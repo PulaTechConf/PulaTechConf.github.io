@@ -61,7 +61,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="country" class="form-label">Country</label>
-                                        <input class="text" class="form-control" id="country" required>
+                                        <input type="text" class="form-control" id="country" required>
                                     </div>
                                     <div class="mb-3">
                                         <label for="registerEmail" class="form-label">Email</label>
@@ -95,6 +95,16 @@
             resultElement.innerHTML = "Testing connection...";
             
             const isConnected = await testFirestoreConnection();
+            
+            if (isConnected) {
+                resultElement.innerHTML = `<div class="alert alert-success">Firebase connection successful! ✅</div>`;
+            } else {
+                resultElement.innerHTML = `<div class="alert alert-danger">Firebase connection failed! ❌</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
             
             if (isConnected) {
                 resultElement.innerHTML = `<div class="alert alert-success">Firebase connection successful! ✅</div>`;
