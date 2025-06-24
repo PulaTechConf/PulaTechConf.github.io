@@ -169,6 +169,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Function to create a badge element from user data
     function createBadgeFromData(userData) {
+        if (!userData) return;
+        
         const badge = document.createElement('div');
         badge.className = 'badge-print-card';
         
@@ -208,7 +210,86 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Add print styles to make badges print nicely
+    // Check if we're on a specific badge printing page
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    
+    if (userId) {
+        // Single badge printing from URL parameter
+        generateBadgeForUser(userId);
+    } else {
+        // Check for batch printing from localStorage
+        const userIds = localStorage.getItem('selectedUsersBadges');
+        
+        if (userIds) {
+            const userIdArray = JSON.parse(userIds);
+            generateBadgesForUsers(userIdArray);
+            localStorage.removeItem('selectedUsersBadges');
+        }
+    }
+    
+    // Function to generate badge for a specific user
+    async function generateBadgeForUser(userId) {
+        try {
+            const userRef = doc(db, "users", userId);
+            const userSnap = await getDoc(userRef);
+            
+            if (!userSnap.exists()) {
+                showError("User not found!");
+                return;
+            }
+            
+            const userData = userSnap.data();
+            createBadgeFromData(userData);
+            
+            // Auto-print after a short delay
+            setTimeout(() => {
+                window.print();
+            }, 500);
+            
+        } catch (error) {
+            console.error("Error generating badge:", error);
+            showError(error.message);
+        }
+    }
+    
+    // Function to generate badges for multiple users
+    async function generateBadgesForUsers(userIds) {
+        try {
+            if (!badgeContainer) return;
+            
+            badgeContainer.innerHTML = '';
+            
+            for (const userId of userIds) {
+                const userRef = doc(db, "users", userId);
+                const userSnap = await getDoc(userRef);
+                
+                if (userSnap.exists()) {
+                    createBadgeFromData(userSnap.data());
+                }
+            }
+            
+            // Auto-print after a short delay
+            setTimeout(() => {
+                window.print();
+            }, 500);
+            
+        } catch (error) {
+            console.error("Error generating badges:", error);
+            showError(error.message);
+        }
+    }
+    
+    // Helper function to show errors
+    function showError(message) {
+        const container = badgeContainer || document.body;
+        const alert = document.createElement('div');
+        alert.className = 'alert alert-danger';
+        alert.textContent = `Error: ${message}`;
+        container.appendChild(alert);
+    }
+    
+    // Add print styles
     function addPrintStyles() {
         const style = document.createElement('style');
         style.textContent = `
@@ -234,6 +315,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.head.appendChild(style);
     }
     
-    // Add print styles
+    // Initialize print styles
     addPrintStyles();
 });
+    
+    badgeContainer.appendChild(badgeEl);
+
+function showError(message) {
+    const container = document.getElementById('badgeContainer') || document.body;
+    const alert = document.createElement('div');
+    alert.className = 'alert alert-danger';
+    alert.textContent = `Error: ${message}`;
+    container.appendChild(alert);
+}
