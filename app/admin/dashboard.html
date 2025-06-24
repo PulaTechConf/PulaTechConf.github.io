@@ -47,6 +47,9 @@
                 <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">User Management</button>
             </li>
             <li class="nav-item" role="presentation">
+                <button class="nav-link" id="pizza-tab" data-bs-toggle="tab" data-bs-target="#pizza" type="button" role="tab">Pizza Tracking</button>
+            </li>
+            <li class="nav-item" role="presentation">
                 <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab">Notifications</button>
             </li>
         </ul>
@@ -78,6 +81,137 @@
                             </tr>
                         </tbody>
                     </table>
+                </div>
+            </div>
+            
+            <!-- Pizza Tracking Tab -->
+            <div class="tab-pane fade" id="pizza" role="tabpanel">
+                <h2 class="h4 mb-3">Pizza Tracking</h2>
+                
+                <ul class="nav nav-pills mb-3" id="pizzaSubTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="pizza-summary-tab" data-bs-toggle="pill" data-bs-target="#pizza-summary" type="button" role="tab">Pizza Summary</button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="pizza-users-tab" data-bs-toggle="pill" data-bs-target="#pizza-users" type="button" role="tab">User Selections</button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="pizzaTabContent">
+                    <!-- Pizza Summary Tab -->
+                    <div class="tab-pane fade show active" id="pizza-summary" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h5">Pizza Counts by Day</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refreshPizzaSummary">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h4 class="h6 mb-0">Day 1 - Wednesday, July 16</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Pizza Type</th>
+                                                        <th>Count</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="day1Summary">
+                                                    <tr>
+                                                        <td colspan="2" class="text-center">Loading...</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h4 class="h6 mb-0">Day 2 - Thursday, July 17</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Pizza Type</th>
+                                                        <th>Count</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="day2Summary">
+                                                    <tr>
+                                                        <td colspan="2" class="text-center">Loading...</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="card mb-3">
+                                    <div class="card-header">
+                                        <h4 class="h6 mb-0">Day 3 - Friday, July 18</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table table-sm">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Pizza Type</th>
+                                                        <th>Count</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody id="day3Summary">
+                                                    <tr>
+                                                        <td colspan="2" class="text-center">Loading...</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User Pizza Selections Tab -->
+                    <div class="tab-pane fade" id="pizza-users" role="tabpanel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3 class="h5">User Pizza Selections</h3>
+                            <button class="btn btn-sm btn-outline-primary" id="refreshUserPizzas">
+                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                            </button>
+                        </div>
+                        
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Day 1</th>
+                                        <th>Day 2</th>
+                                        <th>Day 3</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userPizzasTableBody">
+                                    <tr>
+                                        <td colspan="4" class="text-center">Loading user selections...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -137,5 +271,6 @@
     <script type="module" src="../../js/app.js"></script>
     <script type="module" src="../../js/admin/users.js"></script>
     <script type="module" src="../../js/admin/notifications.js"></script>
+    <script type="module" src="../../js/admin/pizza-tracking.js"></script>
 </body>
 </html>
