@@ -4,14 +4,15 @@ import {
     addDoc, 
     query, 
     orderBy, 
-    where,
     limit, 
     onSnapshot,
     serverTimestamp,
-    Timestamp
+    getDocs,
+    doc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log("Messaging.js loaded");
     console.log("Firebase db object available:", !!db);
     
@@ -36,6 +37,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Current active chat channel
     let currentChat = 'general';
+    let messageListener = null;
+    
+    // Show/hide chat channels based on user role
+    setupAccessRights();
+    
+    // Add event listener to the refresh button
+    refreshChannelsBtn?.addEventListener('click', function() {
+        loadMessages(currentChat);
+    });
     
     // Add event listeners to chat channel links
     document.querySelectorAll('[data-chat]').forEach(link => {
@@ -63,50 +73,56 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Add event listener to message form - SIMPLIFIED VERSION TO AVOID INDEX ISSUES
-    messageForm.addEventListener('submit', function(e) {
+    // Add event listener to message form
+    messageForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const message = messageInput.value.trim();
         if (!message) return;
+        
+        console.log("Sending message:", message);
         
         // Show sending status
         const sendingMsg = document.createElement('div');
         sendingMsg.className = 'text-center text-muted mb-2';
         sendingMsg.innerHTML = '<small>Sending message...</small>';
         chatMessages.appendChild(sendingMsg);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Prepare message data
-        const messageData = {
-            text: message,
-            senderId: userId || 'anonymous',
-            senderName: userName || 'Anonymous User',
-            timestamp: serverTimestamp()
-        };
-        
-        console.log("Sending message:", message);
-        
-        // Save directly to the chat-specific collection
-        const chatMessagesCollection = collection(db, `chats/${currentChat}/messages`);
-        
-        addDoc(chatMessagesCollection, messageData)
-            .then(docRef => {
-                console.log("Message saved with ID:", docRef.id);
-                
-                // Remove sending indicator
-                sendingMsg.remove();
-                
-                // Clear input
-                messageInput.value = '';
-            })
-            .catch(error => {
-                console.error("Error saving message:", error);
-                sendingMsg.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
-            });
+        try {
+            // Ensure chat collection exists
+            await ensureChatCollection(currentChat);
+            
+            // Create message object
+            const messageData = {
+                text: message,
+                senderId: userId || 'anonymous',
+                senderName: userName || 'Anonymous User',
+                timestamp: serverTimestamp(),
+                clientTime: new Date().toISOString(),
+                channel: currentChat
+            };
+            
+            // Save message to the chat channel collection
+            const messagesCollection = collection(db, "chats", currentChat, "messages");
+            const docRef = await addDoc(messagesCollection, messageData);
+            
+            console.log("Message saved with ID:", docRef.id);
+            
+            // Remove sending indicator
+            sendingMsg.remove();
+            
+            // Clear input
+            messageInput.value = '';
+            
+        } catch (error) {
+            console.error("Error sending message:", error);
+            sendingMsg.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        }
     });
     
     // Initialize by loading messages
-    setupAccessRights();
+    await ensureAllChatCollections();
     loadMessages('general');
     
     // Function to set up user access rights
@@ -124,9 +140,6 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(`Chat channels set up for ${userRole} role`);
     }
     
-    // Set refresh button functionality
-    refreshChannelsBtn?.addEventListener('click', () => loadMessages(currentChat));
-    
     // Function to load messages for a chat channel
     function loadMessages(chatId) {
         console.log(`Loading messages for ${chatId} channel`);
@@ -134,18 +147,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show loading indicator
         chatMessages.innerHTML = '<div class="text-center p-3">Loading messages...</div>';
         
+        // Clear any previous listener
+        if (messageListener) {
+            messageListener();
+            messageListener = null;
+        }
+        
         try {
-            // SIMPLIFIED QUERY - AVOID INDEX REQUIREMENTS
-            // Query messages directly from the nested collection instead
             const messagesRef = collection(db, `chats/${chatId}/messages`);
-            const q = query(
-                messagesRef,
-                orderBy("timestamp", "desc"),
-                limit(30)
-            );
+            const q = query(messagesRef, orderBy("timestamp", "asc"), limit(100));
             
-            // Set up real-time listener
-            const unsubscribe = onSnapshot(q, (snapshot) => {
+            messageListener = onSnapshot(q, (snapshot) => {
                 console.log(`Received ${snapshot.size} messages for ${chatId}`);
                 
                 // Clear messages container
@@ -156,15 +168,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // Get messages as array and reverse to display oldest first
-                const messages = [];
+                // Add messages to UI
                 snapshot.forEach(doc => {
-                    messages.push({...doc.data(), id: doc.id});
-                });
-                
-                // Add messages in reverse order (oldest first)
-                messages.reverse().forEach(message => {
-                    addMessageToUI(message);
+                    const messageData = doc.data();
+                    addMessageToUI(messageData);
                 });
                 
                 // Scroll to bottom
@@ -183,10 +190,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 `;
             });
-            
-            // Store unsubscribe function for cleanup
-            window.currentChatUnsubscribe = unsubscribe;
-            
         } catch (error) {
             console.error("Exception setting up message listener:", error);
             chatMessages.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
@@ -214,7 +217,7 @@ document.addEventListener('DOMContentLoaded', function() {
             timeStr = new Date(message.clientTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
         
-        // Create message element - fix variable declaration
+        // Create message element
         const messageElement = document.createElement('div');
         messageElement.className = 'd-flex mb-3';
         messageElement.innerHTML = `
@@ -228,7 +231,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <h6 class="mb-0">${isOwnMessage ? 'You' : message.senderName || 'Anonymous'}</h6>
                     <small class="text-muted">${timeStr}</small>
                 </div>
-                <p class="mb-1">${message.message || message.text || ''}</p>
+                <p class="mb-1">${message.text || ''}</p>
             </div>
         `;
         
@@ -236,45 +239,42 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.appendChild(messageElement);
     }
     
-    // Clean up when leaving the page
-    window.addEventListener('beforeunload', function() {
-        if (window.currentChatUnsubscribe) {
-            window.currentChatUnsubscribe();
-        }
-    });
-    
-    // Custom diagnostic function to check Firestore connection
-    async function testFirestore() {
+    // Ensure chat collection exists
+    async function ensureChatCollection(chatId) {
         try {
-            console.log("TEST: Attempting to connect to Firestore...");
+            const chatDocRef = doc(db, "chats", chatId);
+            await setDoc(chatDocRef, { 
+                name: chatId,
+                lastUpdated: new Date().toISOString(),
+                updatedBy: userName
+            }, { merge: true });
             
-            // Create a test timestamp
-            const timestamp = Timestamp.now();
-            
-            // Add a test document
-            const testRef = collection(db, "connection_tests");
-            const docRef = await addDoc(testRef, {
-                message: "Connection test",
-                timestamp: timestamp,
-                browser: navigator.userAgent,
-                host: window.location.host
-            });
-            
-            console.log("TEST: Successfully added document with ID:", docRef.id);
             return true;
-        } catch (error) {
-            console.error("TEST: Firestore test failed:", error);
-            return false;
+        } catch(error) {
+            console.error(`Error ensuring chat collection ${chatId}:`, error);
+            throw error;
         }
     }
     
-    // Run test
-    testFirestore().then(success => {
-        console.log("Firestore connection test result:", success ? "SUCCESS" : "FAILED");
+    // Ensure all chat collections exist
+    async function ensureAllChatCollections() {
+        const channels = ['general', 'announcements', 'organizers', 'admin'];
+        for (const channel of channels) {
+            try {
+                await ensureChatCollection(channel);
+            } catch (error) {
+                console.error(`Failed to ensure collection for ${channel}:`, error);
+            }
+        }
+    }
+    
+    // Clean up listener when navigating away
+    window.addEventListener('beforeunload', function() {
+        if (messageListener) {
+            messageListener();
+        }
     });
 });
-    
-    // Add to chat container
     chatMessages.appendChild(messageEl);
 
     // Function to ensure a chat collection exists and is set up correctly
