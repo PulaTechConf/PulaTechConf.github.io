@@ -9,7 +9,8 @@ import {
     serverTimestamp,
     getDocs,
     doc,
-    setDoc
+    setDoc,
+    where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
     
-    // SUPER SIMPLE MESSAGE SENDING - MOST RELIABLE APPROACH
+    // FIX: Direct write to messages collection without nested structure
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -96,46 +97,46 @@ document.addEventListener('DOMContentLoaded', async function() {
         chatMessages.appendChild(sendingMsg);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        // Use only the simplest data structure
+        // Create message data with all required fields
         const messageData = {
             text: message,
             senderId: userId || 'anonymous',
             senderName: userName || 'Anonymous User',
             channel: currentChat,
-            timestamp: new Date().toISOString() // Use string timestamp for reliability
+            timestamp: new Date().toISOString(), // Use string timestamp for better debugging
+            created: serverTimestamp() // Also include server timestamp
         };
         
-        console.log("MESSAGE DATA:", messageData);
+        // DIRECT PATH: Simple collection with explicit channel field
+        const messagesCollection = collection(db, "all_messages"); 
         
-        // Save directly to a simple collection
-        addDoc(collection(db, "messages"), messageData)
+        // Save message to Firestore
+        addDoc(messagesCollection, messageData)
             .then(docRef => {
-                console.log("Message saved with ID:", docRef.id);
-                messageInput.value = '';
+                console.log("SUCCESS: Message saved with ID:", docRef.id);
+                
+                // Remove sending indicator and clear input
                 sendingMsg.remove();
+                messageInput.value = '';
                 
-                // Show immediate confirmation
-                const confirmMsg = document.createElement('div');
-                confirmMsg.className = 'text-center text-success mb-2';
-                confirmMsg.innerHTML = '<small>Message sent ✓</small>';
-                chatMessages.appendChild(confirmMsg);
-                setTimeout(() => confirmMsg.remove(), 2000);
-                
-                // Try loading messages again
-                loadMessages(currentChat);
+                // Check database immediately for diagnostic purposes
+                checkMessages(currentChat);
             })
             .catch(error => {
-                console.error("ERROR SAVING MESSAGE:", error);
-                sendingMsg.innerHTML = `<div class="alert alert-danger">Error sending: ${error.message}</div>`;
+                console.error("FIREBASE ERROR:", error);
+                sendingMsg.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
                 
-                // Add more detailed logging
-                console.log("Failed message:", messageData);
-                console.log("Current channel:", currentChat);
-                console.log("DB reference:", db);
+                // Log environment info for debugging
+                console.log("DEBUG INFO:", {
+                    environment: window.location.hostname,
+                    dbExists: !!db,
+                    userId,
+                    currentChat
+                });
             });
     });
     
-    // Initialize by loading messages
+    // Initialize
     loadMessages('general');
     
     // Function to set up user access rights
@@ -153,7 +154,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log(`Chat channels set up for ${userRole} role`);
     }
     
-    // SIMPLIFIED MESSAGE LOADING
+    // SIMPLE QUERY: Get messages from flat collection
     function loadMessages(chatId) {
         console.log("Loading messages for channel:", chatId);
         
@@ -166,24 +167,17 @@ document.addEventListener('DOMContentLoaded', async function() {
             messageListener = null;
         }
         
-        // Get all messages from the flat collection
-        const messagesRef = collection(db, "messages");
-        
-        // Create a simple query that doesn't need indexes
-        const q = query(
-            messagesRef,
-            orderBy("timestamp"),
-            limit(100)
-        );
-        
-        console.log("Setting up message listener");
-        
-        // Set up real-time listener with error handling
         try {
+            // Query the flat messages collection without complicated filters
+            const messagesRef = collection(db, "all_messages");
+            const q = query(messagesRef, orderBy("timestamp"), limit(100));
+            
+            console.log("Setting up message listener");
+            
             messageListener = onSnapshot(q, (snapshot) => {
                 console.log(`Received ${snapshot.size} total messages`);
                 
-                // Filter messages on the client side
+                // Filter by channel on client side
                 const channelMessages = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -205,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     return;
                 }
                 
-                // Sort by timestamp
+                // Sort messages by timestamp
                 channelMessages.sort((a, b) => {
                     const timeA = new Date(a.timestamp);
                     const timeB = new Date(b.timestamp);
@@ -230,14 +224,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
-    // Function to add a message to the UI
     function addMessageToUI(message) {
         if (!message) return;
         
         const isOwnMessage = message.senderId === userId;
         
-        // Format timestamp - just use the string directly
-        const timeStr = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "Just now";
+        // Format timestamp 
+        let timeStr = "Just now";
+        if (message.timestamp) {
+            timeStr = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
         
         // Create message element
         const messageElement = document.createElement('div');
@@ -254,12 +250,27 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <small class="text-muted">${timeStr}</small>
                 </div>
                 <p class="mb-1">${message.text || ''}</p>
-                <small class="text-muted">${message.id ? `Message ID: ${message.id.substring(0, 6)}...` : ''}</small>
+                <small class="text-muted">ID: ${message.id?.substring(0,6) || ''}...</small>
             </div>
         `;
         
         // Add to chat container
         chatMessages.appendChild(messageElement);
+    }
+    
+    // Debug function to directly check database
+    function checkMessages(chatId) {
+        const messagesRef = collection(db, "all_messages");
+        const q = query(messagesRef, where("channel", "==", chatId), limit(5));
+        
+        getDocs(q).then((snapshot) => {
+            console.log(`DIRECT CHECK: Found ${snapshot.size} messages for ${chatId}`);
+            snapshot.forEach(doc => {
+                console.log("- Message:", doc.id, doc.data());
+            });
+        }).catch(err => {
+            console.error("DIRECT CHECK ERROR:", err);
+        });
     }
     
     // Clean up listener when page is closed
