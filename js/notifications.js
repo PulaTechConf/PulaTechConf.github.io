@@ -23,6 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up notifications listener
     setupNotificationsListener();
     
+    // Stop dropdown from closing when clicking notification items
+    document.addEventListener('click', function(e) {
+        if (e.target && (e.target.closest('.notification-item') || e.target.closest('.notification-content'))) {
+            e.stopPropagation(); // Stop event propagation to prevent dropdown from closing
+        }
+    }, true);
+    
     // Add click handler for notification items
     document.addEventListener('click', function(e) {
         if (e.target && e.target.closest('.notification-item')) {
@@ -30,14 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const content = item.querySelector('.notification-content');
             
             if (content) {
-                // Close all other open notification contents first
-                document.querySelectorAll('.notification-content.show').forEach(openContent => {
-                    if (openContent !== content) {
-                        openContent.classList.remove('show');
-                    }
-                });
-                
-                // Toggle current notification content
+                // Toggle this notification content
                 content.classList.toggle('show');
             }
         }
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         
-        // Add each notification to the dropdown
+        // Add each notification to the dropdown with improved wrapping
         notifications.forEach(notification => {
             // Format date
             let formattedDate = "Recent";
@@ -148,9 +148,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const notificationItem = document.createElement('div');
             notificationItem.className = 'notification-item dropdown-item';
             notificationItem.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex justify-content-between align-items-start">
                     <strong>${notification.title}</strong>
-                    <small class="text-muted">${formattedDate}</small>
+                    <small class="text-muted ms-2">${formattedDate}</small>
                 </div>
                 <div class="notification-content">
                     ${notification.message}

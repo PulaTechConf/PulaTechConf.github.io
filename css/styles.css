@@ -54,6 +54,8 @@ body {
     border-bottom: 1px solid #eee;
     padding: 10px 15px;
     cursor: pointer;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .notification-item:hover {
@@ -64,6 +66,12 @@ body {
     border-bottom: none;
 }
 
+.notification-item strong {
+    word-break: break-word;
+    max-width: 270px;
+    display: inline-block;
+}
+
 .notification-content {
     display: none;
     padding-top: 8px;
@@ -72,6 +80,8 @@ body {
     border-top: 1px dashed #eee;
     margin-top: 5px;
     padding-top: 8px;
+    word-wrap: break-word;
+    white-space: normal;
 }
 
 .notification-content.show {
@@ -123,4 +133,54 @@ body {
 .badge-name {
     font-size: 20px;
     font-weight: bold;
+}
+
+/* Chat container styles */
+.chat-container {
+    height: 500px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    scroll-behavior: smooth;
+}
+
+.message-input {
+    background-color: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+    padding: 15px;
+}
+
+/* Make chat area responsive */
+@media (max-height: 700px) {
+    .chat-container {
+        height: 400px;
+    }
+}
+
+@media (max-height: 500px) {
+    .chat-container {
+        height: 300px;
+    }
+}
+
+/* Style for the card that contains the chat */
+.chat-card {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 180px);
+}
+
+.chat-card .card-body {
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* Make sure the messaging container takes full height */
+.messaging-container {
+    height: calc(100vh - 72px);
+    display: flex;
+    flex-direction: column;
 }

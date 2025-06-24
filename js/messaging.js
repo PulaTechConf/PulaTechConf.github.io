@@ -7,7 +7,10 @@ import {
     limit, 
     onSnapshot,
     serverTimestamp,
-    getDocs
+    getDocs,
+    doc,
+    getDoc,
+    setDoc
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', async function() {
@@ -95,16 +98,21 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             console.log(`Sending message to ${currentChat} chat:`, message);
             
-            // Create message object
+            // Create message object with proper structure
             const messageData = {
                 text: message,
                 senderId: userId,
                 senderName: userName || 'Anonymous',
-                timestamp: serverTimestamp()
+                timestamp: serverTimestamp(),
+                created: new Date().toISOString() // Backup timestamp in ISO format
             };
             
-            // Add to Firestore - important to use the correct collection path
-            const messagesCollection = collection(db, `chats/${currentChat}/messages`);
+            // Important: Use setDoc approach that worked for other features
+            // Make sure the collection path exists first
+            await ensureChatCollectionExists(currentChat);
+            
+            // Add to Firestore using same pattern as working features
+            const messagesCollection = collection(db, "chats", currentChat, "messages");
             const docRef = await addDoc(messagesCollection, messageData);
             
             console.log("Message sent with ID:", docRef.id);
@@ -161,7 +169,48 @@ document.addEventListener('DOMContentLoaded', async function() {
                 messageListener = null;
             }
             
-            // Create reference to messages collection
+            // Special case for announcements channel - use notifications collection
+            if (chatId === 'announcements') {
+                const notificationsRef = collection(db, "notifications");
+                const q = query(
+                    notificationsRef,
+                    orderBy("timestamp", "desc"),
+                    limit(100)
+                );
+                
+                // Set up real-time listener for notifications
+                messageListener = onSnapshot(q, (snapshot) => {
+                    // Clear messages container
+                    chatMessages.innerHTML = '';
+                    
+                    if (snapshot.empty) {
+                        chatMessages.innerHTML = '<div class="text-center p-3">No announcements yet.</div>';
+                        return;
+                    }
+                    
+                    // Add each notification as a message
+                    snapshot.forEach(doc => {
+                        const notification = doc.data();
+                        
+                        // Create a message-like object from notification
+                        const messageData = {
+                            text: notification.message,
+                            senderId: 'system',
+                            senderName: notification.title || 'Announcement',
+                            timestamp: notification.timestamp
+                        };
+                        
+                        addMessageToUI(messageData);
+                    });
+                    
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                });
+                
+                return;
+            }
+            
+            // Regular chat channels
             const messagesRef = collection(db, `chats/${chatId}/messages`);
             const q = query(
                 messagesRef,
@@ -270,6 +319,28 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     }
     
+    // Make sure collection exists before saving
+    async function ensureChatCollectionExists(chatId) {
+        try {
+            // This will create the collection path if it doesn't exist
+            const docRef = doc(db, "chats", chatId);
+            const docSnap = await getDoc(docRef);
+            
+            if (!docSnap.exists()) {
+                // Initialize the chat document with metadata
+                await setDoc(docRef, {
+                    name: chatId,
+                    created: new Date().toISOString(),
+                    lastActivity: serverTimestamp()
+                });
+                console.log(`Created chat collection: ${chatId}`);
+            }
+        } catch (error) {
+            console.error(`Error ensuring chat collection exists: ${error}`);
+            throw error; // Propagate the error
+        }
+    }
+
     // Initialize chat collections
     ensureChatCollectionsExist();
 });
