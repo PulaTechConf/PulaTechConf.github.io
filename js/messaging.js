@@ -329,5 +329,3 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error("Error initializing chat collections:", error);
         }
     }
-        }
-    }
