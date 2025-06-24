@@ -58,8 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadUsers() {
         console.log("Loading users...");
         
+        // Check if usersList element exists
+        const usersList = document.getElementById('usersList');
         if (!usersList) {
-            console.error("usersList element not found");
+            console.error("usersList element not found - This might be expected if not on the users admin page");
             return;
         }
         
@@ -115,7 +117,9 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("Users loaded successfully");
         } catch (error) {
             console.error("Error loading users:", error);
-            usersList.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading users: ${error.message}</td></tr>`;
+            if (usersList) {
+                usersList.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading users: ${error.message}</td></tr>`;
+            }
         }
     }
     

@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // Add event listener to message form - SUPER SIMPLE VERSION
+    // Add event listener to message form - SIMPLIFIED VERSION TO AVOID INDEX ISSUES
     messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
@@ -76,21 +76,20 @@ document.addEventListener('DOMContentLoaded', function() {
         sendingMsg.innerHTML = '<small>Sending message...</small>';
         chatMessages.appendChild(sendingMsg);
         
-        // Simple message object - FLAT STRUCTURE
+        // Prepare message data
         const messageData = {
-            message: message,
-            channel: currentChat,
-            userId: userId || 'anonymous',
-            userName: userName,
-            email: userEmail || 'anonymous@example.com',
-            timestamp: serverTimestamp(),
-            clientTime: new Date().toISOString()
+            text: message,
+            senderId: userId || 'anonymous',
+            senderName: userName || 'Anonymous User',
+            timestamp: serverTimestamp()
         };
         
-        console.log("Attempting to save message:", messageData);
+        console.log("Sending message:", message);
         
-        // Save directly to the all_messages collection - FLAT STRUCTURE FOR RELIABILITY
-        addDoc(collection(db, "all_messages"), messageData)
+        // Save directly to the chat-specific collection
+        const chatMessagesCollection = collection(db, `chats/${currentChat}/messages`);
+        
+        addDoc(chatMessagesCollection, messageData)
             .then(docRef => {
                 console.log("Message saved with ID:", docRef.id);
                 
@@ -99,22 +98,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Clear input
                 messageInput.value = '';
-                
-                // No need to add to UI as the listener will update it
-                
             })
             .catch(error => {
                 console.error("Error saving message:", error);
-                sendingMsg.innerHTML = '<div class="alert alert-danger">Error: ' + error.message + '</div>';
-                
-                // Log more details about the error
-                console.error("Error details:", {
-                    code: error.code,
-                    message: error.message,
-                    stack: error.stack
-                });
-                
-                setTimeout(() => sendingMsg.remove(), 5000);
+                sendingMsg.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
             });
     });
     
@@ -148,13 +135,13 @@ document.addEventListener('DOMContentLoaded', function() {
         chatMessages.innerHTML = '<div class="text-center p-3">Loading messages...</div>';
         
         try {
-            // Query messages from the flat structure
-            const messagesRef = collection(db, "all_messages");
+            // SIMPLIFIED QUERY - AVOID INDEX REQUIREMENTS
+            // Query messages directly from the nested collection instead
+            const messagesRef = collection(db, `chats/${chatId}/messages`);
             const q = query(
                 messagesRef,
-                where("channel", "==", chatId),
-                orderBy("timestamp", "asc"),
-                limit(50)
+                orderBy("timestamp", "desc"),
+                limit(30)
             );
             
             // Set up real-time listener
@@ -169,10 +156,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
                 
-                // Add messages to UI
+                // Get messages as array and reverse to display oldest first
+                const messages = [];
                 snapshot.forEach(doc => {
-                    const messageData = doc.data();
-                    addMessageToUI(messageData);
+                    messages.push({...doc.data(), id: doc.id});
+                });
+                
+                // Add messages in reverse order (oldest first)
+                messages.reverse().forEach(message => {
+                    addMessageToUI(message);
                 });
                 
                 // Scroll to bottom
@@ -183,7 +175,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 chatMessages.innerHTML = `
                     <div class="alert alert-danger">
                         Error loading messages: ${error.message}
-                        <br><small>Error code: ${error.code}</small>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button class="btn btn-outline-primary btn-sm" onclick="window.location.reload()">
+                            <i class="bi bi-arrow-clockwise"></i> Retry
+                        </button>
                     </div>
                 `;
             });
@@ -201,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function addMessageToUI(message) {
         if (!message) return;
         
-        const isOwnMessage = message.userId === userId;
+        const isOwnMessage = message.senderId === userId;
         
         // Format timestamp
         let timeStr = "Just now";
@@ -211,15 +207,17 @@ document.addEventListener('DOMContentLoaded', function() {
             } else if (message.timestamp.seconds) {
                 timeStr = new Date(message.timestamp.seconds * 1000)
                     .toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (typeof message.timestamp === 'string') {
+                timeStr = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             }
         } else if (message.clientTime) {
             timeStr = new Date(message.clientTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
         
-        // Create message element
-        const messageEl = document.createElement('div');
-        messageEl.className = 'd-flex mb-3';
-        messageEl.innerHTML = `
+        // Create message element - fix variable declaration
+        const messageElement = document.createElement('div');
+        messageElement.className = 'd-flex mb-3';
+        messageElement.innerHTML = `
             <div class="flex-shrink-0">
                 <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
                     <i class="bi bi-person"></i>
@@ -227,15 +225,15 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <div class="flex-grow-1 ms-3">
                 <div class="d-flex justify-content-between">
-                    <h6 class="mb-0">${isOwnMessage ? 'You' : message.userName || 'Anonymous'}</h6>
+                    <h6 class="mb-0">${isOwnMessage ? 'You' : message.senderName || 'Anonymous'}</h6>
                     <small class="text-muted">${timeStr}</small>
                 </div>
-                <p class="mb-1">${message.message || message.text}</p>
+                <p class="mb-1">${message.message || message.text || ''}</p>
             </div>
         `;
         
         // Add to chat container
-        chatMessages.appendChild(messageEl);
+        chatMessages.appendChild(messageElement);
     }
     
     // Clean up when leaving the page
@@ -329,5 +327,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log("All chat collections initialized");
         } catch (error) {
             console.error("Error initializing chat collections:", error);
+        }
+    }
         }
     }
