@@ -4,8 +4,7 @@ import {
     query, 
     orderBy,
     limit,
-    onSnapshot,
-    Timestamp
+    onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -14,29 +13,35 @@ document.addEventListener('DOMContentLoaded', () => {
     // Find UI elements
     const notificationsBtn = document.getElementById('notificationsBtn');
     const notificationBadge = document.querySelector('.notification-badge');
-    const notificationsList = document.getElementById('notificationsList');
+    const notificationsDropdown = document.getElementById('notificationsDropdown');
     
-    if (!notificationsBtn || !notificationBadge || !notificationsList) {
+    if (!notificationsBtn || !notificationBadge || !notificationsDropdown) {
         console.log("Notification elements not found on page");
         return;
     }
     
-    // Listen for notifications button click
-    notificationsBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        console.log("Notifications button clicked");
-        
-        // Show notifications modal
-        const notificationsModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
-        notificationsModal.show();
-        
-        // Mark as read when opened
-        notificationBadge.classList.add('d-none');
-        notificationBadge.textContent = '0';
-    });
-    
     // Set up notifications listener
     setupNotificationsListener();
+    
+    // Add click handler for notification items
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('notification-item') || 
+            e.target.closest('.notification-item')) {
+            
+            const item = e.target.classList.contains('notification-item') ? 
+                e.target : e.target.closest('.notification-item');
+                
+            const content = item.querySelector('.notification-content');
+            if (content) {
+                // Toggle visibility
+                if (content.style.display === 'block') {
+                    content.style.display = 'none';
+                } else {
+                    content.style.display = 'block';
+                }
+            }
+        }
+    });
     
     function setupNotificationsListener() {
         console.log("Setting up notifications listener");
@@ -56,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let notifications = [];
             
             if (snapshot.empty) {
-                notificationsList.innerHTML = '<div class="list-group-item text-center">No notifications</div>';
+                notificationsDropdown.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
                 notificationBadge.classList.add('d-none');
                 return;
             }
@@ -93,27 +98,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 notificationBadge.classList.add('d-none');
             }
             
-            // Update notifications list if modal is visible
-            updateNotificationsList(notifications);
+            // Update notifications dropdown
+            updateNotificationsDropdown(notifications);
             
         }, (error) => {
             console.error("Error getting notifications:", error);
         });
     }
     
-    // Function to update the notifications list UI
-    function updateNotificationsList(notifications) {
-        if (!notificationsList) return;
+    // Function to update the notifications dropdown UI
+    function updateNotificationsDropdown(notifications) {
+        if (!notificationsDropdown) return;
         
         // Clear current list
-        notificationsList.innerHTML = '';
+        notificationsDropdown.innerHTML = '';
         
         if (notifications.length === 0) {
-            notificationsList.innerHTML = '<div class="list-group-item text-center">No notifications</div>';
+            notificationsDropdown.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
             return;
         }
         
-        // Add each notification to the list
+        // Add each notification to the dropdown
         notifications.forEach(notification => {
             // Format date
             let formattedDate = "Recent";
@@ -126,16 +131,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             const notificationItem = document.createElement('div');
-            notificationItem.className = 'list-group-item';
+            notificationItem.className = 'notification-item dropdown-item';
             notificationItem.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-1">${notification.title}</h6>
+                <div class="d-flex justify-content-between">
+                    <strong>${notification.title}</strong>
                     <small class="text-muted">${formattedDate}</small>
                 </div>
-                <p class="mb-1">${notification.message}</p>
+                <div class="notification-content">
+                    ${notification.message}
+                </div>
             `;
             
-            notificationsList.appendChild(notificationItem);
+            notificationsDropdown.appendChild(notificationItem);
         });
     }
 });

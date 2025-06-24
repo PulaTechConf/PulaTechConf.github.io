@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PulaTechConf - Home</title>
+    <title>PulaTechConf - Schedule</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/styles.css">
@@ -20,7 +20,7 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" href="home.html">Home</a>
+                        <a class="nav-link active" href="home.html">Schedule</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="info.html">Conference Info</a>
@@ -39,11 +39,14 @@
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="notificationsBtn">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="notificationsBtn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="bi bi-bell"></i>
                             <span class="badge bg-danger notification-badge d-none">0</span>
                         </a>
+                        <div class="dropdown-menu dropdown-menu-end notifications-dropdown" id="notificationsDropdown">
+                            <div class="dropdown-item text-center">Loading notifications...</div>
+                        </div>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="logoutBtn">Logout</a>
@@ -54,6 +57,8 @@
     </nav>
 
     <div class="container mt-4">
+        <div id="alertContainer"></div>
+        
         <h1 class="mb-4">Conference Schedule</h1>
 
         <div class="accordion" id="conferenceSchedule">
@@ -69,20 +74,22 @@
                         <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
                         <p>📌 <a href="https://g.co/kgs/WXB7oWG" target="_blank">Google maps</a></p>
                         
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">19:00 – 19:30</span>
-                                <span class="badge bg-primary">Registration</span>
+                        <div id="day1ScheduleSection" class="editable-section" data-title="Day 1 Schedule">
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">19:00 – 19:30</span>
+                                    <span class="badge bg-primary">Registration</span>
+                                </div>
+                                <p>Registration – Welcome desk</p>
                             </div>
-                            <p>Registration – Welcome desk</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">20:00 – 21:30</span>
-                                <span class="badge bg-info">Networking</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">20:00 – 21:30</span>
+                                    <span class="badge bg-info">Networking</span>
+                                </div>
+                                <p>Cocktail and Ice-breaking Event – Refreshments and networking</p>
                             </div>
-                            <p>Cocktail and Ice-breaking Event – Refreshments and networking</p>
                         </div>
                     </div>
                 </div>
@@ -101,82 +108,83 @@
                         <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
                         <p>🔗 Hybrid Access: <a href="meet.google.com/hbu-njzw-ijz" target="_blank">meet.google.com/hbu-njzw-ijz</a></p>
                         
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">10:00 – 10:35</span>
-                                <span class="badge bg-primary">Opening</span>
+                        <div id="day2ScheduleSection" class="editable-section" data-title="Day 2 Schedule">
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">10:00 – 10:35</span>
+                                    <span class="badge bg-primary">Opening</span>
+                                </div>
+                                <p>Opening Ceremony – Official welcome</p>
                             </div>
-                            <p>Opening Ceremony – Official welcome</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">10:35 – 10:55</span>
-                                <span class="badge bg-success">Lecture</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">10:35 – 10:55</span>
+                                    <span class="badge bg-success">Lecture</span>
+                                </div>
+                                <p>Invited Lecture 1</p>
                             </div>
-                            <p>Invited Lecture 1</p>
-                        </div>
-                        
-                        <!-- Rest of the schedule... -->
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">11:00 – 11:10</span>
-                                <span class="badge bg-secondary">Break</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">11:00 – 11:10</span>
+                                    <span class="badge bg-secondary">Break</span>
+                                </div>
+                                <p>Coffee Break – Refreshments</p>
                             </div>
-                            <p>Coffee Break – Refreshments</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">11:10 – 11:35</span>
-                                <span class="badge bg-success">Lecture</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">11:10 – 11:35</span>
+                                    <span class="badge bg-success">Lecture</span>
+                                </div>
+                                <p>Invited Lecture 2</p>
                             </div>
-                            <p>Invited Lecture 2</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">11:35 – 12:00</span>
-                                <span class="badge bg-success">Lecture</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">11:35 – 12:00</span>
+                                    <span class="badge bg-success">Lecture</span>
+                                </div>
+                                <p>Invited Lecture 3</p>
                             </div>
-                            <p>Invited Lecture 3</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">12:00 – 12:40</span>
-                                <span class="badge bg-info">Discussion</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">12:00 – 12:40</span>
+                                    <span class="badge bg-info">Discussion</span>
+                                </div>
+                                <p>Round Table Discussion: Education and Opportunities in Dual Studies</p>
                             </div>
-                            <p>Round Table Discussion: Education and Opportunities in Dual Studies</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">12:40 – 13:30</span>
-                                <span class="badge bg-secondary">Lunch</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">12:40 – 13:30</span>
+                                    <span class="badge bg-secondary">Lunch</span>
+                                </div>
+                                <p>Lunch Break</p>
                             </div>
-                            <p>Lunch Break</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">13:30 – 15:50</span>
-                                <span class="badge bg-warning text-dark">Presentations</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">13:30 – 15:50</span>
+                                    <span class="badge bg-warning text-dark">Presentations</span>
+                                </div>
+                                <p>Presentations (Each presentation: 5-minute time slot)</p>
+                                <p>Sessions:</p>
+                                <ul>
+                                    <li>Engineering, Innovations, Industry & Technology</li>
+                                    <li>Medicine, Society & Innovations</li>
+                                </ul>
                             </div>
-                            <p>Presentations (Each presentation: 5-minute time slot)</p>
-                            <p>Sessions:</p>
-                            <ul>
-                                <li>Engineering, Innovations, Industry & Technology</li>
-                                <li>Medicine, Society & Innovations</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">18:00</span>
-                                <span class="badge bg-info">Networking</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">18:00</span>
+                                    <span class="badge bg-info">Networking</span>
+                                </div>
+                                <p>City Tour and Networking (self-organized / at your own initiative)</p>
                             </div>
-                            <p>City Tour and Networking (self-organized / at your own initiative)</p>
                         </div>
                     </div>
                 </div>
@@ -194,29 +202,31 @@
                         <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
                         <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
                         
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">10:00 – 12:00</span>
-                                <span class="badge bg-secondary">Breakfast</span>
+                        <div id="day3ScheduleSection" class="editable-section" data-title="Day 3 Schedule">
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">10:00 – 12:00</span>
+                                    <span class="badge bg-secondary">Breakfast</span>
+                                </div>
+                                <p>Breakfast with Participants + Opening of the Exhibition: Science, Technology and Art</p>
                             </div>
-                            <p>Breakfast with Participants + Opening of the Exhibition: Science, Technology and Art</p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">13:30</span>
-                                <span class="badge bg-primary">Transfer</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">13:30</span>
+                                    <span class="badge bg-primary">Transfer</span>
+                                </div>
+                                <p>Transfer to Fratarski Island Student Camp</p>
+                                <p>📍 <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">Google maps</a></p>
                             </div>
-                            <p>Transfer to Fratarski Island Student Camp</p>
-                            <p>📍 <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">Google maps</a></p>
-                        </div>
-                        
-                        <div class="schedule-item">
-                            <div class="d-flex justify-content-between">
-                                <span class="fw-bold">From 17:00</span>
-                                <span class="badge bg-success">Lectures</span>
+                            
+                            <div class="schedule-item">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">From 17:00</span>
+                                    <span class="badge bg-success">Lectures</span>
+                                </div>
+                                <p>Lectures and Workshops</p>
                             </div>
-                            <p>Lectures and Workshops</p>
                         </div>
                     </div>
                 </div>
@@ -224,18 +234,21 @@
         </div>
     </div>
 
-    <!-- Notifications Modal -->
-    <div class="modal fade" id="notificationsModal" tabindex="-1">
-        <div class="modal-dialog">
+    <!-- Content Edit Modal -->
+    <div class="modal fade" id="contentEditModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Notifications</h5>
+                    <h5 class="modal-title" id="editModalLabel">Edit Content</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div id="notificationsList" class="list-group">
-                        <!-- Notifications will be loaded here -->
-                    </div>
+                    <input type="hidden" id="currentSectionId">
+                    <textarea id="contentEditor" class="form-control" rows="10"></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveContentBtn">Save Changes</button>
                 </div>
             </div>
         </div>
@@ -244,5 +257,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/notifications.js"></script>
+    <script type="module" src="../js/admin/content-editor.js"></script>
 </body>
 </html>

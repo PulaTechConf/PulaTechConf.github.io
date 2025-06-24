@@ -42,19 +42,58 @@ body {
     min-width: 300px;
 }
 
-.sidebar {
-    height: calc(100vh - 56px);
-}
-
-.chat-container {
-    height: 400px;
+/* New styles for notifications dropdown */
+.notifications-dropdown {
+    width: 350px;
+    max-height: 500px;
     overflow-y: auto;
 }
 
-.message-input {
-    position: sticky;
-    bottom: 0;
-    background: white;
+.notification-item {
+    border-bottom: 1px solid #eee;
+    padding: 10px 15px;
+    cursor: pointer;
+}
+
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-content {
+    display: none;
+    padding-top: 8px;
+    font-size: 0.9rem;
+}
+
+/* Admin editing styles */
+.editable-section {
+    position: relative;
+}
+
+.edit-button {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: none;
+    padding: 5px 10px;
+    background: rgba(44, 62, 80, 0.7);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.8rem;
+}
+
+.editable-section:hover .edit-button {
+    display: block;
+}
+
+.editor-container {
+    min-height: 200px;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    margin-bottom: 1rem;
 }
 
 .badge-print-card {
