@@ -16,28 +16,21 @@ import {
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("Messaging.js loaded");
     
-    // Get user data from localStorage
-    const userId = localStorage.getItem('userId');
-    const userName = localStorage.getItem('userName');
+    // Get user data from localStorage - use email if userId not available
+    const userId = localStorage.getItem('userId') || localStorage.getItem('userEmail');
+    const userName = localStorage.getItem('userName') || 'Anonymous User';
     const userRole = localStorage.getItem('userRole') || 'general';
     
     // Debug log
-    console.log("Current user:", userId, userName, userRole);
+    console.log("Current user:", userName, "with ID:", userId, "Role:", userRole);
     
     if (!userId) {
-        console.error("No userId found in localStorage");
-        return;
+        console.error("No user identifier found. Using session ID instead.");
+        // Generate a temporary session ID if no userId exists
+        localStorage.setItem('sessionId', 'temp_' + Math.random().toString(36).substring(2, 15));
     }
-    
-    // Verify Firebase connection
-    try {
-        // Test the database connection
-        const testCollection = collection(db, "test");
-        console.log("Firebase initialized:", db ? "Yes" : "No");
-        console.log("Test collection reference:", testCollection ? "Valid" : "Invalid");
-    } catch (error) {
-        console.error("Error accessing Firebase:", error);
-    }
+
+    const userIdentifier = userId || localStorage.getItem('sessionId');
     
     // DOM Elements
     const chatMessages = document.getElementById('chatMessages');
@@ -98,20 +91,23 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             console.log(`Sending message to ${currentChat} chat:`, message);
             
-            // Create message object with proper structure
+            // First make sure the parent document exists
+            await setupChatCollection(currentChat);
+            
+            // Message object with all required fields
             const messageData = {
                 text: message,
-                senderId: userId,
-                senderName: userName || 'Anonymous',
-                timestamp: serverTimestamp(),
-                created: new Date().toISOString() // Backup timestamp in ISO format
+                senderId: userIdentifier,
+                senderName: userName,
+                email: localStorage.getItem('userEmail') || 'anonymous@example.com',
+                role: userRole,
+                timestamp: serverTimestamp(), // Use Firestore server timestamp
+                clientTimestamp: new Date().toISOString() // Backup client timestamp
             };
             
-            // Important: Use setDoc approach that worked for other features
-            // Make sure the collection path exists first
-            await ensureChatCollectionExists(currentChat);
+            console.log("Saving message with data:", messageData);
             
-            // Add to Firestore using same pattern as working features
+            // Use the correct path to the messages subcollection
             const messagesCollection = collection(db, "chats", currentChat, "messages");
             const docRef = await addDoc(messagesCollection, messageData);
             
@@ -120,22 +116,24 @@ document.addEventListener('DOMContentLoaded', async function() {
             // Clear input
             messageInput.value = '';
             
+            // Don't need to add to UI manually as the listener will update
+            
         } catch (error) {
             console.error("Error sending message:", error);
             
-            // Show error notification
-            const errorAlert = document.createElement('div');
-            errorAlert.className = 'alert alert-danger m-2';
-            errorAlert.textContent = `Error sending message: ${error.message}`;
-            chatMessages.appendChild(errorAlert);
+            // Show error to user
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'alert alert-danger mt-3';
+            errorMsg.textContent = `Failed to send message: ${error.message}`;
+            chatMessages.appendChild(errorMsg);
             
-            setTimeout(() => {
-                errorAlert.remove();
-            }, 3000);
+            // Remove error after 3 seconds
+            setTimeout(() => errorMsg.remove(), 3000);
         }
     });
     
-    // Initialize - load first channel
+    // Initialize all chat collections and load first channel
+    await setupAllChatCollections();
     loadMessages(currentChat);
     
     // Function to set up chat channels based on user role
@@ -210,11 +208,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 return;
             }
             
-            // Regular chat channels
-            const messagesRef = collection(db, `chats/${chatId}/messages`);
+            // Regular chat channels - ensure collection exists first
+            await setupChatCollection(chatId);
+            
+            const messagesRef = collection(db, "chats", chatId, "messages");
             const q = query(
                 messagesRef,
-                orderBy("timestamp", "asc"),
+                orderBy("timestamp", "desc"), // Most recent first
                 limit(100)
             );
             
@@ -230,9 +230,14 @@ document.addEventListener('DOMContentLoaded', async function() {
                     return;
                 }
                 
-                // Add each message to the UI
+                // Get messages as array and reverse to display oldest first
+                const messages = [];
                 snapshot.forEach(doc => {
-                    const message = doc.data();
+                    messages.push(doc.data());
+                });
+                
+                // Add messages in reverse order (oldest first)
+                messages.reverse().forEach(message => {
                     addMessageToUI(message);
                 });
                 
@@ -254,7 +259,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     function addMessageToUI(message) {
         if (!message) return;
         
-        const isOwnMessage = message.senderId === userId;
+        const isOwnMessage = message.senderId === userIdentifier;
         
         // Format timestamp
         let timeStr = "Just now";
@@ -264,7 +269,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             } else if (message.timestamp.seconds) {
                 timeStr = new Date(message.timestamp.seconds * 1000)
                     .toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (typeof message.timestamp === 'string') {
+                timeStr = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             }
+        } else if (message.clientTimestamp) {
+            timeStr = new Date(message.clientTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
         
         // Create message element
@@ -289,58 +298,56 @@ document.addEventListener('DOMContentLoaded', async function() {
         chatMessages.appendChild(messageEl);
     }
 
-    // Create chat collections if they don't exist (initialization)
-    async function ensureChatCollectionsExist() {
+    // Function to ensure a chat collection exists and is set up correctly
+    async function setupChatCollection(chatId) {
         try {
-            const chatChannels = ['general', 'announcements', 'organizers', 'admin'];
+            // Create the chat document if it doesn't exist
+            const chatDocRef = doc(db, "chats", chatId);
             
-            for (const channel of chatChannels) {
-                // Try to get messages from this channel
-                const messagesRef = collection(db, `chats/${channel}/messages`);
-                const snapshot = await getDocs(query(messagesRef, limit(1)));
-                
-                // If no messages, add a system message
-                if (snapshot.empty) {
-                    console.log(`Creating initial message for ${channel} chat`);
-                    
-                    await addDoc(messagesRef, {
-                        text: `Welcome to the ${channel} chat channel!`,
-                        senderId: 'system',
-                        senderName: 'System',
-                        timestamp: serverTimestamp()
-                    });
-                }
-            }
+            // Use setDoc with merge:true to avoid overwriting existing data
+            await setDoc(chatDocRef, {
+                name: chatId,
+                lastUpdated: new Date().toISOString(),
+                updatedBy: userName
+            }, { merge: true });
             
-            console.log("Chat collections initialized");
-            
+            console.log(`Chat collection ${chatId} is ready`);
+            return true;
         } catch (error) {
-            console.error("Error initializing chat collections:", error);
-        }
-    }
-    
-    // Make sure collection exists before saving
-    async function ensureChatCollectionExists(chatId) {
-        try {
-            // This will create the collection path if it doesn't exist
-            const docRef = doc(db, "chats", chatId);
-            const docSnap = await getDoc(docRef);
-            
-            if (!docSnap.exists()) {
-                // Initialize the chat document with metadata
-                await setDoc(docRef, {
-                    name: chatId,
-                    created: new Date().toISOString(),
-                    lastActivity: serverTimestamp()
-                });
-                console.log(`Created chat collection: ${chatId}`);
-            }
-        } catch (error) {
-            console.error(`Error ensuring chat collection exists: ${error}`);
+            console.error(`Error setting up chat ${chatId}:`, error);
             throw error; // Propagate the error
         }
     }
 
-    // Initialize chat collections
-    ensureChatCollectionsExist();
+    // Function to initialize all chat collections
+    async function setupAllChatCollections() {
+        try {
+            const chatChannels = ['general', 'announcements', 'organizers', 'admin'];
+            
+            for (const channel of chatChannels) {
+                await setupChatCollection(channel);
+                
+                // Check if the channel has any messages
+                const messagesRef = collection(db, "chats", channel, "messages");
+                const snapshot = await getDocs(query(messagesRef, limit(1)));
+                
+                // If no messages, add a welcome message
+                if (snapshot.empty) {
+                    console.log(`Adding welcome message to ${channel}`);
+                    
+                    await addDoc(messagesRef, {
+                        text: `Welcome to the ${channel} chat! This is where all messages will appear.`,
+                        senderId: 'system',
+                        senderName: 'System',
+                        timestamp: serverTimestamp(),
+                        clientTimestamp: new Date().toISOString()
+                    });
+                }
+            }
+            
+            console.log("All chat collections initialized");
+        } catch (error) {
+            console.error("Error initializing chat collections:", error);
+        }
+    }
 });

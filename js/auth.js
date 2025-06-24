@@ -96,6 +96,11 @@ if (loginForm) {
             localStorage.setItem('userId', userDoc.id);
             localStorage.setItem('userRole', userData.role || 'general');
             localStorage.setItem('userName', `${userData.firstName} ${userData.lastName}`);
+            localStorage.setItem('userEmail', userData.email);
+            localStorage.setItem('userCountry', userData.country || '');
+            localStorage.setItem('userAffiliation', userData.affiliation || '');
+            localStorage.setItem('userFirstName', userData.firstName);
+            localStorage.setItem('userLastName', userData.lastName);
             
             console.log("Login successful, redirecting...");
             showMessage('Login successful! Redirecting...', 'success');
@@ -121,13 +126,14 @@ if (registerForm) {
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
         const affiliation = document.getElementById('affiliation').value;
+        const country = document.getElementById('country').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         
         console.log("Registration attempt for:", email);
         
         // Validate input
-        const validationErrors = validateInput({ firstName, lastName, email, password });
+        const validationErrors = validateInput({ firstName, lastName, email, password, country });
         if (validationErrors.length > 0) {
             showMessage(validationErrors.join('. '), 'danger');
             return;
@@ -153,6 +159,7 @@ if (registerForm) {
                 firstName,
                 lastName,
                 affiliation,
+                country,
                 email,
                 password, // Note: In a real app, passwords should be hashed
                 role: "general", // Default role for new users
