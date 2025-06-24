@@ -7,15 +7,42 @@ import {
     query,
     where,
     getDocs
-} from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+// Input validation function
+function validateInput(data) {
+    const errors = [];
+    
+    if (!data.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+        errors.push('Valid email is required');
+    }
+    
+    if (!data.password || data.password.length < 6) {
+        errors.push('Password must be at least 6 characters');
+    }
+    
+    if (data.firstName && data.firstName.trim().length < 2) {
+        errors.push('First name must be at least 2 characters');
+    }
+    
+    if (data.lastName && data.lastName.trim().length < 2) {
+        errors.push('Last name must be at least 2 characters');
+    }
+    
+    return errors;
+}
 
 // Elements
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const authMessage = document.getElementById('authMessage');
 
+// Add debug logging
+console.log("Auth.js loaded");
+
 // Check if user is already logged in
 document.addEventListener("DOMContentLoaded", () => {
+    console.log("DOM loaded, checking login state");
     const userId = localStorage.getItem('userId');
     if (userId) {
         // Redirect to home page if already logged in
@@ -25,19 +52,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // Login functionality
 if (loginForm) {
+    console.log("Login form found, adding event listener");
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const email = document.getElementById('loginEmail').value;
         const password = document.getElementById('loginPassword').value;
+        console.log("Login attempt with email:", email);
+        
+        // Validate input
+        const validationErrors = validateInput({ email, password });
+        if (validationErrors.length > 0) {
+            showMessage(validationErrors.join('. '), 'danger');
+            return;
+        }
         
         try {
             // Find user by email
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("email", "==", email));
+            console.log("Querying for user with email:", email);
             const querySnapshot = await getDocs(q);
             
             if (querySnapshot.empty) {
+                console.log("No user found with email:", email);
                 showMessage('No user found with this email', 'danger');
                 return;
             }
@@ -45,9 +83,11 @@ if (loginForm) {
             // Get the first matching user
             const userDoc = querySnapshot.docs[0];
             const userData = userDoc.data();
+            console.log("User found:", userDoc.id);
             
             // Check password (Note: This is not secure, just for demonstration)
             if (userData.password !== password) {
+                console.log("Password incorrect");
                 showMessage('Incorrect password', 'danger');
                 return;
             }
@@ -57,6 +97,7 @@ if (loginForm) {
             localStorage.setItem('userRole', userData.role || 'general');
             localStorage.setItem('userName', `${userData.firstName} ${userData.lastName}`);
             
+            console.log("Login successful, redirecting...");
             showMessage('Login successful! Redirecting...', 'success');
             
             // Redirect to home page
@@ -73,6 +114,7 @@ if (loginForm) {
 
 // Register functionality
 if (registerForm) {
+    console.log("Register form found, adding event listener");
     registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
@@ -82,13 +124,24 @@ if (registerForm) {
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         
+        console.log("Registration attempt for:", email);
+        
+        // Validate input
+        const validationErrors = validateInput({ firstName, lastName, email, password });
+        if (validationErrors.length > 0) {
+            showMessage(validationErrors.join('. '), 'danger');
+            return;
+        }
+        
         try {
             // Check if email already exists
             const usersRef = collection(db, "users");
             const q = query(usersRef, where("email", "==", email));
+            console.log("Checking if email exists:", email);
             const querySnapshot = await getDocs(q);
             
             if (!querySnapshot.empty) {
+                console.log("Email already exists");
                 showMessage('A user with this email already exists', 'danger');
                 return;
             }
@@ -96,8 +149,7 @@ if (registerForm) {
             // Create a new document with auto-generated id
             const userRef = doc(collection(db, "users"));
             
-            // Store user data in Firestore
-            await setDoc(userRef, {
+            const userData = {
                 firstName,
                 lastName,
                 affiliation,
@@ -105,8 +157,14 @@ if (registerForm) {
                 password, // Note: In a real app, passwords should be hashed
                 role: "general", // Default role for new users
                 createdAt: new Date().toISOString()
-            });
+            };
             
+            console.log("Saving user data:", userData);
+            
+            // Store user data in Firestore
+            await setDoc(userRef, userData);
+            
+            console.log("Registration successful!");
             showMessage('Registration successful! You can now log in.', 'success');
             
             // Clear form and switch to login tab

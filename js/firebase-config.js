@@ -1,22 +1,36 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
-import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-analytics.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
 
-// Your web app's Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyCNCs7raFLKp4pN3j1cyKZ114BhJASIAgY",
-  authDomain: "pulatechcon.firebaseapp.com",
-  projectId: "pulatechcon",
-  storageBucket: "pulatechcon.firebasestorage.app",
-  messagingSenderId: "907952848681",
-  appId: "1:907952848681:web:6b39c5378e84469b6a0138",
-  measurementId: "G-KJ92ETTH92"
-};
+console.log("Loading Firebase config module...");
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const analytics = getAnalytics(app);
+let app;
+let db;
+let analytics;
+
+try {
+  // Your web app's Firebase configuration
+  const firebaseConfig = {
+    apiKey: "AIzaSyCNCs7raFLKp4pN3j1cyKZ114BhJASIAgY",
+    authDomain: "pulatechcon.firebaseapp.com",
+    projectId: "pulatechcon",
+    storageBucket: "pulatechcon.firebasestorage.app",
+    messagingSenderId: "907952848681",
+    appId: "1:907952848681:web:78bdfef97159beee6a0138",
+    measurementId: "G-N3BQE5FLXP"
+  };
+
+  // Add logging for current environment
+  console.log("Current hosting environment:", window.location.hostname);
+  
+  // Initialize Firebase
+  console.log("Initializing Firebase...");
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  analytics = getAnalytics(app);
+  console.log("Firebase initialized successfully");
+} catch (error) {
+  console.error("Firebase initialization error:", error);
+}
 
 export { app, db, analytics };
-export { app, auth, db, messaging };

@@ -4,7 +4,7 @@ import {
     query, 
     orderBy, 
     onSnapshot 
-} from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
+} from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const notificationsBtn = document.getElementById('notificationsBtn');
@@ -98,25 +98,6 @@ function renderNotifications(notifications, container) {
         container.appendChild(notificationElement);
     });
 }
-    
-    notifications.forEach(notification => {
-        const notificationElement = document.createElement('div');
-        notificationElement.classList.add('list-group-item');
-        
-        // Format date
-        const date = new Date(notification.timestamp.toDate());
-        const formattedDate = date.toLocaleString();
-        
-        notificationElement.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="mb-1">${notification.title}</h6>
-                <small>${formattedDate}</small>
-            </div>
-            <p class="mb-1">${notification.message}</p>
-        `;
-        
-        container.appendChild(notificationElement);
-    });
 
 function markAllAsRead() {
     // Implementation would involve updating the "readBy" array in each notification
