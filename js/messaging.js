@@ -7,30 +7,23 @@ import {
     limit, 
     onSnapshot,
     serverTimestamp,
-    getDocs,
     doc,
-    getDoc,
-    setDoc
+    setDoc,
+    getDocs
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log("Messaging.js loaded");
     
-    // Get user data from localStorage - use email if userId not available
-    const userId = localStorage.getItem('userId') || localStorage.getItem('userEmail');
-    const userName = localStorage.getItem('userName') || 'Anonymous User';
+    // Debug Firebase connection
+    console.log("Firebase db object:", db);
+    
+    // Get user data from localStorage
+    const userId = localStorage.getItem('userId');
+    const userName = localStorage.getItem('userName');
     const userRole = localStorage.getItem('userRole') || 'general';
     
-    // Debug log
     console.log("Current user:", userName, "with ID:", userId, "Role:", userRole);
-    
-    if (!userId) {
-        console.error("No user identifier found. Using session ID instead.");
-        // Generate a temporary session ID if no userId exists
-        localStorage.setItem('sessionId', 'temp_' + Math.random().toString(36).substring(2, 15));
-    }
-
-    const userIdentifier = userId || localStorage.getItem('sessionId');
     
     // DOM Elements
     const chatMessages = document.getElementById('chatMessages');
@@ -81,60 +74,81 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
     
-    // Add event listener to message form
-    messageForm.addEventListener('submit', async function(e) {
+    // Add event listener to message form - SIMPLIFIED VERSION FOR DEBUGGING
+    messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const message = messageInput.value.trim();
         if (!message) return;
         
-        try {
-            console.log(`Sending message to ${currentChat} chat:`, message);
-            
-            // First make sure the parent document exists
-            await setupChatCollection(currentChat);
-            
-            // Message object with all required fields
-            const messageData = {
-                text: message,
-                senderId: userIdentifier,
-                senderName: userName,
-                email: localStorage.getItem('userEmail') || 'anonymous@example.com',
-                role: userRole,
-                timestamp: serverTimestamp(), // Use Firestore server timestamp
-                clientTimestamp: new Date().toISOString() // Backup client timestamp
-            };
-            
-            console.log("Saving message with data:", messageData);
-            
-            // Use the correct path to the messages subcollection
-            const messagesCollection = collection(db, "chats", currentChat, "messages");
-            const docRef = await addDoc(messagesCollection, messageData);
-            
-            console.log("Message sent with ID:", docRef.id);
+        console.log(`Attempting to send message to ${currentChat}:`, message);
+        
+        // Prepare the message data - simple structure
+        const messageData = {
+            text: message,
+            senderId: userId || 'anonymous',
+            senderName: userName || 'Anonymous User',
+            timestamp: serverTimestamp()
+        };
+        
+        // Create message collection reference
+        const messagesCollection = collection(db, "messages");
+        
+        // Save to Firestore - in a simple, flat collection for debugging
+        addDoc(messagesCollection, {
+            ...messageData,
+            channel: currentChat,
+            clientTime: new Date().toISOString()
+        })
+        .then(docRef => {
+            console.log("Message saved with ID:", docRef.id);
             
             // Clear input
             messageInput.value = '';
             
-            // Don't need to add to UI manually as the listener will update
+            // Display the message in UI
+            addMessageToUI({
+                ...messageData,
+                timestamp: new Date() // Use current date for immediate display
+            });
             
-        } catch (error) {
-            console.error("Error sending message:", error);
-            
-            // Show error to user
-            const errorMsg = document.createElement('div');
-            errorMsg.className = 'alert alert-danger mt-3';
-            errorMsg.textContent = `Failed to send message: ${error.message}`;
-            chatMessages.appendChild(errorMsg);
-            
-            // Remove error after 3 seconds
-            setTimeout(() => errorMsg.remove(), 3000);
-        }
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        })
+        .catch(error => {
+            console.error("Error saving message:", error);
+            alert(`Failed to save message: ${error.message}`);
+        });
+        
+        // Also try to save to the chat-specific collection
+        const chatMessagesCollection = collection(db, "chats", currentChat, "messages");
+        addDoc(chatMessagesCollection, messageData)
+            .then(() => console.log("Message also saved to chat-specific collection"))
+            .catch(err => console.error("Failed to save to chat-specific:", err));
     });
     
-    // Initialize all chat collections and load first channel
-    await setupAllChatCollections();
-    loadMessages(currentChat);
+    // Initialize by loading the general chat
+    createChannels().then(() => {
+        loadMessages('general');
+    });
+    
+    // Function to create initial channels if needed
+    async function createChannels() {
+        try {
+            const channels = ['general', 'announcements', 'organizers', 'admin'];
+            
+            for (const channelName of channels) {
+                const channelRef = doc(db, "chats", channelName);
+                await setDoc(channelRef, { 
+                    name: channelName,
+                    createdAt: serverTimestamp()
+                }, { merge: true });
+            }
+            console.log("Chat channels created/updated");
+        } catch (error) {
+            console.error("Error creating channels:", error);
+        }
+    }
     
     // Function to set up chat channels based on user role
     function setupChatChannels(role) {
@@ -154,149 +168,117 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
     
     // Function to load messages for a chat channel
-    async function loadMessages(chatId) {
+    function loadMessages(chatId) {
+        console.log(`Loading messages for ${chatId}`);
+        
+        // Show loading state
+        chatMessages.innerHTML = '<div class="text-center p-3">Loading messages...</div>';
+        
+        // Clear any previous listener
+        if (messageListener) {
+            messageListener();
+            messageListener = null;
+        }
+        
         try {
-            console.log(`Loading messages for ${chatId} chat`);
+            // First try: Load from chat-specific collection
+            const chatMessagesRef = collection(db, "chats", chatId, "messages");
+            const q = query(chatMessagesRef, orderBy("timestamp", "asc"), limit(50));
             
-            // Show loading indicator
-            chatMessages.innerHTML = '<div class="text-center p-3">Loading messages...</div>';
-            
-            // Clean up previous listener
-            if (messageListener) {
-                messageListener();
-                messageListener = null;
-            }
-            
-            // Special case for announcements channel - use notifications collection
-            if (chatId === 'announcements') {
-                const notificationsRef = collection(db, "notifications");
-                const q = query(
-                    notificationsRef,
-                    orderBy("timestamp", "desc"),
-                    limit(100)
-                );
-                
-                // Set up real-time listener for notifications
-                messageListener = onSnapshot(q, (snapshot) => {
-                    // Clear messages container
-                    chatMessages.innerHTML = '';
-                    
-                    if (snapshot.empty) {
-                        chatMessages.innerHTML = '<div class="text-center p-3">No announcements yet.</div>';
-                        return;
-                    }
-                    
-                    // Add each notification as a message
-                    snapshot.forEach(doc => {
-                        const notification = doc.data();
-                        
-                        // Create a message-like object from notification
-                        const messageData = {
-                            text: notification.message,
-                            senderId: 'system',
-                            senderName: notification.title || 'Announcement',
-                            timestamp: notification.timestamp
-                        };
-                        
-                        addMessageToUI(messageData);
-                    });
-                    
-                    // Scroll to bottom
-                    chatMessages.scrollTop = chatMessages.scrollHeight;
-                });
-                
-                return;
-            }
-            
-            // Regular chat channels - ensure collection exists first
-            await setupChatCollection(chatId);
-            
-            const messagesRef = collection(db, "chats", chatId, "messages");
-            const q = query(
-                messagesRef,
-                orderBy("timestamp", "desc"), // Most recent first
-                limit(100)
-            );
-            
-            // Set up real-time listener
             messageListener = onSnapshot(q, (snapshot) => {
-                console.log(`Received ${snapshot.size} messages for ${chatId}`);
+                console.log(`Received ${snapshot.size} messages from ${chatId} collection`);
                 
-                // Clear messages container
+                // Clear container
                 chatMessages.innerHTML = '';
                 
                 if (snapshot.empty) {
-                    chatMessages.innerHTML = '<div class="text-center p-3">No messages yet. Be the first to say something!</div>';
+                    // If no messages in chat-specific collection, try the general collection
+                    const allMessagesRef = collection(db, "messages");
+                    const filteredQ = query(
+                        allMessagesRef, 
+                        // where("channel", "==", chatId),
+                        orderBy("timestamp", "asc"),
+                        limit(50)
+                    );
+                    
+                    onSnapshot(filteredQ, (allSnapshot) => {
+                        if (allSnapshot.empty) {
+                            chatMessages.innerHTML = '<div class="text-center p-3">No messages yet. Be the first to say something!</div>';
+                            return;
+                        }
+                        
+                        chatMessages.innerHTML = '';
+                        allSnapshot.forEach(doc => {
+                            const messageData = doc.data();
+                            if (messageData.channel === chatId) {
+                                addMessageToUI(messageData);
+                            }
+                        });
+                        chatMessages.scrollTop = chatMessages.scrollHeight;
+                    });
                     return;
                 }
                 
-                // Get messages as array and reverse to display oldest first
-                const messages = [];
+                // Add messages to UI
                 snapshot.forEach(doc => {
-                    messages.push(doc.data());
-                });
-                
-                // Add messages in reverse order (oldest first)
-                messages.reverse().forEach(message => {
-                    addMessageToUI(message);
+                    const messageData = doc.data();
+                    addMessageToUI(messageData);
                 });
                 
                 // Scroll to bottom
                 chatMessages.scrollTop = chatMessages.scrollHeight;
-                
             }, (error) => {
                 console.error("Error loading messages:", error);
-                chatMessages.innerHTML = `<div class="text-center p-3 text-danger">Error loading messages: ${error.message}</div>`;
+                chatMessages.innerHTML = `<div class="alert alert-danger">Error loading messages: ${error.message}</div>`;
             });
             
         } catch (error) {
             console.error("Error setting up message listener:", error);
-            chatMessages.innerHTML = `<div class="text-center p-3 text-danger">Error loading messages: ${error.message}</div>`;
+            chatMessages.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
         }
+    }
+// Function to add a message to the UI
+function addMessageToUI(message) {
+    if (!message) return;
+    
+    const isOwnMessage = message.senderId === userId;
+    
+    // Format timestamp
+    let timeStr = "Just now";
+    if (message.timestamp) {
+        if (message.timestamp.toDate) {
+            timeStr = message.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } else if (message.timestamp.seconds) {
+            timeStr = new Date(message.timestamp.seconds * 1000)
+                .toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } else if (typeof message.timestamp === 'string') {
+            timeStr = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        }
+    } else if (message.clientTimestamp) {
+        timeStr = new Date(message.clientTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     }
     
-    // Function to add a message to the UI
-    function addMessageToUI(message) {
-        if (!message) return;
-        
-        const isOwnMessage = message.senderId === userIdentifier;
-        
-        // Format timestamp
-        let timeStr = "Just now";
-        if (message.timestamp) {
-            if (message.timestamp.toDate) {
-                timeStr = message.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else if (message.timestamp.seconds) {
-                timeStr = new Date(message.timestamp.seconds * 1000)
-                    .toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else if (typeof message.timestamp === 'string') {
-                timeStr = new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
-        } else if (message.clientTimestamp) {
-            timeStr = new Date(message.clientTimestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        }
-        
-        // Create message element
-        const messageEl = document.createElement('div');
-        messageEl.className = 'd-flex mb-3';
-        messageEl.innerHTML = `
-            <div class="flex-shrink-0">
-                <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
-                    <i class="bi bi-person"></i>
-                </div>
+    // Create message element
+    const messageEl = document.createElement('div');
+    messageEl.className = 'd-flex mb-3';
+    messageEl.innerHTML = `
+        <div class="flex-shrink-0">
+            <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
+                <i class="bi bi-person"></i>
             </div>
-            <div class="flex-grow-1 ms-3">
-                <div class="d-flex justify-content-between">
-                    <h6 class="mb-0">${isOwnMessage ? 'You' : message.senderName || 'Anonymous'}</h6>
-                    <small class="text-muted">${timeStr}</small>
-                </div>
-                <p class="mb-1">${message.text}</p>
+        </div>
+        <div class="flex-grow-1 ms-3">
+            <div class="d-flex justify-content-between">
+                <h6 class="mb-0">${isOwnMessage ? 'You' : message.senderName || 'Anonymous'}</h6>
+                <small class="text-muted">${timeStr}</small>
             </div>
-        `;
-        
-        // Add to chat container
-        chatMessages.appendChild(messageEl);
-    }
+            <p class="mb-1">${message.text}</p>
+        </div>
+    `;
+    
+    // Add to chat container
+    chatMessages.appendChild(messageEl);
+}
 
     // Function to ensure a chat collection exists and is set up correctly
     async function setupChatCollection(chatId) {

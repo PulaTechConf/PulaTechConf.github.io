@@ -2,80 +2,93 @@ import { db } from '../firebase-config.js';
 import { 
     collection, 
     addDoc, 
-    query, 
-    orderBy, 
-    limit,
-    getDocs,
+    doc,
+    deleteDoc,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if user has admin rights
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
-        console.log("Not an admin, notification management disabled");
-        return;
+// Function to create a new notification (for admin use)
+export async function createNotification(title, message) {
+    try {
+        console.log("Creating notification:", title);
+        
+        const notificationData = {
+            title,
+            message,
+            timestamp: serverTimestamp(),
+            createdBy: localStorage.getItem('userId') || 'system'
+        };
+        
+        const notificationsRef = collection(db, "notifications");
+        const docRef = await addDoc(notificationsRef, notificationData);
+        
+        console.log("Notification created with ID:", docRef.id);
+        return { success: true, id: docRef.id };
+    } catch (error) {
+        console.error("Error creating notification:", error);
+        return { success: false, error: error.message };
     }
+}
+
+// Function to delete a notification (for admin use)
+export async function deleteNotification(notificationId) {
+    try {
+        console.log("Deleting notification:", notificationId);
+        
+        const notificationRef = doc(db, "notifications", notificationId);
+        await deleteDoc(notificationRef);
+        
+        console.log("Notification deleted successfully");
+        return { success: true };
+    } catch (error) {
+        console.error("Error deleting notification:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Example usage (for testing)
+document.addEventListener('DOMContentLoaded', function() {
+    // Admin-only functionality
+    if (localStorage.getItem('userRole') !== 'admin') return;
     
-    console.log("Admin notifications module loaded");
-    
-    // Load recent notifications
-    loadRecentNotifications();
-    
-    // Set up notification form
-    const notificationForm = document.getElementById('sendNotificationForm');
+    // If on admin page, set up notification creation form
+    const notificationForm = document.getElementById('createNotificationForm');
     if (notificationForm) {
-        notificationForm.addEventListener('submit', sendNotification);
+        notificationForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const title = document.getElementById('notificationTitle').value.trim();
+            const message = document.getElementById('notificationMessage').value.trim();
+            
+            if (!title || !message) {
+                alert('Both title and message are required');
+                return;
+            }
+            
+            const result = await createNotification(title, message);
+            
+            if (result.success) {
+                alert('Notification created successfully');
+                notificationForm.reset();
+            } else {
+                alert(`Error creating notification: ${result.error}`);
+            }
+        });
+    }
+
+    // Load recent notifications if applicable
+    if (document.getElementById('recentNotifications')) {
+        loadRecentNotifications();
     }
 });
 
-// Load recent notifications
+// Function to load recent notifications
 async function loadRecentNotifications() {
     try {
-        const notificationsContainer = document.getElementById('recentNotifications');
-        if (!notificationsContainer) return;
-        
-        // Create query for 10 most recent notifications
-        const q = query(
-            collection(db, "notifications"),
-            orderBy("timestamp", "desc"),
-            limit(10)
-        );
-        
-        // Get the notifications
-        const querySnapshot = await getDocs(q);
-        
-        if (querySnapshot.empty) {
-            notificationsContainer.innerHTML = `
-                <div class="list-group-item text-center">
-                    No notifications found
-                </div>
-            `;
-            return;
-        }
-        
-        // Clear container
-        notificationsContainer.innerHTML = '';
-        
-        // Add each notification
-        querySnapshot.forEach(doc => {
-            const data = doc.data();
-            const date = data.timestamp ? new Date(data.timestamp.toDate()) : new Date();
-            const formattedDate = date.toLocaleString();
-            
-            const notificationEl = document.createElement('div');
-            notificationEl.className = 'list-group-item';
-            notificationEl.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <h6 class="mb-1">${data.title}</h6>
-                    <small>${formattedDate}</small>
-                </div>
-                <p class="mb-1">${data.message}</p>
-            `;
-            
-            notificationsContainer.appendChild(notificationEl);
-        });
-        
+        // Implementation for loading notifications would go here
+        // This is a placeholder for the actual implementation
+        console.log("Loading recent notifications...");
+        // Fetch notifications from Firestore and display them
     } catch (error) {
         console.error("Error loading notifications:", error);
         document.getElementById('recentNotifications').innerHTML = `

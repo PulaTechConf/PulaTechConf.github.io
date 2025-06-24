@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Connection Test</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-5">
+        <h1>Firebase Connection Test</h1>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Firebase Connectivity</h5>
+                <div id="connectionStatus" class="alert alert-info">Testing connection...</div>
+                <button id="testConnectionBtn" class="btn btn-primary">Test Connection</button>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">Write Test</h5>
+                <div class="mb-3">
+                    <label for="testMessage" class="form-label">Test Message</label>
+                    <input type="text" class="form-control" id="testMessage" value="Test message">
+                </div>
+                <button id="writeTestBtn" class="btn btn-success">Write to Firestore</button>
+                <div id="writeStatus" class="alert mt-2 d-none"></div>
+            </div>
+        </div>
+        
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5 class="card-title">Read Test</h5>
+                <button id="readTestBtn" class="btn btn-info">Read from Firestore</button>
+                <div id="readStatus" class="mt-2"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from './js/firebase-config.js';
+        import { 
+            collection, 
+            addDoc,
+            getDocs,
+            serverTimestamp,
+            limit,
+            query
+        } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const connectionStatus = document.getElementById('connectionStatus');
+            const testConnectionBtn = document.getElementById('testConnectionBtn');
+            const writeTestBtn = document.getElementById('writeTestBtn');
+            const readTestBtn = document.getElementById('readTestBtn');
+            
+            // Log Firebase instance
+            console.log("Firebase DB object:", db);
+            
+            // Initial connection test
+            testConnection();
+            
+            // Test connection button
+            testConnectionBtn.addEventListener('click', testConnection);
+            
+            // Write test button
+            writeTestBtn.addEventListener('click', async () => {
+                const writeStatus = document.getElementById('writeStatus');
+                const testMessage = document.getElementById('testMessage').value;
+                
+                try {
+                    writeStatus.className = 'alert alert-info mt-2';
+                    writeStatus.textContent = 'Writing to Firestore...';
+                    writeStatus.classList.remove('d-none');
+                    
+                    const docRef = await addDoc(collection(db, "test_collection"), {
+                        message: testMessage,
+                        timestamp: serverTimestamp()
+                    });
+                    
+                    console.log("Document written with ID:", docRef.id);
+                    writeStatus.className = 'alert alert-success mt-2';
+                    writeStatus.textContent = `Success! Document written with ID: ${docRef.id}`;
+                } catch (error) {
+                    console.error("Error writing document:", error);
+                    writeStatus.className = 'alert alert-danger mt-2';
+                    writeStatus.textContent = `Error writing document: ${error.message}`;
+                }
+            });
+            
+            // Read test button
+            readTestBtn.addEventListener('click', async () => {
+                const readStatus = document.getElementById('readStatus');
+                
+                try {
+                    readStatus.innerHTML = '<div class="alert alert-info">Reading from Firestore...</div>';
+                    
+                    const q = query(collection(db, "test_collection"), limit(5));
+                    const querySnapshot = await getDocs(q);
+                    
+                    if (querySnapshot.empty) {
+                        readStatus.innerHTML = '<div class="alert alert-warning">No documents found</div>';
+                        return;
+                    }
+                    
+                    let html = '<div class="alert alert-success">Documents read successfully:</div><ul class="list-group">';
+                    
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        html += `<li class="list-group-item">
+                            <strong>ID:</strong> ${doc.id}<br>
+                            <strong>Message:</strong> ${data.message || 'No message'}<br>
+                            <strong>Timestamp:</strong> ${data.timestamp ? data.timestamp.toDate().toLocaleString() : 'No timestamp'}
+                        </li>`;
+                    });
+                    
+                    html += '</ul>';
+                    readStatus.innerHTML = html;
+                } catch (error) {
+                    console.error("Error reading documents:", error);
+                    readStatus.innerHTML = `<div class="alert alert-danger">Error reading documents: ${error.message}</div>`;
+                }
+            });
+            
+            // Function to test Firebase connection
+            async function testConnection() {
+                connectionStatus.textContent = "Testing connection...";
+                connectionStatus.className = "alert alert-info";
+                
+                try {
+                    // Simple test - try to get a collection reference
+                    const testCollection = collection(db, "test_collection");
+                    console.log("Test collection reference:", testCollection);
+                    
+                    // Try to query the collection
+                    const q = query(testCollection, limit(1));
+                    await getDocs(q);
+                    
+                    connectionStatus.textContent = "Firebase connection successful! ✅";
+                    connectionStatus.className = "alert alert-success";
+                } catch (error) {
+                    console.error("Firebase connection error:", error);
+                    connectionStatus.textContent = `Firebase connection failed: ${error.message} ❌`;
+                    connectionStatus.className = "alert alert-danger";
+                }
+            }
+        });
+    </script>
+</body>
+</html>

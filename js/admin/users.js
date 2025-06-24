@@ -3,13 +3,15 @@ import {
     collection,
     getDocs,
     doc,
+    getDoc,
     updateDoc,
-    deleteDoc,
-    query,
-    where
+    deleteDoc
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log("Admin users.js loaded");
+    console.log("Firebase db object:", db);
+    
     // Check if user is admin
     const userRole = localStorage.getItem('userRole');
     if (userRole !== 'admin') {
@@ -21,113 +23,109 @@ document.addEventListener('DOMContentLoaded', function() {
     // DOM Elements
     const usersList = document.getElementById('usersList');
     const refreshBtn = document.getElementById('refreshUsersBtn');
-    const userSearch = document.getElementById('userSearch');
-    const selectAll = document.getElementById('selectAll');
-    const printSelectedBtn = document.getElementById('printSelectedBtn');
-    const printAllBtn = document.getElementById('printAllBtn');
-    const editUserModal = new bootstrap.Modal(document.getElementById('editUserModal'));
-    const editUserForm = document.getElementById('editUserForm');
-    const saveUserBtn = document.getElementById('saveUserBtn');
-    const badgePrintArea = document.getElementById('badgePrintArea');
-    const badgeContainer = document.getElementById('badgeContainer');
+    
+    if (!usersList) {
+        console.error("usersList element not found");
+        return;
+    }
+    
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', loadUsers);
+    }
     
     // Load users on page load
     loadUsers();
     
-    // Event listeners
-    refreshBtn.addEventListener('click', loadUsers);
-    userSearch.addEventListener('input', filterUsers);
-    selectAll.addEventListener('change', toggleSelectAll);
-    printSelectedBtn.addEventListener('click', printSelectedBadges);
-    printAllBtn.addEventListener('click', printAllBadges);
-    saveUserBtn.addEventListener('click', saveUserChanges);
-    
-    // Function to load all users
-    async function loadUsers() {
-        try {
-            usersList.innerHTML = '<tr><td colspan="7" class="text-center">Loading users...</td></tr>';
-            
-            const usersRef = collection(db, "users");
-            const querySnapshot = await getDocs(usersRef);
-            
-            if (querySnapshot.empty) {
-                usersList.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
-                return;
-            }
-            
-            // Clear and populate the users list
-            usersList.innerHTML = '';
-            
-            querySnapshot.forEach(doc => {
-                const userData = doc.data();
-                const row = document.createElement('tr');
-                row.dataset.id = doc.id;
-                row.dataset.name = `${userData.firstName} ${userData.lastName}`;
-                row.dataset.email = userData.email;
-                row.dataset.role = userData.role || 'general';
-                row.dataset.search = `${userData.firstName} ${userData.lastName} ${userData.email} ${userData.role || 'general'} ${userData.affiliation || ''} ${userData.country || ''}`.toLowerCase();
-                
-                row.innerHTML = `
-                    <td><input type="checkbox" class="user-select" data-id="${doc.id}"></td>
-                    <td>${userData.firstName} ${userData.lastName}</td>
-                    <td>${userData.email}</td>
-                    <td>${userData.affiliation || '-'}</td>
-                    <td>${userData.country || '-'}</td>
-                    <td>
-                        <span class="badge bg-${userData.role === 'admin' ? 'danger' : userData.role === 'organizer' ? 'warning' : 'secondary'}">
-                            ${userData.role || 'general'}
-                        </span>
-                    </td>
-                    <td>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary edit-user" data-id="${doc.id}">
-                                <i class="bi bi-pencil"></i>
-                            </button>
-                            <button class="btn btn-outline-danger delete-user" data-id="${doc.id}">
-                                <i class="bi bi-trash"></i>
-                            </button>
-                            <button class="btn btn-outline-success print-badge" data-id="${doc.id}">
-                                <i class="bi bi-printer"></i>
-                            </button>
-                        </div>
-                    </td>
-                `;
-                
-                usersList.appendChild(row);
-            });
-            
-            // Add event listeners to action buttons
-            document.querySelectorAll('.edit-user').forEach(btn => {
-                btn.addEventListener('click', () => editUser(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.delete-user').forEach(btn => {
-                btn.addEventListener('click', () => deleteUser(btn.dataset.id));
-            });
-            
-            document.querySelectorAll('.print-badge').forEach(btn => {
-                btn.addEventListener('click', () => printSingleBadge(btn.dataset.id));
-            });
-            
-        } catch (error) {
-            console.error('Error loading users:', error);
-            usersList.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading users: ${error.message}</td></tr>`;
-        }
-    }
-    
-    // Function to filter users based on search input
-    function filterUsers() {
-        const searchTerm = userSearch.value.toLowerCase();
+    // Function to load all users (simplified version)
+    function loadUsers() {
+        console.log("Loading users...");
         
-        document.querySelectorAll('#usersList tr').forEach(row => {
-            const searchData = row.dataset.search;
-            if (!searchTerm || searchData?.includes(searchTerm)) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        });
+        if (!usersList) {
+            console.error("usersList element not found");
+            return;
+        }
+        
+        // Show loading state
+        usersList.innerHTML = '<tr><td colspan="7" class="text-center">Loading users...</td></tr>';
+        
+        // Get the users collection reference
+        const usersRef = collection(db, "users");
+        
+        // Get all users
+        getDocs(usersRef)
+            .then(querySnapshot => {
+                console.log(`Found ${querySnapshot.size} users`);
+                
+                if (querySnapshot.empty) {
+                    usersList.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
+                    return;
+                }
+                
+                // Clear and build list
+                usersList.innerHTML = '';
+                
+                querySnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    console.log("User data:", userData);
+                    
+                    // Create table row
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><input type="checkbox" class="user-select" data-id="${doc.id}"></td>
+                        <td>${userData.firstName || ''} ${userData.lastName || ''}</td>
+                        <td>${userData.email || ''}</td>
+                        <td>${userData.affiliation || ''}</td>
+                        <td>${userData.country || ''}</td>
+                        <td>${userData.role || 'general'}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary edit-user" data-id="${doc.id}">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger delete-user" data-id="${doc.id}">Delete</button>
+                        </td>
+                    `;
+                    
+                    usersList.appendChild(row);
+                });
+                
+                // Add event listeners for action buttons
+                document.querySelectorAll('.edit-user').forEach(btn => {
+                    btn.addEventListener('click', () => editUser(btn.dataset.id));
+                });
+                
+                document.querySelectorAll('.delete-user').forEach(btn => {
+                    btn.addEventListener('click', () => deleteUser(btn.dataset.id));
+                });
+                
+            })
+            .catch(error => {
+                console.error("Error loading users:", error);
+                usersList.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error loading users: ${error.message}</td></tr>`;
+            });
     }
+    
+    // Function to edit a user
+    function editUser(userId) {
+        console.log("Editing user:", userId);
+        // Implementation would go here
+        alert("Edit functionality coming soon"); 
+    }
+    
+    // Function to delete a user
+    function deleteUser(userId) {
+        if (!confirm("Are you sure you want to delete this user?")) return;
+        
+        console.log("Deleting user:", userId);
+        
+        deleteDoc(doc(db, "users", userId))
+            .then(() => {
+                console.log("User deleted successfully");
+                loadUsers(); // Refresh the list
+            })
+            .catch(error => {
+                console.error("Error deleting user:", error);
+                alert(`Error deleting user: ${error.message}`);
+            });
+    }
+});
     
     // Function to toggle all checkboxes
     function toggleSelectAll() {
@@ -336,4 +334,3 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 500);
         }, 500);
     }
-});
