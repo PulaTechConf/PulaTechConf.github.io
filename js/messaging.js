@@ -9,18 +9,24 @@ import {
     serverTimestamp,
     getDocs,
     doc,
-    setDoc,
-    Timestamp
+    setDoc
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', async function() {
     console.log("Messaging.js loaded");
+    
+    // VERIFY FIREBASE CONNECTION
+    if (!db) {
+        console.error("Firebase db object is not available!");
+        document.body.innerHTML = '<div class="alert alert-danger m-5">Error: Could not connect to Firebase. Please check your connection and reload.</div>';
+        return;
+    }
+    
     console.log("Firebase db object available:", !!db);
     
     // Get user data from localStorage
     const userId = localStorage.getItem('userId');
     const userName = localStorage.getItem('userName') || 'Anonymous User';
-    const userEmail = localStorage.getItem('userEmail');
     const userRole = localStorage.getItem('userRole') || 'general';
     
     console.log("Current user:", userName, "with ID:", userId, "Role:", userRole);
@@ -63,8 +69,8 @@ document.addEventListener('DOMContentLoaded', async function() {
             this.classList.add('active');
             
             // Update header
-            const chatName = this.querySelector('h6').textContent;
-            const chatDesc = this.querySelector('small').textContent;
+            const chatName = this.querySelector('h6')?.textContent || 'General';
+            const chatDesc = this.querySelector('small')?.textContent || 'Chat';
             document.getElementById('chatTitle').textContent = chatName;
             document.getElementById('chatDescription').textContent = chatDesc;
             
@@ -74,14 +80,14 @@ document.addEventListener('DOMContentLoaded', async function() {
         });
     });
     
-    // Add event listener to message form - SIMPLIFIED FOR DIRECT SAVE
-    messageForm.addEventListener('submit', async function(e) {
+    // SUPER SIMPLE MESSAGE SENDING - MOST RELIABLE APPROACH
+    messageForm.addEventListener('submit', function(e) {
         e.preventDefault();
         
         const message = messageInput.value.trim();
         if (!message) return;
         
-        console.log("Sending message:", message);
+        console.log("SENDING MESSAGE:", message, "TO CHANNEL:", currentChat);
         
         // Show sending status
         const sendingMsg = document.createElement('div');
@@ -90,54 +96,46 @@ document.addEventListener('DOMContentLoaded', async function() {
         chatMessages.appendChild(sendingMsg);
         chatMessages.scrollTop = chatMessages.scrollHeight;
         
-        try {
-            // Create direct-access message data
-            const messageData = {
-                text: message,
-                senderId: userId || 'anonymous',
-                senderName: userName || 'Anonymous User',
-                timestamp: Timestamp.now(), // Using client-side timestamp for immediate availability
-                createdAt: new Date().toISOString(),
-                channel: currentChat
-            };
-            
-            console.log("MESSAGE DATA TO SAVE:", messageData);
-            
-            // Save to a flat messages collection for easier debugging
-            const flatMessagesCollection = collection(db, "all_messages");
-            await addDoc(flatMessagesCollection, messageData);
-            
-            // Now also save to the channel-specific subcollection
-            const channelMessagesCollection = collection(db, "chats", currentChat, "messages");
-            await addDoc(channelMessagesCollection, messageData);
-            
-            console.log("Message saved successfully to both collections");
-            
-            // Remove sending indicator
-            sendingMsg.remove();
-            
-            // Clear input
-            messageInput.value = '';
-            
-            // Add message to UI immediately for better UX
-            addMessageToUI(messageData);
-            
-            // Scroll to bottom
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-        } catch (error) {
-            console.error("Error sending message:", error);
-            sendingMsg.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
-            
-            // Add more debugging info
-            console.error("Error details:", error);
-            console.error("Message that failed:", message);
-            console.error("Current chat:", currentChat);
-        }
+        // Use only the simplest data structure
+        const messageData = {
+            text: message,
+            senderId: userId || 'anonymous',
+            senderName: userName || 'Anonymous User',
+            channel: currentChat,
+            timestamp: new Date().toISOString() // Use string timestamp for reliability
+        };
+        
+        console.log("MESSAGE DATA:", messageData);
+        
+        // Save directly to a simple collection
+        addDoc(collection(db, "messages"), messageData)
+            .then(docRef => {
+                console.log("Message saved with ID:", docRef.id);
+                messageInput.value = '';
+                sendingMsg.remove();
+                
+                // Show immediate confirmation
+                const confirmMsg = document.createElement('div');
+                confirmMsg.className = 'text-center text-success mb-2';
+                confirmMsg.innerHTML = '<small>Message sent ✓</small>';
+                chatMessages.appendChild(confirmMsg);
+                setTimeout(() => confirmMsg.remove(), 2000);
+                
+                // Try loading messages again
+                loadMessages(currentChat);
+            })
+            .catch(error => {
+                console.error("ERROR SAVING MESSAGE:", error);
+                sendingMsg.innerHTML = `<div class="alert alert-danger">Error sending: ${error.message}</div>`;
+                
+                // Add more detailed logging
+                console.log("Failed message:", messageData);
+                console.log("Current channel:", currentChat);
+                console.log("DB reference:", db);
+            });
     });
     
-    // Initialize by creating chat collections and loading messages
-    await createChatCollections();
+    // Initialize by loading messages
     loadMessages('general');
     
     // Function to set up user access rights
@@ -155,78 +153,66 @@ document.addEventListener('DOMContentLoaded', async function() {
         console.log(`Chat channels set up for ${userRole} role`);
     }
     
-    // Function to create chat collections if they don't exist
-    async function createChatCollections() {
-        try {
-            console.log("Creating chat collections...");
-            const channels = ['general', 'announcements', 'organizers', 'admin'];
-            
-            for (const channelId of channels) {
-                // Create the chat document if it doesn't exist
-                const chatDocRef = doc(db, "chats", channelId);
-                await setDoc(chatDocRef, {
-                    name: channelId,
-                    lastUpdated: new Date().toISOString(),
-                    updatedBy: userName || 'system'
-                }, { merge: true });
-                
-                console.log(`Chat collection created/updated: ${channelId}`);
-            }
-        } catch (error) {
-            console.error("Error creating chat collections:", error);
-        }
-    }
-    
-    // Function to load messages for a chat channel - SIMPLIFIED FOR DIRECT ACCESS
+    // SIMPLIFIED MESSAGE LOADING
     function loadMessages(chatId) {
-        console.log(`Loading messages for ${chatId} channel`);
+        console.log("Loading messages for channel:", chatId);
         
         // Show loading indicator
         chatMessages.innerHTML = '<div class="text-center p-3">Loading messages...</div>';
         
-        // Clear any previous listener
+        // Clear previous listener
         if (messageListener) {
             messageListener();
             messageListener = null;
         }
         
+        // Get all messages from the flat collection
+        const messagesRef = collection(db, "messages");
+        
+        // Create a simple query that doesn't need indexes
+        const q = query(
+            messagesRef,
+            orderBy("timestamp"),
+            limit(100)
+        );
+        
+        console.log("Setting up message listener");
+        
+        // Set up real-time listener with error handling
         try {
-            // Try to load from flat collection first (for debugging)
-            const allMessagesRef = collection(db, "all_messages");
-            const q = query(
-                allMessagesRef,
-                orderBy("createdAt", "asc"), // Sort by string timestamp for consistency
-                limit(100)
-            );
-            
-            console.log("Setting up message listener for:", chatId);
-            
             messageListener = onSnapshot(q, (snapshot) => {
-                console.log(`Received ${snapshot.size} messages from all_messages`);
+                console.log(`Received ${snapshot.size} total messages`);
                 
-                if (snapshot.empty) {
-                    chatMessages.innerHTML = '<div class="text-center p-3">No messages yet. Be the first to say something!</div>';
-                    return;
-                }
-                
-                // Filter messages for this channel
+                // Filter messages on the client side
                 const channelMessages = [];
                 snapshot.forEach(doc => {
                     const data = doc.data();
                     if (data.channel === chatId) {
-                        channelMessages.push(data);
+                        channelMessages.push({
+                            id: doc.id,
+                            ...data
+                        });
                     }
                 });
                 
-                console.log(`Found ${channelMessages.length} messages for channel ${chatId}`);
+                console.log(`Filtered ${channelMessages.length} messages for channel ${chatId}`);
+                
+                // Display messages
+                chatMessages.innerHTML = '';
                 
                 if (channelMessages.length === 0) {
-                    chatMessages.innerHTML = '<div class="text-center p-3">No messages in this channel yet. Be the first to say something!</div>';
+                    chatMessages.innerHTML = '<div class="text-center p-3">No messages yet. Be the first to say something!</div>';
                     return;
                 }
                 
-                // Clear messages container and add filtered messages
-                chatMessages.innerHTML = '';
+                // Sort by timestamp
+                channelMessages.sort((a, b) => {
+                    const timeA = new Date(a.timestamp);
+                    const timeB = new Date(b.timestamp);
+                    return timeA - timeB;
+                });
+                
+                // Add messages to UI
                 channelMessages.forEach(message => {
                     addMessageToUI(message);
                 });
@@ -234,14 +220,13 @@ document.addEventListener('DOMContentLoaded', async function() {
                 // Scroll to bottom
                 chatMessages.scrollTop = chatMessages.scrollHeight;
                 
-            }, (error) => {
-                console.error("Error loading messages:", error);
+            }, error => {
+                console.error("Error in message listener:", error);
                 chatMessages.innerHTML = `<div class="alert alert-danger">Error loading messages: ${error.message}</div>`;
             });
-            
         } catch (error) {
-            console.error("Error setting up message listener:", error);
-            chatMessages.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+            console.error("Failed to set up listener:", error);
+            chatMessages.innerHTML = `<div class="alert alert-danger">Failed to load messages: ${error.message}</div>`;
         }
     }
     
@@ -251,21 +236,10 @@ document.addEventListener('DOMContentLoaded', async function() {
         
         const isOwnMessage = message.senderId === userId;
         
-        // Format timestamp - simplify this for reliability
-        let timeStr = "Just now";
-        if (message.createdAt) {
-            // Use the string timestamp for reliability
-            timeStr = new Date(message.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } else if (message.timestamp) {
-            if (message.timestamp.toDate) {
-                timeStr = message.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else if (message.timestamp.seconds) {
-                timeStr = new Date(message.timestamp.seconds * 1000)
-                    .toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
-        }
+        // Format timestamp - just use the string directly
+        const timeStr = message.timestamp ? new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : "Just now";
         
-        // Create message element with clear debug info
+        // Create message element
         const messageElement = document.createElement('div');
         messageElement.className = 'd-flex mb-3';
         messageElement.innerHTML = `
@@ -280,6 +254,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                     <small class="text-muted">${timeStr}</small>
                 </div>
                 <p class="mb-1">${message.text || ''}</p>
+                <small class="text-muted">${message.id ? `Message ID: ${message.id.substring(0, 6)}...` : ''}</small>
             </div>
         `;
         
@@ -287,7 +262,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         chatMessages.appendChild(messageElement);
     }
     
-    // Clean up listener when navigating away
+    // Clean up listener when page is closed
     window.addEventListener('beforeunload', function() {
         if (messageListener) {
             messageListener();
