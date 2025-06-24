@@ -176,43 +176,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-// Function to add a message to the UI
-function addMessageToUI(messageData) {
-    if (!chatMessages) return;
-    
-    const isOwnMessage = messageData.senderId === userId;
-    
-    // Format timestamp
-    let formattedTime = "Just now";
-    if (messageData.timestamp) {
-        if (messageData.timestamp.toDate) {
-            formattedTime = messageData.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        } else if (messageData.timestamp.seconds) {
-            formattedTime = new Date(messageData.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    // Function to add a message to the UI
+    function addMessageToUI(messageData) {
+        if (!chatMessages) return;
+        
+        const isOwnMessage = messageData.senderId === userId;
+        
+        // Format timestamp
+        let formattedTime = "Just now";
+        if (messageData.timestamp) {
+            if (messageData.timestamp.toDate) {
+                formattedTime = messageData.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } else if (messageData.timestamp.seconds) {
+                formattedTime = new Date(messageData.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            }
         }
+        
+        // Create message element
+        const messageElement = document.createElement('div');
+        messageElement.className = 'd-flex mb-3';
+        messageElement.innerHTML = `
+            <div class="flex-shrink-0">
+                <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
+                    <i class="bi bi-person"></i>
+                </div>
+            </div>
+            <div class="flex-grow-1 ms-3">
+                <div class="d-flex justify-content-between">
+                    <h6 class="mb-0">${isOwnMessage ? 'You' : messageData.senderName || 'Anonymous'}</h6>
+                    <small class="text-muted">${formattedTime}</small>
+                </div>
+                <p class="mb-1">${messageData.text}</p>
+            </div>
+        `;
+        
+        chatMessages.appendChild(messageElement);
     }
-    
-    // Create message element
-    const messageElement = document.createElement('div');
-    messageElement.className = 'd-flex mb-3';
-    messageElement.innerHTML = `
-        <div class="flex-shrink-0">
-            <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
-                <i class="bi bi-person"></i>
-            </div>
-        </div>
-        <div class="flex-grow-1 ms-3">
-            <div class="d-flex justify-content-between">
-                <h6 class="mb-0">${isOwnMessage ? 'You' : messageData.senderName || 'Anonymous'}</h6>
-                <small class="text-muted">${formattedTime}</small>
-            </div>
-            <p class="mb-1">${messageData.text}</p>
-        </div>
-    `;
-    
-    chatMessages.appendChild(messageElement);
-}
-    
+});
     // Function to render a single message
     function renderMessage(messageData, messageId) {
         if (!chatMessages) return;
@@ -264,6 +264,5 @@ function addMessageToUI(messageData) {
             `;
         }
         
-        chatMessages.appendChild(messageElem);
-    }
-});
+    chatMessages.appendChild(messageElem);
+}
