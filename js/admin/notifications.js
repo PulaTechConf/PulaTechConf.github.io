@@ -13,8 +13,11 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if user has admin rights
     const userRole = localStorage.getItem('userRole');
     if (userRole !== 'admin') {
+        console.log("Not an admin, notification management disabled");
         return;
     }
+    
+    console.log("Admin notifications module loaded");
     
     // Load recent notifications
     loadRecentNotifications();
@@ -57,7 +60,7 @@ async function loadRecentNotifications() {
         // Add each notification
         querySnapshot.forEach(doc => {
             const data = doc.data();
-            const date = data.timestamp ? new Date(data.timestamp.toMillis()) : new Date();
+            const date = data.timestamp ? new Date(data.timestamp.toDate()) : new Date();
             const formattedDate = date.toLocaleString();
             
             const notificationEl = document.createElement('div');
@@ -77,7 +80,7 @@ async function loadRecentNotifications() {
         console.error("Error loading notifications:", error);
         document.getElementById('recentNotifications').innerHTML = `
             <div class="list-group-item text-center text-danger">
-                Error loading notifications
+                Error loading notifications: ${error.message}
             </div>
         `;
     }
@@ -104,7 +107,7 @@ async function sendNotification(e) {
             title,
             message,
             timestamp: serverTimestamp(),
-            sentBy: localStorage.getItem('userId')
+            sentBy: localStorage.getItem('userId') || 'unknown'
         });
         
         // Clear the form

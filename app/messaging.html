@@ -137,6 +137,7 @@
                 <div class="modal-body">
                     <div id="notificationsList" class="list-group">
                         <!-- Notifications will be loaded here -->
+                        <div class="list-group-item text-center">Loading notifications...</div>
                     </div>
                 </div>
             </div>
@@ -147,9 +148,8 @@
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/notifications.js"></script>
     <script type="module" src="../js/messaging.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Set up new message button
+</body>
+</html>
             document.getElementById('newMessageBtn')?.addEventListener('click', function() {
                 const modal = new bootstrap.Modal(document.getElementById('newMessageModal'));
                 modal.show();

@@ -2,105 +2,140 @@ import { db } from './firebase-config.js';
 import { 
     collection, 
     query, 
-    orderBy, 
-    onSnapshot 
+    orderBy,
+    limit,
+    onSnapshot,
+    Timestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Notifications.js loaded");
+    
+    // Find UI elements
     const notificationsBtn = document.getElementById('notificationsBtn');
     const notificationBadge = document.querySelector('.notification-badge');
     const notificationsList = document.getElementById('notificationsList');
     
-    if (notificationsBtn && notificationBadge && notificationsList) {
-        // Open notifications modal
-        notificationsBtn.addEventListener('click', () => {
-            const notificationsModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
-            notificationsModal.show();
-        });
-        
-        // Listen for new notifications
-        listenForNotifications();
+    if (!notificationsBtn || !notificationBadge || !notificationsList) {
+        console.log("Notification elements not found on page");
+        return;
     }
-});
-
-function listenForNotifications() {
-    // Define query to get all notifications sorted by timestamp
-    const notificationsQuery = query(
-        collection(db, "notifications"),
-        orderBy("timestamp", "desc")
-    );
     
-    // Listen for notifications
-    onSnapshot(notificationsQuery, (snapshot) => {
-        const notifications = [];
-        let unreadCount = 0;
+    // Listen for notifications button click
+    notificationsBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        console.log("Notifications button clicked");
         
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            notifications.push({
-                id: doc.id,
-                ...data
+        // Show notifications modal
+        const notificationsModal = new bootstrap.Modal(document.getElementById('notificationsModal'));
+        notificationsModal.show();
+        
+        // Mark as read when opened
+        notificationBadge.classList.add('d-none');
+        notificationBadge.textContent = '0';
+    });
+    
+    // Set up notifications listener
+    setupNotificationsListener();
+    
+    function setupNotificationsListener() {
+        console.log("Setting up notifications listener");
+        
+        // Create a query for notifications, sorted by timestamp
+        const notificationsRef = collection(db, "notifications");
+        const q = query(
+            notificationsRef,
+            orderBy("timestamp", "desc"),
+            limit(10)
+        );
+        
+        // Listen for notifications in real time
+        onSnapshot(q, (snapshot) => {
+            console.log(`Received ${snapshot.size} notifications`);
+            let unreadCount = 0;
+            let notifications = [];
+            
+            if (snapshot.empty) {
+                notificationsList.innerHTML = '<div class="list-group-item text-center">No notifications</div>';
+                notificationBadge.classList.add('d-none');
+                return;
+            }
+            
+            // Process all notifications
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                notifications.push({
+                    id: doc.id,
+                    title: data.title || 'Notification',
+                    message: data.message || '',
+                    timestamp: data.timestamp
+                });
+                
+                // Check if notification is recent (less than 24 hours old)
+                if (data.timestamp) {
+                    const notificationTime = data.timestamp.toDate ? 
+                        data.timestamp.toDate() : 
+                        new Date(data.timestamp.seconds * 1000);
+                    
+                    const hoursSinceNotification = (new Date() - notificationTime) / (1000 * 60 * 60);
+                    
+                    if (hoursSinceNotification < 24) {
+                        unreadCount++;
+                    }
+                }
             });
             
-            // If the notification is new (less than 24 hours old), count it as unread
-            const notificationTime = data.timestamp.toDate();
-            const currentTime = new Date();
-            const hoursDifference = (currentTime - notificationTime) / (1000 * 60 * 60);
-            
-            if (hoursDifference < 24) {
-                unreadCount++;
-            }
-        });
-        
-        // Update badge with unread count
-        const notificationBadge = document.querySelector('.notification-badge');
-        if (notificationBadge) {
+            // Update badge
             if (unreadCount > 0) {
                 notificationBadge.textContent = unreadCount;
                 notificationBadge.classList.remove('d-none');
             } else {
                 notificationBadge.classList.add('d-none');
             }
-        }
-        
-        // Update notification list if modal is open
-        const notificationsList = document.getElementById('notificationsList');
-        if (notificationsList && document.getElementById('notificationsModal').classList.contains('show')) {
-            renderNotifications(notifications, notificationsList);
-        }
-    });
-}
-
-function renderNotifications(notifications, container) {
-    container.innerHTML = '';
-    
-    if (notifications.length === 0) {
-        container.innerHTML = '<div class="list-group-item">No notifications</div>';
-        return;
+            
+            // Update notifications list if modal is visible
+            updateNotificationsList(notifications);
+            
+        }, (error) => {
+            console.error("Error getting notifications:", error);
+        });
     }
     
-    notifications.forEach(notification => {
-        const notificationElement = document.createElement('div');
-        notificationElement.classList.add('list-group-item');
+    // Function to update the notifications list UI
+    function updateNotificationsList(notifications) {
+        if (!notificationsList) return;
         
-        // Format date
-        const date = new Date(notification.timestamp.toDate());
-        const formattedDate = date.toLocaleString();
+        // Clear current list
+        notificationsList.innerHTML = '';
         
-        notificationElement.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <h6 class="mb-1">${notification.title}</h6>
-                <small>${formattedDate}</small>
-            </div>
-            <p class="mb-1">${notification.message}</p>
-        `;
+        if (notifications.length === 0) {
+            notificationsList.innerHTML = '<div class="list-group-item text-center">No notifications</div>';
+            return;
+        }
         
-        container.appendChild(notificationElement);
-    });
-}
-
-function markAllAsRead() {
-    // Implementation would involve updating the "readBy" array in each notification
-    // to include the current user's ID, but we'll leave this as a placeholder
-    console.log("Marking all notifications as read");
-}
+        // Add each notification to the list
+        notifications.forEach(notification => {
+            // Format date
+            let formattedDate = "Recent";
+            if (notification.timestamp) {
+                const date = notification.timestamp.toDate ? 
+                    notification.timestamp.toDate() : 
+                    new Date(notification.timestamp.seconds * 1000);
+                
+                formattedDate = date.toLocaleString();
+            }
+            
+            const notificationItem = document.createElement('div');
+            notificationItem.className = 'list-group-item';
+            notificationItem.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <h6 class="mb-1">${notification.title}</h6>
+                    <small class="text-muted">${formattedDate}</small>
+                </div>
+                <p class="mb-1">${notification.message}</p>
+            `;
+            
+            notificationsList.appendChild(notificationItem);
+        });
+    }
+});

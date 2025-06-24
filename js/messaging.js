@@ -6,7 +6,6 @@ import {
     orderBy, 
     limit, 
     onSnapshot,
-    getDocs,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
@@ -18,11 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const userRole = localStorage.getItem('userRole') || 'general';
     
     if (!userId) {
-        console.log("User not logged in");
+        console.log("No user ID found in localStorage");
         return;
     }
     
-    console.log("Current user role:", userRole);
+    console.log("Current user:", userName, "with role:", userRole);
     
     // References to DOM elements
     const chatMessages = document.getElementById('chatMessages');
@@ -40,79 +39,73 @@ document.addEventListener('DOMContentLoaded', function() {
         loadMessages(currentChat);
     });
     
-    // Set up chat channels based on user role
-    setupChatAccess(userRole);
+    // Set up chat channel click events
+    document.querySelectorAll('[data-chat]').forEach(channel => {
+        channel.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Skip if channel is hidden
+            if (this.classList.contains('d-none')) {
+                return;
+            }
+            
+            const chatId = this.getAttribute('data-chat');
+            console.log("Switching to chat:", chatId);
+            
+            // Update active chat
+            document.querySelectorAll('[data-chat]').forEach(el => {
+                el.classList.remove('active');
+            });
+            this.classList.add('active');
+            
+            // Update chat title and description
+            const chatName = this.querySelector('h6').textContent;
+            const chatDesc = this.querySelector('small').textContent;
+            document.getElementById('chatTitle').textContent = chatName;
+            document.getElementById('chatDescription').textContent = chatDesc;
+            
+            // Update current chat and load messages
+            currentChat = chatId;
+            loadMessages(chatId);
+        });
+    });
     
-    // Send message
+    // Handle message submission
     messageForm?.addEventListener('submit', function(e) {
         e.preventDefault();
-        const message = messageInput.value.trim();
+        const messageText = messageInput.value.trim();
         
-        if (message) {
-            sendMessage(message, currentChat);
+        if (messageText) {
+            // Send message to Firebase
+            sendMessage(messageText, currentChat);
+            
+            // Clear input
             messageInput.value = '';
         }
     });
     
-    // Load initial messages
+    // Initial load of messages for the default channel
     loadMessages('general');
     
-    // Function to control access to chat channels based on role
-    function setupChatAccess(role) {
-        console.log("Setting up chat access for role:", role);
-        
-        // Add click event listeners to all chat channels
-        document.querySelectorAll('[data-chat]').forEach(item => {
-            item.addEventListener('click', function(e) {
-                e.preventDefault();
-                
-                // Skip if the chat is hidden by role
-                if (this.classList.contains('d-none')) {
-                    return;
-                }
-                
-                const chatId = this.getAttribute('data-chat');
-                console.log("Switching to chat:", chatId);
-                
-                // Update active chat
-                document.querySelectorAll('[data-chat]').forEach(el => {
-                    el.classList.remove('active');
-                });
-                this.classList.add('active');
-                
-                // Update chat title and description
-                const chatName = this.querySelector('h6').textContent;
-                document.getElementById('chatTitle').textContent = chatName;
-                
-                const chatDescription = this.querySelector('small').textContent;
-                document.getElementById('chatDescription').textContent = chatDescription;
-                
-                // Update current chat and load messages
-                currentChat = chatId;
-                loadMessages(chatId);
-            });
-        });
-    }
-    
-    // Function to load messages
-    function loadMessages(chatId) {
+    // Function to load messages for a chat channel
+    async function loadMessages(chatId) {
         try {
             if (!chatMessages) return;
             
-            // Clear existing messages and show loading
+            // Clear current messages and show loading
             chatMessages.innerHTML = '<div class="text-center p-3">Loading messages...</div>';
             
             console.log(`Loading messages for chat: ${chatId}`);
             
-            // Clean up previous subscription if exists
+            // Clear previous listener if exists
             if (currentUnsubscribe) {
                 currentUnsubscribe();
                 currentUnsubscribe = null;
             }
             
-            // Set up query for this chat's messages
+            // Create messages collection reference for this chat
             const messagesRef = collection(db, "chats", chatId, "messages");
-            const q = query(messagesRef, orderBy("timestamp", "asc"), limit(50));
+            const q = query(messagesRef, orderBy("timestamp", "asc"), limit(100));
             
             // Set up real-time listener
             const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -133,18 +126,16 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Scroll to bottom
                 chatMessages.scrollTop = chatMessages.scrollHeight;
             }, (error) => {
-                console.error("Error loading messages:", error);
-                chatMessages.innerHTML = '<div class="text-center p-3 text-danger">Error loading messages</div>';
+                console.error("Error listening for messages:", error);
+                chatMessages.innerHTML = `<div class="text-center p-3 text-danger">Error loading messages: ${error.message}</div>`;
             });
             
-            // Store unsubscribe function
+            // Store unsubscribe function to clean up later
             currentUnsubscribe = unsubscribe;
             
         } catch (error) {
             console.error("Error setting up message listener:", error);
-            if (chatMessages) {
-                chatMessages.innerHTML = '<div class="text-center p-3 text-danger">Error loading messages</div>';
-            }
+            chatMessages.innerHTML = `<div class="text-center p-3 text-danger">Error loading messages: ${error.message}</div>`;
         }
     }
     
@@ -155,108 +146,72 @@ document.addEventListener('DOMContentLoaded', function() {
             
             console.log(`Sending message to ${chatId}:`, text);
             
-            // Add message to Firestore
-            await addDoc(collection(db, "chats", chatId, "messages"), {
+            // Prepare message data
+            const messageData = {
                 text,
                 senderId: userId,
                 senderName: userName || 'Anonymous',
                 timestamp: serverTimestamp()
-            });
+            };
+            
+            // Add to Firestore
+            const messagesCollection = collection(db, "chats", chatId, "messages");
+            await addDoc(messagesCollection, messageData);
             
             console.log("Message sent successfully");
             
         } catch (error) {
             console.error("Error sending message:", error);
             
-            // Show error message in chat
+            // Show error message
             const errorDiv = document.createElement('div');
-            errorDiv.className = 'alert alert-danger';
-            errorDiv.textContent = 'Failed to send message. Please try again.';
+            errorDiv.className = 'alert alert-danger m-2';
+            errorDiv.textContent = `Failed to send message: ${error.message}`;
             chatMessages.appendChild(errorDiv);
             
-            // Remove error message after 3 seconds
+            // Remove error after 3 seconds
             setTimeout(() => {
                 errorDiv.remove();
             }, 3000);
         }
     }
     
-    // Function to add a message to the UI
-    function addMessageToUI(messageData) {
-        if (!chatMessages) return;
-        
-        const isOwnMessage = messageData.senderId === userId;
-        
-        // Format timestamp
-        let formattedTime = "Just now";
-        if (messageData.timestamp) {
-            if (messageData.timestamp.toDate) {
-                // Firestore timestamp
-                formattedTime = messageData.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            } else if (messageData.timestamp.seconds) {
-                // Serialized timestamp
-                const date = new Date(messageData.timestamp.seconds * 1000);
-                formattedTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            }
-        }
-        
-        // Create message element
-        const messageElement = document.createElement('div');
-        messageElement.className = 'd-flex mb-3';
-        messageElement.innerHTML = `
-            <div class="flex-shrink-0">
-                <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
-                    <i class="bi bi-person"></i>
-                </div>
-            </div>
-            <div class="flex-grow-1 ms-3">
-                <div class="d-flex justify-content-between">
-                    <h6 class="mb-0">${isOwnMessage ? 'You' : messageData.senderName || 'Anonymous'}</h6>
-                    <small class="text-muted">${formattedTime}</small>
-                </div>
-                <p class="mb-1">${messageData.text}</p>
-            </div>
-        `;
-        
-    chatMessages.appendChild(messageElement);
-}
-
-// Function to send a message
-    async function sendMessage(text, chatId, senderId, senderName) {
-        try {
-            console.log(`Sending message to ${chatId}: ${text}`);
-            
-            // Get reference to the messages collection
-            const messagesRef = collection(db, "chats", chatId, "messages");
-            
-            // Create message object
-            const messageData = {
-                text,
-                senderId,
-                senderName,
-                timestamp: serverTimestamp()
-            };
-            
-            // Add document to Firestore
-            const docRef = await addDoc(messagesRef, messageData);
-            console.log("Message sent successfully with ID:", docRef.id);
-            
-            return true;
-        } catch (error) {
-            console.error("Error sending message:", error);
-            
-            // Show error to user
-            const errorAlert = document.createElement('div');
-            errorAlert.className = 'alert alert-danger m-2';
-            errorAlert.textContent = `Failed to send message: ${error.message}`;
-            chatMessages.appendChild(errorAlert);
-            
-            // Remove after 3 seconds
-            setTimeout(() => errorAlert.remove(), 3000);
-            
-            return false;
+// Function to add a message to the UI
+function addMessageToUI(messageData) {
+    if (!chatMessages) return;
+    
+    const isOwnMessage = messageData.senderId === userId;
+    
+    // Format timestamp
+    let formattedTime = "Just now";
+    if (messageData.timestamp) {
+        if (messageData.timestamp.toDate) {
+            formattedTime = messageData.timestamp.toDate().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        } else if (messageData.timestamp.seconds) {
+            formattedTime = new Date(messageData.timestamp.seconds * 1000).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
     }
+    
+    // Create message element
+    const messageElement = document.createElement('div');
+    messageElement.className = 'd-flex mb-3';
+    messageElement.innerHTML = `
+        <div class="flex-shrink-0">
+            <div class="${isOwnMessage ? 'bg-primary text-white' : 'bg-light'} rounded-circle p-2 text-center" style="width: 40px; height: 40px;">
+                <i class="bi bi-person"></i>
+            </div>
+        </div>
+        <div class="flex-grow-1 ms-3">
+            <div class="d-flex justify-content-between">
+                <h6 class="mb-0">${isOwnMessage ? 'You' : messageData.senderName || 'Anonymous'}</h6>
+                <small class="text-muted">${formattedTime}</small>
+            </div>
+            <p class="mb-1">${messageData.text}</p>
+        </div>
+    `;
+    
+    chatMessages.appendChild(messageElement);
+}
     
     // Function to render a single message
     function renderMessage(messageData, messageId) {
