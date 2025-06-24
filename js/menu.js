@@ -81,11 +81,15 @@ async function savePizzaSelection(userId, day, pizzaId, pizzaName) {
             userData = docSnap.data();
         }
         
+        // Get user's name from localStorage
+        const userName = localStorage.getItem('userName') || 'Unknown User';
+        
         // Update the selection for the specified day
         userData[day] = {
             id: pizzaId,
             name: pizzaName,
-            selectedAt: Timestamp.now()
+            selectedAt: Timestamp.now(),
+            orderedBy: userName // Add the user's name to the pizza selection
         };
         
         // Save to Firestore
@@ -99,8 +103,26 @@ async function savePizzaSelection(userId, day, pizzaId, pizzaName) {
             const currentCount = summaryDoc.exists() ? 
                 (summaryDoc.data()[pizzaId] || 0) : 0;
             
+            // Also store who ordered what in the summary
+            const ordersField = `${pizzaId}_orders`;
+            let currentOrders = [];
+            
+            if (summaryDoc.exists() && summaryDoc.data()[ordersField]) {
+                currentOrders = summaryDoc.data()[ordersField];
+            }
+            
+            // Add this user to the orders if not already present
+            if (!currentOrders.some(order => order.userId === userId)) {
+                currentOrders.push({
+                    userId: userId,
+                    userName: userName,
+                    timestamp: new Date().toISOString()
+                });
+            }
+            
             transaction.set(summaryRef, {
-                [pizzaId]: currentCount + 1
+                [pizzaId]: currentCount + 1,
+                [ordersField]: currentOrders
             }, { merge: true });
         });
         

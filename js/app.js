@@ -2,17 +2,17 @@ import { db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Check if user is logged in - this should happen first
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+        console.log("No user ID found, redirecting to login page");
+        window.location.href = getLoginPagePath();
+        return; // Stop execution if not logged in
+    }
+
     const logoutBtn = document.getElementById('logoutBtn');
     const adminElements = document.querySelectorAll('.admin-only');
     const organizerElements = document.querySelectorAll('.organizer-only');
-    
-    // Check if user is logged in
-    const userId = localStorage.getItem('userId');
-    if (!userId) {
-        // Redirect to login page if not logged in
-        window.location.href = '../index.html';
-        return;
-    }
     
     // Show/hide elements based on role
     const userRole = localStorage.getItem('userRole') || 'general';
@@ -23,24 +23,50 @@ document.addEventListener('DOMContentLoaded', function() {
         organizerElements.forEach(el => el.classList.remove('d-none'));
     }
     
-    // Logout functionality
+    // Improved logout functionality
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            // Clear user data from localStorage
-            localStorage.removeItem('userId');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('userName');
-            
-            // Redirect to login page
-            window.location.href = '../index.html';
-        });
+        console.log("Logout button found, adding event listener");
+        logoutBtn.addEventListener('click', handleLogout);
+    } else {
+        console.warn("Logout button not found in the page");
     }
     
     // Schedule notification reminders
     setupScheduleReminders();
 });
+
+// Separate function for logout to make it easier to debug
+function handleLogout(e) {
+    e.preventDefault();
+    console.log("Logout button clicked");
+    
+    // Clear user data from localStorage
+    localStorage.removeItem('userId');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userName');
+    console.log("User data cleared from localStorage");
+    
+    // Redirect to login page with a small delay to ensure localStorage is cleared
+    setTimeout(() => {
+        const loginPath = getLoginPagePath();
+        console.log("Redirecting to:", loginPath);
+        window.location.href = loginPath;
+    }, 100);
+}
+
+// Helper function to determine the correct path to the login page
+function getLoginPagePath() {
+    // If we're in an app subfolder, we need to go up one level
+    if (window.location.pathname.includes('/app/')) {
+        return '../index.html';
+    }
+    // If we're in the admin subfolder, we need to go up two levels
+    if (window.location.pathname.includes('/admin/')) {
+        return '../../index.html';
+    }
+    // Otherwise we're at the root
+    return 'index.html';
+}
 
 // Function to setup schedule reminders
 function setupScheduleReminders() {
@@ -123,14 +149,3 @@ function showEventReminder(eventTitle) {
         notificationElement.remove();
     }, 10000);
 }
-        <div class="toast-body">
-            ${eventTitle} starts in 15 minutes!
-        </div>
-    ;
-    
-    document.body.appendChild(notificationElement);
-    
-    // Remove after 10 seconds
-    setTimeout(() => {
-        notificationElement.remove();
-    }, 10000);
