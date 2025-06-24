@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificationBadge = document.querySelector('.notification-badge');
     const notificationsDropdown = document.getElementById('notificationsDropdown');
     
-    if (!notificationsBtn || !notificationBadge || !notificationsDropdown) {
+    if (!notificationsBtn || !notificationBadge) {
         console.log("Notification elements not found on page");
         return;
     }
@@ -25,20 +25,20 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Add click handler for notification items
     document.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('notification-item') || 
-            e.target.closest('.notification-item')) {
-            
-            const item = e.target.classList.contains('notification-item') ? 
-                e.target : e.target.closest('.notification-item');
-                
+        if (e.target && e.target.closest('.notification-item')) {
+            const item = e.target.closest('.notification-item');
             const content = item.querySelector('.notification-content');
+            
             if (content) {
-                // Toggle visibility
-                if (content.style.display === 'block') {
-                    content.style.display = 'none';
-                } else {
-                    content.style.display = 'block';
-                }
+                // Close all other open notification contents first
+                document.querySelectorAll('.notification-content.show').forEach(openContent => {
+                    if (openContent !== content) {
+                        openContent.classList.remove('show');
+                    }
+                });
+                
+                // Toggle current notification content
+                content.classList.toggle('show');
             }
         }
     });
@@ -61,7 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
             let notifications = [];
             
             if (snapshot.empty) {
-                notificationsDropdown.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
+                if (notificationsDropdown) {
+                    notificationsDropdown.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
+                }
                 notificationBadge.classList.add('d-none');
                 return;
             }
@@ -99,7 +101,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             // Update notifications dropdown
-            updateNotificationsDropdown(notifications);
+            if (notificationsDropdown) {
+                updateNotificationsDropdown(notifications);
+            }
             
         }, (error) => {
             console.error("Error getting notifications:", error);
@@ -127,13 +131,24 @@ document.addEventListener('DOMContentLoaded', () => {
                     notification.timestamp.toDate() : 
                     new Date(notification.timestamp.seconds * 1000);
                 
-                formattedDate = date.toLocaleString();
+                // Format date to show only relevant info (today, yesterday, or specific date)
+                const now = new Date();
+                const isToday = date.toDateString() === now.toDateString();
+                const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString();
+                
+                if (isToday) {
+                    formattedDate = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                } else if (isYesterday) {
+                    formattedDate = `Yesterday, ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                } else {
+                    formattedDate = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+                }
             }
             
             const notificationItem = document.createElement('div');
             notificationItem.className = 'notification-item dropdown-item';
             notificationItem.innerHTML = `
-                <div class="d-flex justify-content-between">
+                <div class="d-flex justify-content-between align-items-center">
                     <strong>${notification.title}</strong>
                     <small class="text-muted">${formattedDate}</small>
                 </div>
