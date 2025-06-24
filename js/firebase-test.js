@@ -1,8 +1,10 @@
 import { db } from './firebase-config.js';
 import { 
     collection, 
-    addDoc,
-    getDocs
+    addDoc, 
+    getDocs,
+    query,
+    where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 // Function to test Firestore connection

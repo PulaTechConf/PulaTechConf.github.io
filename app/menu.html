@@ -76,7 +76,6 @@
             <!-- Pizza cards will be displayed here -->
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="../images/pizza-margherita.jpg" class="card-img-top" alt="Margherita">
                     <div class="card-body">
                         <h5 class="card-title">Margherita</h5>
                         <p class="card-text">Classic pizza with tomato sauce, fresh mozzarella, and basil.</p>
@@ -86,7 +85,6 @@
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="../images/pizza-pepperoni.jpg" class="card-img-top" alt="Pepperoni">
                     <div class="card-body">
                         <h5 class="card-title">Pepperoni</h5>
                         <p class="card-text">Tomato sauce, mozzarella, and pepperoni slices.</p>
@@ -96,7 +94,6 @@
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="../images/pizza-vegetarian.jpg" class="card-img-top" alt="Vegetarian">
                     <div class="card-body">
                         <h5 class="card-title">Vegetarian</h5>
                         <p class="card-text">Tomato sauce, mozzarella, bell peppers, mushrooms, onions, and olives.</p>
@@ -106,7 +103,6 @@
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="../images/pizza-quattro-formaggi.jpg" class="card-img-top" alt="Quattro Formaggi">
                     <div class="card-body">
                         <h5 class="card-title">Quattro Formaggi</h5>
                         <p class="card-text">Four cheese pizza with mozzarella, gorgonzola, parmesan, and ricotta.</p>
@@ -116,7 +112,6 @@
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="../images/pizza-prosciutto.jpg" class="card-img-top" alt="Prosciutto">
                     <div class="card-body">
                         <h5 class="card-title">Prosciutto</h5>
                         <p class="card-text">Tomato sauce, mozzarella, prosciutto, and arugula.</p>
@@ -126,7 +121,6 @@
             </div>
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
-                    <img src="../images/pizza-gluten-free.jpg" class="card-img-top" alt="Gluten Free">
                     <div class="card-body">
                         <h5 class="card-title">Gluten Free</h5>
                         <p class="card-text">Special gluten-free crust with tomato sauce and mozzarella.</p>
@@ -192,5 +186,23 @@
     <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/notifications.js"></script>
     <script type="module" src="../js/menu.js"></script>
+    <script type="module">
+        // Add this script to ensure modals handle focus properly
+        document.addEventListener('DOMContentLoaded', () => {
+            const confirmationModal = document.getElementById('confirmationModal');
+            if (confirmationModal) {
+                confirmationModal.addEventListener('hidden.bs.modal', function () {
+                    // Ensure focus is returned to the trigger element when modal is closed
+                    document.querySelector('.select-pizza-btn:focus')?.blur();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
+                });
+            }
+        });
+    </script>
 </body>
 </html>
