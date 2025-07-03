@@ -49,7 +49,8 @@ document.addEventListener('DOMContentLoaded', function() {
             section.appendChild(editButton);
         });
     }
-      // Function to open edit modal for a section
+    
+    // Function to open edit modal for a section
     function openEditModal(section) {
         const modal = new bootstrap.Modal(document.getElementById('contentEditModal'));
         const modalTitle = document.getElementById('editModalLabel');
@@ -136,6 +137,36 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        // Update toolbar button states based on current selection
+        richTextEditor.addEventListener('keyup', updateToolbarStates);
+        richTextEditor.addEventListener('mouseup', updateToolbarStates);
+        
+        function updateToolbarStates() {
+            const commands = ['bold', 'italic', 'underline'];
+            
+            commands.forEach(command => {
+                const button = toolbar.querySelector(`[data-command="${command}"]`);
+                if (button) {
+                    if (document.queryCommandState(command)) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Update heading select
+            const headingSelect = document.getElementById('headingSelect');
+            if (headingSelect) {
+                const block = document.queryCommandValue('formatBlock');
+                if (block && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(block.toLowerCase())) {
+                    headingSelect.value = block.toLowerCase();
+                } else {
+                    headingSelect.value = '';
+                }
+            }
+        }
+        
         // Prevent default browser shortcuts that might interfere
         richTextEditor.addEventListener('keydown', function(e) {
             // Handle common keyboard shortcuts
@@ -179,36 +210,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 10);
         });
         
-        // Update toolbar button states based on current selection
-        richTextEditor.addEventListener('keyup', updateToolbarStates);
-        richTextEditor.addEventListener('mouseup', updateToolbarStates);
-        
-        function updateToolbarStates() {
-            const commands = ['bold', 'italic', 'underline'];
-            
-            commands.forEach(command => {
-                const button = toolbar.querySelector(`[data-command="${command}"]`);
-                if (button) {
-                    if (document.queryCommandState(command)) {
-                        button.classList.add('active');
-                    } else {
-                        button.classList.remove('active');
-                    }
-                }
-            });
-            
-            // Update heading select
-            const headingSelect = document.getElementById('headingSelect');
-            if (headingSelect) {
-                const block = document.queryCommandValue('formatBlock');
-                if (block && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(block.toLowerCase())) {
-                    headingSelect.value = block.toLowerCase();
-                } else {
-                    headingSelect.value = '';
-                }
-            }
-        }
-          // Initialize toolbar states
+        // Initialize toolbar states
         updateToolbarStates();
     }
     
@@ -231,22 +233,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatedBy: localStorage.getItem('userId')
             }, { merge: true });
             
-            // Update section in UI (preserve existing content structure)
-            const sectionClone = section.cloneNode(false); // Clone without children
-            sectionClone.innerHTML = content;
-            
-            // Add edit button back
-            const editButton = document.createElement('button');
-            editButton.className = 'edit-button';
-            editButton.innerHTML = '<i class="bi bi-pencil"></i> Edit';
-            editButton.dataset.sectionId = section.id;
-            editButton.addEventListener('click', function() {
-                openEditModal(section);
-            });
-            sectionClone.appendChild(editButton);
-            
-            // Replace the original section
-            section.parentNode.replaceChild(sectionClone, section);
+            // Update section content while preserving functional elements
+            updateSectionContent(section, content);
             
             // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('contentEditModal'));
@@ -261,6 +249,63 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Function to update section content while preserving functional elements
+    function updateSectionContent(section, newContent) {
+        const sectionId = section.id;
+        
+        // Check if this is a section with functional elements (like schedule)
+        const hasFunctionalElements = section.querySelector('#lunchTitle, #pizzaChoice, #clearPizzaBtn');
+        
+        if (hasFunctionalElements) {
+            console.log('Updating section with functional elements:', sectionId);
+            
+            // For sections with functional elements, update more carefully
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(`<div>${newContent}</div>`, 'text/html');
+            const newContentDiv = doc.body.firstChild;
+            
+            // Update the section content but preserve functional elements
+            const children = Array.from(section.children);
+            children.forEach(child => {
+                if (!child.classList.contains('edit-button') && 
+                    !child.id.includes('lunch') && 
+                    !child.id.includes('pizza')) {
+                    child.remove();
+                }
+            });
+            
+            // Add new content elements
+            Array.from(newContentDiv.children).forEach(child => {
+                if (!child.classList.contains('edit-button')) {
+                    section.insertBefore(child.cloneNode(true), section.querySelector('.edit-button'));
+                }
+            });
+            
+            // Reinitialize pizza selection functionality
+            setTimeout(() => {
+                if (window.reinitializePizzaSelection) {
+                    window.reinitializePizzaSelection();
+                }
+            }, 100);
+            
+        } else {
+            // For regular sections, simple content replacement
+            section.innerHTML = newContent;
+        }
+        
+        // Add edit button back
+        if (!section.querySelector('.edit-button')) {
+            const editButton = document.createElement('button');
+            editButton.className = 'edit-button';
+            editButton.innerHTML = '<i class="bi bi-pencil"></i> Edit';
+            editButton.dataset.sectionId = section.id;
+            editButton.addEventListener('click', function() {
+                openEditModal(section);
+            });
+            section.appendChild(editButton);
+        }
+    }
+    
     // Load content from Firebase
     async function loadContent() {
         const editableSections = document.querySelectorAll('.editable-section');
@@ -271,17 +316,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const contentSnap = await getDoc(contentRef);
                 
                 if (contentSnap.exists() && contentSnap.data().content) {
-                    section.innerHTML = contentSnap.data().content;
-                    
-                    // Re-add edit button
-                    const editButton = document.createElement('button');
-                    editButton.className = 'edit-button';
-                    editButton.innerHTML = '<i class="bi bi-pencil"></i> Edit';
-                    editButton.dataset.sectionId = section.id;
-                    editButton.addEventListener('click', function() {
-                        openEditModal(section);
-                    });
-                    section.appendChild(editButton);
+                    updateSectionContent(section, contentSnap.data().content);
                 }
             } catch (error) {
                 console.error(`Error loading content for section ${section.id}:`, error);

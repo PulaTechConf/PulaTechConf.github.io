@@ -59,16 +59,45 @@ window.testPWAFeatures = {
         } else {
             alert('Offline storage not initialized');
         }
-    },
-
-    // Test schedule notifications
-    testScheduleNotifications() {
+    },    // Test schedule notifications with immediate notification
+    async testImmediateScheduleNotification() {
         if (window.scheduleNotifications) {
-            // Force check for upcoming events
-            window.scheduleNotifications.checkUpcomingEvents();
-            alert('Schedule notifications check triggered');
+            try {
+                // Create a test event that should trigger in 30 seconds
+                const testEvent = {
+                    id: 'test-immediate-' + Date.now(),
+                    title: 'Test Event (30 seconds)',
+                    time: window.scheduleNotifications.getTimeInMinutes(0.5), // 30 seconds from now
+                    date: window.scheduleNotifications.getTodayDate(),
+                    notifyBefore: [0.5], // 30 seconds before (0.5 minutes)
+                    message: 'This is an immediate test notification!'
+                };
+
+                // Add to schedule temporarily
+                window.scheduleNotifications.scheduleEvents.push(testEvent);
+                
+                alert('Test notification scheduled for 30 seconds from now. Watch for the notification!');
+                console.log('Test event added:', testEvent);
+                
+            } catch (error) {
+                console.error('Error creating test notification:', error);
+                alert('Error creating test notification');
+            }
         } else {
             alert('Schedule notifications not initialized');
+        }
+    },
+
+    // Test notification badge clearing
+    showNotificationBadgeTest() {
+        // Add a fake notification count to test clearing
+        const notificationBadge = document.querySelector('.notification-badge');
+        if (notificationBadge) {
+            notificationBadge.textContent = '5';
+            notificationBadge.classList.remove('d-none');
+            alert('Notification badge set to 5. Click the notifications button to test badge clearing.');
+        } else {
+            alert('Notification badge element not found');
         }
     },
 
@@ -88,13 +117,13 @@ window.testPWAFeatures = {
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             min-width: 200px;
         `;
-        
-        panel.innerHTML = `
+          panel.innerHTML = `
             <h6>PWA Test Panel</h6>
             <button class="btn btn-sm btn-primary mb-2 w-100" onclick="testPWAFeatures.testPushNotification()">Test Notification</button>
             <button class="btn btn-sm btn-secondary mb-2 w-100" onclick="testPWAFeatures.testServiceWorker()">Test Service Worker</button>
             <button class="btn btn-sm btn-info mb-2 w-100" onclick="testPWAFeatures.testOfflineStorage()">Test Offline Storage</button>
-            <button class="btn btn-sm btn-warning mb-2 w-100" onclick="testPWAFeatures.testScheduleNotifications()">Test Schedule Notifications</button>
+            <button class="btn btn-sm btn-warning mb-2 w-100" onclick="testPWAFeatures.testImmediateScheduleNotification()">Test Immediate Notification</button>
+            <button class="btn btn-sm btn-success mb-2 w-100" onclick="testPWAFeatures.showNotificationBadgeTest()">Test Badge Clear</button>
             <button class="btn btn-sm btn-danger w-100" onclick="document.getElementById('pwa-test-panel').remove()">Close Panel</button>
         `;
         

@@ -260,3 +260,68 @@ function getPizzaName(pizzaType) {
     };
     return names[pizzaType] || pizzaType;
 }
+
+// Global function to reinitialize pizza selection after content updates
+window.reinitializePizzaSelection = function() {
+    console.log('Reinitializing pizza selection functionality');
+    
+    // Set up lunch expandable
+    const lunchTitle = document.getElementById('lunchTitle');
+    const lunchDetails = document.getElementById('lunchDetails');
+    const lunchIcon = document.getElementById('lunchIcon');
+    
+    if (lunchTitle && lunchDetails && lunchIcon) {
+        // Remove any existing listeners
+        lunchTitle.replaceWith(lunchTitle.cloneNode(true));
+        const newLunchTitle = document.getElementById('lunchTitle');
+        
+        newLunchTitle.style.cursor = 'pointer';
+        newLunchTitle.addEventListener('click', function() {
+            console.log('Lunch title clicked (reinitialized)');
+            
+            if (lunchDetails.style.display === 'none') {
+                lunchDetails.style.display = 'block';
+                lunchIcon.classList.remove('bi-chevron-down');
+                lunchIcon.classList.add('bi-chevron-up');
+                console.log('Lunch details expanded');
+            } else {
+                lunchDetails.style.display = 'none';
+                lunchIcon.classList.remove('bi-chevron-up');
+                lunchIcon.classList.add('bi-chevron-down');
+                console.log('Lunch details collapsed');
+            }
+        });
+        console.log('Lunch expandable reinitialized successfully');
+    }
+    
+    // Set up pizza selection
+    const pizzaChoice = document.getElementById('pizzaChoice');
+    const clearPizzaBtn = document.getElementById('clearPizzaBtn');
+    
+    if (pizzaChoice) {
+        // Remove existing listeners and add new ones
+        pizzaChoice.replaceWith(pizzaChoice.cloneNode(true));
+        const newPizzaChoice = document.getElementById('pizzaChoice');
+        
+        newPizzaChoice.addEventListener('change', function() {
+            console.log('Pizza choice changed (reinitialized):', this.value);
+            if (this.value) {
+                savePizzaChoice(this.value);
+            }
+        });
+    }
+    
+    if (clearPizzaBtn) {
+        // Remove existing listeners and add new ones
+        clearPizzaBtn.replaceWith(clearPizzaBtn.cloneNode(true));
+        const newClearBtn = document.getElementById('clearPizzaBtn');
+        
+        newClearBtn.addEventListener('click', function() {
+            console.log('Clear pizza button clicked (reinitialized)');
+            clearPizzaChoice();
+        });
+    }
+    
+    // Load existing selection
+    loadExistingSelection();
+};

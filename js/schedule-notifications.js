@@ -7,14 +7,16 @@ import {
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-class ScheduleNotifications {
-    constructor() {
+class ScheduleNotifications {    constructor() {
+        // Check if we're in test mode (for demo purposes)
+        this.testMode = location.search.includes('test=true') || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        
         this.scheduleEvents = [
             {
                 id: 'day1-opening',
                 title: 'Conference Opening',
                 time: '09:00',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [30, 10], // minutes
                 message: 'Conference opening ceremony is starting soon! Welcome to PulaTech Conference 2025!'
             },
@@ -22,23 +24,30 @@ class ScheduleNotifications {
                 id: 'day1-keynote',
                 title: 'Keynote: The Future of Croatian Tech',
                 time: '09:30',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [15, 5],
                 message: 'Keynote presentation is starting soon!'
+            },
+            {
+                id: 'test-immediate',
+                title: 'Test Event (Immediate)',
+                time: this.testMode ? this.getTimeInMinutes(2) : '10:30', // 2 minutes from now in test mode
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
+                notifyBefore: [1], // 1 minute before
+                message: 'This is a test notification that should appear soon!'
             },
             {
                 id: 'day1-coffee1',
                 title: 'Coffee Break',
                 time: '10:30',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [5],
                 message: 'Coffee break is starting now!'
-            },
-            {
+            },            {
                 id: 'day1-panel1',
                 title: 'Panel: AI and Machine Learning in Croatia',
                 time: '11:00',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [10, 2],
                 message: 'AI and Machine Learning panel is starting soon!'
             },
@@ -46,7 +55,7 @@ class ScheduleNotifications {
                 id: 'day1-lunch',
                 title: 'Lunch Break',
                 time: '12:30',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [10],
                 message: 'Lunch break is starting now!'
             },
@@ -54,7 +63,7 @@ class ScheduleNotifications {
                 id: 'day1-workshop1',
                 title: 'Workshop: Modern Web Development',
                 time: '14:00',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [15, 5],
                 message: 'Modern Web Development workshop is starting soon!'
             },
@@ -62,7 +71,7 @@ class ScheduleNotifications {
                 id: 'day1-coffee2',
                 title: 'Afternoon Coffee',
                 time: '15:30',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [5],
                 message: 'Afternoon coffee break is starting now!'
             },
@@ -70,7 +79,7 @@ class ScheduleNotifications {
                 id: 'day1-networking',
                 title: 'Networking Session',
                 time: '16:00',
-                date: '2025-07-16',
+                date: this.testMode ? this.getTodayDate() : '2025-07-16',
                 notifyBefore: [10],
                 message: 'Networking session is starting now!'
             },
@@ -79,7 +88,7 @@ class ScheduleNotifications {
                 id: 'day2-opening',
                 title: 'Day 2 Opening',
                 time: '09:00',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [30, 10],
                 message: 'Day 2 is starting! Welcome back to PulaTech Conference!'
             },
@@ -87,7 +96,7 @@ class ScheduleNotifications {
                 id: 'day2-startup',
                 title: 'Startup Pitch Session',
                 time: '09:30',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [15, 5],
                 message: 'Startup pitch session is starting soon!'
             },
@@ -95,7 +104,7 @@ class ScheduleNotifications {
                 id: 'day2-coffee1',
                 title: 'Morning Coffee',
                 time: '10:30',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [5],
                 message: 'Morning coffee break is starting now!'
             },
@@ -103,7 +112,7 @@ class ScheduleNotifications {
                 id: 'day2-panel2',
                 title: 'Panel: Cybersecurity in the Digital Age',
                 time: '11:00',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [10, 2],
                 message: 'Cybersecurity panel is starting soon!'
             },
@@ -111,7 +120,7 @@ class ScheduleNotifications {
                 id: 'day2-lunch-pizza',
                 title: 'Lunch Break (Pizza Selection)',
                 time: '12:30',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [15, 5],
                 message: 'Lunch break is starting soon! Don\'t forget to select your pizza if you haven\'t already!'
             },
@@ -119,7 +128,7 @@ class ScheduleNotifications {
                 id: 'day2-workshop2',
                 title: 'Workshop: Cloud Computing Strategies',
                 time: '14:00',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [15, 5],
                 message: 'Cloud Computing workshop is starting soon!'
             },
@@ -127,7 +136,7 @@ class ScheduleNotifications {
                 id: 'day2-coffee2',
                 title: 'Afternoon Coffee',
                 time: '15:30',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [5],
                 message: 'Afternoon coffee break is starting now!'
             },
@@ -135,13 +144,36 @@ class ScheduleNotifications {
                 id: 'day2-closing',
                 title: 'Closing Ceremony',
                 time: '16:00',
-                date: '2025-07-17',
+                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
                 notifyBefore: [15, 5],
                 message: 'Closing ceremony is starting soon. Thank you for joining PulaTech Conference 2025!'
             }
         ];
         
+        console.log('Schedule notifications initialized with test mode:', this.testMode);
         this.init();
+    }
+
+    getTodayDate() {
+        const today = new Date();
+        return today.getFullYear() + '-' + 
+               String(today.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(today.getDate()).padStart(2, '0');
+    }
+
+    getTomorrowDate() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return tomorrow.getFullYear() + '-' + 
+               String(tomorrow.getMonth() + 1).padStart(2, '0') + '-' + 
+               String(tomorrow.getDate()).padStart(2, '0');
+    }
+
+    getTimeInMinutes(minutesFromNow) {
+        const future = new Date();
+        future.setMinutes(future.getMinutes() + minutesFromNow);
+        return String(future.getHours()).padStart(2, '0') + ':' + 
+               String(future.getMinutes()).padStart(2, '0');
     }
 
     init() {
