@@ -13,35 +13,42 @@ document.addEventListener('DOMContentLoaded', () => {
     // Find UI elements
     const notificationsBtn = document.getElementById('notificationsBtn');
     const notificationBadge = document.querySelector('.notification-badge');
-    const notificationsDropdown = document.getElementById('notificationsDropdown');
+    const notificationsPanel = document.getElementById('notificationsPanel');
     
-    if (!notificationsBtn || !notificationBadge) {
+    if (!notificationsBtn || !notificationBadge || !notificationsPanel) {
         console.log("Notification elements not found on page");
         return;
     }
+      // Add manual dropdown toggle
+    notificationsBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (notificationsPanel.style.display === 'none') {
+            notificationsPanel.style.display = 'block';
+            console.log('Notifications panel opened');
+            
+            // Clear unread count when opening notifications
+            setTimeout(() => {
+                notificationBadge.classList.add('d-none');
+                console.log('Notification badge cleared');
+            }, 500);
+            
+        } else {
+            notificationsPanel.style.display = 'none';
+            console.log('Notifications panel closed');
+        }
+    });
+    
+    // Close panel when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!notificationsBtn.contains(e.target) && !notificationsPanel.contains(e.target)) {
+            notificationsPanel.style.display = 'none';
+        }
+    });
     
     // Set up notifications listener
     setupNotificationsListener();
-    
-    // Stop dropdown from closing when clicking notification items
-    document.addEventListener('click', function(e) {
-        if (e.target && (e.target.closest('.notification-item') || e.target.closest('.notification-content'))) {
-            e.stopPropagation(); // Stop event propagation to prevent dropdown from closing
-        }
-    }, true);
-    
-    // Add click handler for notification items
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.closest('.notification-item')) {
-            const item = e.target.closest('.notification-item');
-            const content = item.querySelector('.notification-content');
-            
-            if (content) {
-                // Toggle this notification content
-                content.classList.toggle('show');
-            }
-        }
-    });
     
     function setupNotificationsListener() {
         console.log("Setting up notifications listener");
@@ -61,8 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
             let notifications = [];
             
             if (snapshot.empty) {
-                if (notificationsDropdown) {
-                    notificationsDropdown.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
+                if (notificationsPanel) {
+                    notificationsPanel.innerHTML = '<div class="notifications-content"><div class="text-center p-3">No notifications</div></div>';
                 }
                 notificationBadge.classList.add('d-none');
                 return;
@@ -100,9 +107,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 notificationBadge.classList.add('d-none');
             }
             
-            // Update notifications dropdown
-            if (notificationsDropdown) {
-                updateNotificationsDropdown(notifications);
+            // Update notifications panel
+            if (notificationsPanel) {
+                updateNotificationsPanel(notifications);
             }
             
         }, (error) => {
@@ -110,19 +117,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // Function to update the notifications dropdown UI
-    function updateNotificationsDropdown(notifications) {
-        if (!notificationsDropdown) return;
+    // Function to update the notifications panel UI
+    function updateNotificationsPanel(notifications) {
+        if (!notificationsPanel) return;
         
-        // Clear current list
-        notificationsDropdown.innerHTML = '';
+        // Clear current content
+        notificationsPanel.innerHTML = '';
         
         if (notifications.length === 0) {
-            notificationsDropdown.innerHTML = '<div class="dropdown-item text-center">No notifications</div>';
+            notificationsPanel.innerHTML = '<div class="notifications-content"><div class="text-center p-3">No notifications</div></div>';
             return;
         }
         
-        // Add each notification to the dropdown with improved wrapping
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'notifications-content';
+        
+        // Add each notification
         notifications.forEach(notification => {
             // Format date
             let formattedDate = "Recent";
@@ -131,7 +142,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     notification.timestamp.toDate() : 
                     new Date(notification.timestamp.seconds * 1000);
                 
-                // Format date to show only relevant info (today, yesterday, or specific date)
                 const now = new Date();
                 const isToday = date.toDateString() === now.toDateString();
                 const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString();
@@ -144,20 +154,43 @@ document.addEventListener('DOMContentLoaded', () => {
                     formattedDate = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
                 }
             }
-            
-            const notificationItem = document.createElement('div');
-            notificationItem.className = 'notification-item dropdown-item';
+              const notificationItem = document.createElement('div');
+            notificationItem.className = 'notification-expandable';
             notificationItem.innerHTML = `
-                <div class="d-flex justify-content-between align-items-start">
-                    <strong>${notification.title}</strong>
-                    <small class="text-muted ms-2">${formattedDate}</small>
+                <div class="notification-header" style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background-color: #fff; color: #333;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong style="color: #333;">${notification.title}</strong>
+                        <small class="text-muted" style="color: #666;">${formattedDate}</small>
+                    </div>
+                    <i class="bi bi-chevron-down mt-1" style="color: #333;"></i>
                 </div>
-                <div class="notification-content">
-                    ${notification.message}
+                <div class="notification-details" style="display: none; padding: 10px; background-color: #f8f9fa; border-bottom: 1px solid #eee; color: #555;">
+                    <p class="mb-0" style="color: #555;">${notification.message}</p>
                 </div>
             `;
             
-            notificationsDropdown.appendChild(notificationItem);
+            // Add click handler for expanding
+            const header = notificationItem.querySelector('.notification-header');
+            const details = notificationItem.querySelector('.notification-details');
+            const icon = notificationItem.querySelector('i');
+            
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                if (details.style.display === 'none') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            
+            container.appendChild(notificationItem);
         });
+        
+        notificationsPanel.appendChild(container);
     }
 });

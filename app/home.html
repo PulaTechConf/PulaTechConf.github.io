@@ -3,7 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PulaTechConf - Schedule</title>
+    <title>PulaTechConf - Information</title>
+    
+    <!-- PWA Meta tags -->
+    <meta name="description" content="Official app for PulaTech Conference 2025 in Pula, Croatia">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PulaTech Conf">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="../manifest.json">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/svg+xml" href="../icons/icon.svg">
+    <link rel="apple-touch-icon" href="../icons/icon.svg">
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/styles.css">
@@ -16,36 +31,24 @@
             <a class="navbar-brand" href="#">PulaTechConf</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
+            </button>            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
-                        <a class="nav-link active" href="home.html">Schedule</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="info.html">Conference Info</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="general-info.html">General Info</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="menu.html">Menu</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="messaging.html">Messages</a>
+                        <a class="nav-link active" href="home.html">Information</a>
                     </li>
                     <li class="nav-item admin-only d-none">
                         <a class="nav-link" href="admin/dashboard.html">Admin</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationsBtn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <ul class="navbar-nav ms-auto">                    <li class="nav-item admin-only d-none">
+                        <a class="nav-link" href="#" id="notificationsBtn">
                             <i class="bi bi-bell"></i>
                             <span class="badge bg-danger notification-badge d-none">0</span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end notifications-dropdown" id="notificationsDropdown">
-                            <div class="dropdown-item text-center">Loading notifications...</div>
+                        <div class="notifications-panel" id="notificationsPanel" style="display: none;">
+                            <div class="notifications-content">
+                                <div class="text-center p-3">Loading notifications...</div>
+                            </div>
                         </div>
                     </li>
                     <li class="nav-item">
@@ -54,189 +57,337 @@
                 </ul>
             </div>
         </div>
-    </nav>
-
-    <div class="container mt-4">
+    </nav>    <div class="container mt-4">
         <div id="alertContainer"></div>
         
-        <h1 class="mb-4">Conference Schedule</h1>
+        <!-- Information Tabs -->
+        <ul class="nav nav-tabs mb-4" id="informationTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="schedule-tab" data-bs-toggle="tab" data-bs-target="#schedule" type="button" role="tab" aria-controls="schedule" aria-selected="true">Schedule</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="conference-info-tab" data-bs-toggle="tab" data-bs-target="#conference-info" type="button" role="tab" aria-controls="conference-info" aria-selected="false">Conference Info</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="general-info-tab" data-bs-toggle="tab" data-bs-target="#general-info" type="button" role="tab" aria-controls="general-info" aria-selected="false">General Info</button>
+            </li>
+        </ul>
 
-        <div class="accordion" id="conferenceSchedule">
-            <!-- Day 1 -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDay1">
-                        Day 1 – Wednesday, July 16
-                    </button>
-                </h2>
-                <div id="collapseDay1" class="accordion-collapse collapse show">
-                    <div class="accordion-body">
-                        <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
-                        <p>📌 <a href="https://g.co/kgs/WXB7oWG" target="_blank">Google maps</a></p>
-                        
-                        <div id="day1ScheduleSection" class="editable-section" data-title="Day 1 Schedule">
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">19:00 – 19:30</span>
-                                    <span class="badge bg-primary">Registration</span>
+        <!-- Tab Content -->
+        <div class="tab-content" id="informationTabContent">
+            <!-- Schedule Tab -->
+            <div class="tab-pane fade show active" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
+                <div class="accordion" id="conferenceSchedule">
+                    <!-- Day 1 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDay1">
+                                Day 1 – Wednesday, July 16
+                            </button>
+                        </h2>
+                        <div id="collapseDay1" class="accordion-collapse collapse show">
+                            <div class="accordion-body">
+                                <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
+                                <p>📌 <a href="https://g.co/kgs/WXB7oWG" target="_blank">Google maps</a></p>
+                                
+                                <div id="day1ScheduleSection" class="editable-section" data-title="Day 1 Schedule">
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">19:00 – 19:30</span>
+                                            <span class="badge bg-primary">Registration</span>
+                                        </div>
+                                        <p>Registration – Welcome desk</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">20:00 – 21:30</span>
+                                            <span class="badge bg-info">Networking</span>
+                                        </div>
+                                        <p>Cocktail and Ice-breaking Event – Refreshments and networking</p>
+                                    </div>
                                 </div>
-                                <p>Registration – Welcome desk</p>
                             </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">20:00 – 21:30</span>
-                                    <span class="badge bg-info">Networking</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 2 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDay2">
+                                Day 2 – Thursday, July 17
+                            </button>
+                        </h2>
+                        <div id="collapseDay2" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <p class="fw-bold">📍 Coworking Pula, Marka Marulića 5, Pula</p>
+                                <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
+                                <p>🔗 Hybrid Access: <a href="meet.google.com/hbu-njzw-ijz" target="_blank">meet.google.com/hbu-njzw-ijz</a></p>
+                                
+                                <div id="day2ScheduleSection" class="editable-section" data-title="Day 2 Schedule">
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">10:00 – 10:35</span>
+                                            <span class="badge bg-primary">Opening</span>
+                                        </div>
+                                        <p>Opening Ceremony – Official welcome</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">10:35 – 10:55</span>
+                                            <span class="badge bg-success">Lecture</span>
+                                        </div>
+                                        <p>Invited Lecture 1</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">11:00 – 11:10</span>
+                                            <span class="badge bg-secondary">Break</span>
+                                        </div>
+                                        <p>Coffee Break – Refreshments</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">11:10 – 11:35</span>
+                                            <span class="badge bg-success">Lecture</span>
+                                        </div>
+                                        <p>Invited Lecture 2</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">11:35 – 12:00</span>
+                                            <span class="badge bg-success">Lecture</span>
+                                        </div>
+                                        <p>Invited Lecture 3</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">12:00 – 12:40</span>
+                                            <span class="badge bg-info">Discussion</span>
+                                        </div>
+                                        <p>Round Table Discussion: Education and Opportunities in Dual Studies</p>
+                                    </div>                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">12:40 – 13:30</span>
+                                            <span class="badge bg-secondary">Lunch</span>
+                                        </div>
+                                        <div class="lunch-expandable">
+                                            <div class="lunch-title" id="lunchTitle">
+                                                <span class="fw-bold">🍽️ Lunch Break</span>
+                                                <i class="bi bi-chevron-down ms-2" id="lunchIcon"></i>
+                                            </div>
+                                            <div class="lunch-details" id="lunchDetails" style="display: none;">
+                                                <div class="pizza-selection mt-3">
+                                                    <p><strong>🍕 Pizza Selection:</strong></p>
+                                                    <div class="alert alert-info alert-sm">
+                                                        <small><i class="bi bi-info-circle"></i> Please select your pizza choice below. Selection will be saved automatically.</small>
+                                                    </div>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <select class="form-select" id="pizzaChoice">
+                                                                <option value="">Select your pizza...</option>
+                                                                <option value="margherita">🍅 Margherita</option>
+                                                                <option value="pepperoni">🍕 Pepperoni</option>
+                                                                <option value="vegetarian">🥬 Vegetarian</option>
+                                                                <option value="quattro-formaggi">🧀 Quattro Formaggi</option>
+                                                                <option value="prosciutto">🥓 Prosciutto</option>
+                                                                <option value="gluten-free">🌾 Gluten Free</option>
+                                                            </select>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <button class="btn btn-outline-primary btn-sm" id="clearPizzaBtn">
+                                                                <i class="bi bi-x-circle"></i> Clear Selection
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <div id="pizzaSelectionStatus" class="mt-2"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">13:30 – 14:20</span>
+                                            <span class="badge bg-success">Lecture</span>
+                                        </div>
+                                        <p>Upping Zone: From Failure to Success</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">14:20 – 14:30</span>
+                                            <span class="badge bg-secondary">Break</span>
+                                        </div>
+                                        <p>Coffee Break – Refreshments</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">14:30 – 15:50</span>
+                                            <span class="badge bg-warning text-dark">Presentations</span>
+                                        </div>
+                                        <p>Presentations (Each presentation: 5-minute time slot)</p>
+                                        <p>Sessions:</p>
+                                        <ul>
+                                            <li>Engineering, Innovations, Industry & Technology</li>
+                                            <li>Medicine, Society & Innovations</li>
+                                        </ul>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">18:00</span>
+                                            <span class="badge bg-info">Networking</span>
+                                        </div>
+                                        <p>City Tour and Networking (self-organized / at your own initiative)</p>
+                                    </div>
                                 </div>
-                                <p>Cocktail and Ice-breaking Event – Refreshments and networking</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Day 3 -->
+                    <div class="accordion-item">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDay3">
+                                Day 3 – Friday, July 18
+                            </button>
+                        </h2>
+                        <div id="collapseDay3" class="accordion-collapse collapse">
+                            <div class="accordion-body">
+                                <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
+                                <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
+                                
+                                <div id="day3ScheduleSection" class="editable-section" data-title="Day 3 Schedule">
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">10:00 – 12:00</span>
+                                            <span class="badge bg-secondary">Breakfast</span>
+                                        </div>
+                                        <p>Breakfast with Participants + Opening of the Exhibition: Science, Technology and Art</p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">13:30</span>
+                                            <span class="badge bg-primary">Transfer</span>
+                                        </div>
+                                        <p>Transfer to Fratarski Island Student Camp</p>
+                                        <p>📍 <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">Google maps</a></p>
+                                    </div>
+                                    
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">From 17:00</span>
+                                            <span class="badge bg-success">Lectures</span>
+                                        </div>
+                                        <p>Lectures and Workshops</p>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
-            
-            <!-- Day 2 -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDay2">
-                        Day 2 – Thursday, July 17
-                    </button>
-                </h2>
-                <div id="collapseDay2" class="accordion-collapse collapse">
-                    <div class="accordion-body">
-                        <p class="fw-bold">📍 Coworking Pula, Marka Marulića 5, Pula</p>
-                        <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
-                        <p>🔗 Hybrid Access: <a href="meet.google.com/hbu-njzw-ijz" target="_blank">meet.google.com/hbu-njzw-ijz</a></p>
-                        
-                        <div id="day2ScheduleSection" class="editable-section" data-title="Day 2 Schedule">
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">10:00 – 10:35</span>
-                                    <span class="badge bg-primary">Opening</span>
-                                </div>
-                                <p>Opening Ceremony – Official welcome</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">10:35 – 10:55</span>
-                                    <span class="badge bg-success">Lecture</span>
-                                </div>
-                                <p>Invited Lecture 1</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">11:00 – 11:10</span>
-                                    <span class="badge bg-secondary">Break</span>
-                                </div>
-                                <p>Coffee Break – Refreshments</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">11:10 – 11:35</span>
-                                    <span class="badge bg-success">Lecture</span>
-                                </div>
-                                <p>Invited Lecture 2</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">11:35 – 12:00</span>
-                                    <span class="badge bg-success">Lecture</span>
-                                </div>
-                                <p>Invited Lecture 3</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">12:00 – 12:40</span>
-                                    <span class="badge bg-info">Discussion</span>
-                                </div>
-                                <p>Round Table Discussion: Education and Opportunities in Dual Studies</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">12:40 – 13:30</span>
-                                    <span class="badge bg-secondary">Lunch</span>
-                                </div>
-                                <p>Lunch Break</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">13:30 – 15:50</span>
-                                    <span class="badge bg-warning text-dark">Presentations</span>
-                                </div>
-                                <p>Presentations (Each presentation: 5-minute time slot)</p>
-                                <p>Sessions:</p>
-                                <ul>
-                                    <li>Engineering, Innovations, Industry & Technology</li>
-                                    <li>Medicine, Society & Innovations</li>
-                                </ul>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">18:00</span>
-                                    <span class="badge bg-info">Networking</span>
-                                </div>
-                                <p>City Tour and Networking (self-organized / at your own initiative)</p>
-                            </div>
-                        </div>
-                    </div>
+            </div>            <!-- Conference Info Tab -->
+            <div class="tab-pane fade" id="conference-info" role="tabpanel" aria-labelledby="conference-info-tab">
+                <div id="conferenceInfoSection" class="editable-section" data-title="Conference Info">
+                    <h2>About PulaTechConf 2025</h2>
+                    <p>Join us for an enriching experience in Pula, Croatia, from July 16th to 18th, 2025!</p>
+                    
+                    <p>The Second Central and Mediterranean European Conference on New Technologies, Society, and Development builds upon the success of its inaugural edition in 2024. This conference continues to serve as a platform for collaboration and innovation across diverse scientific disciplines. Esteemed scholars and industry experts will gather to advance technological knowledge and explore its societal impacts.</p>
+                    
+                    <h3>Conference Highlights</h3>
+                    <ul>
+                        <li>Dynamic research presentations</li>
+                        <li>Thought-provoking debates</li>
+                        <li>Networking opportunities</li>
+                        <li>Cooperation among professionals from various fields</li>
+                    </ul>
+                    
+                    <h3>Important Information</h3>
+                    <p><strong>Abstract Deadline Extended:</strong> The new deadline for abstract submissions is June 25th. We will shortly send instructions for the full article submission to your registered email address.</p>
+                    
+                    <p><strong>Free Participation:</strong> Based on last year's experience, we are pleased to announce that participation in the conference will remain free of charge.</p>
+                    
+                    <p><strong>Review Process:</strong> Every submitted abstract will undergo a thorough peer-review process, and accepted abstracts will be published in the conference proceedings.</p>
+                    
+                    <h3>Organization</h3>
+                    <p>Organized through a partnership between academic institutions and global technical firms, this conference reaffirms a commitment to the advancement and dissemination of technological knowledge.</p>
+                    
+                    <p><strong>Official website:</strong> <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></p>
                 </div>
             </div>
-            
-            <!-- Day 3 -->
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDay3">
-                        Day 3 – Friday, July 18
-                    </button>
-                </h2>
-                <div id="collapseDay3" class="accordion-collapse collapse">
-                    <div class="accordion-body">
-                        <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
-                        <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
-                        
-                        <div id="day3ScheduleSection" class="editable-section" data-title="Day 3 Schedule">
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">10:00 – 12:00</span>
-                                    <span class="badge bg-secondary">Breakfast</span>
-                                </div>
-                                <p>Breakfast with Participants + Opening of the Exhibition: Science, Technology and Art</p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">13:30</span>
-                                    <span class="badge bg-primary">Transfer</span>
-                                </div>
-                                <p>Transfer to Fratarski Island Student Camp</p>
-                                <p>📍 <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">Google maps</a></p>
-                            </div>
-                            
-                            <div class="schedule-item">
-                                <div class="d-flex justify-content-between">
-                                    <span class="fw-bold">From 17:00</span>
-                                    <span class="badge bg-success">Lectures</span>
-                                </div>
-                                <p>Lectures and Workshops</p>
-                            </div>
-                        </div>
+
+            <!-- General Info Tab -->
+            <div class="tab-pane fade" id="general-info" role="tabpanel" aria-labelledby="general-info-tab">
+                <div id="generalInfoSection" class="editable-section" data-title="General Info">
+                    <h2>Participant Guide – TFPU 2025 Conference</h2>
+                    <p><strong>Dates:</strong> July 16–18, 2025<br>
+                    <strong>Location:</strong> Pula, Croatia</p>
+                    
+                    <h3>🚗 Parking Information</h3>
+                    <div class="alert alert-info">
+                        <p><strong>Important:</strong> For all three days, it's recommended to park at the designated parking area as the conference location at Marka Marulića 5, Pula only offers street parking if available. Due to tourist season, expect crowds in the city, so it's advisable to park at the designated area and walk to the conference venue.</p>
+                        <p><em>Note: Exact parking location information will be provided closer to the conference date.</em></p>
+                    </div>
+                    
+                    <h3>🚶 Walking Directions</h3>
+                    <p><strong>Campus Restaurant → Coworking Pula:</strong> <a href="https://maps.app.goo.gl/EtaB5Hq296jLoncZ7" target="_blank">Google Maps Route</a></p>
+                    
+                    <h4>Coworking Pula Entrance Instructions:</h4>
+                    <ol>
+                        <li>Go straight through the entrance to the reception</li>
+                        <li>Immediately turn left to find the elevator</li>
+                        <li>Press the button for the second floor</li>
+                        <li>When you exit, the event room will be right in front of you</li>
+                        <li>If using stairs, speak to the reception desk for directions</li>
+                    </ol>
+                    
+                    <h3>🏛️ What to See in Pula</h3>
+                    <ul>
+                        <li><strong>🏛️ Pula Arena</strong> – Roman amphitheatre from the 1st century</li>
+                        <li><strong>🏛️ Temple of Augustus & Forum</strong> – Ancient Roman square in the old town</li>
+                        <li><strong>🌆 Zerostrasse Tunnels</strong> – WWI underground shelters under the city</li>
+                        <li><strong>🏰 Kaštel & Historical Museum of Istria</strong> – Hilltop fortress with panoramic views</li>
+                        <li><strong>🌊 Riva & Lungomare Promenade</strong> – Ideal for an evening stroll by the sea</li>
+                    </ul>
+                    
+                    <h3>📋 Useful Information During Conference</h3>
+                    <ul>
+                        <li><strong>💡 Name badges:</strong> Please wear your badge at all times during conference hours</li>
+                        <li><strong>☕ Coffee & Water:</strong> Complimentary coffee and water will be provided at breaks. For ordering pizza for lunch you need to choose it on time on tablet</li>
+                        <li><strong>🆘 Info point:</strong> The info desk will be staffed throughout all sessions</li>
+                        <li><strong>💻 Presentation uploads:</strong> If you're presenting, please send your slides to the organizers at least 2 hours before</li>
+                        <li><strong>🌐 Wi-Fi at Venues:</strong> Free Wi-Fi will be available via QR barcode on conference poster</li>
+                    </ul>
+                    
+                    <h3>📍 Venue Information</h3>
+                    <p><strong>Campus Restaurant:</strong> <a href="https://www.scpu.hr/hr/prehrana/restoran/" target="_blank">Official website</a></p>
+                    
+                    <h3>🏝️ Fratarski Island Information</h3>
+                    <p><strong>Day 3 Transfer:</strong> Transportation to Fratarski Island Student Camp will be provided. Please note:</p>
+                    <ul>
+                        <li>Registration for island visit is required in advance</li>
+                        <li>Boat tickets are included</li>
+                        <li>Bring personal items if planning to stay overnight</li>
+                        <li>Additional food may be needed depending on availability</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning">
+                        <strong>Note:</strong> Some venue and parking details are still being finalized. Updated information will be provided closer to the conference date.
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <!-- Content Edit Modal -->
+    </div>    <!-- Content Edit Modal -->
     <div class="modal fade" id="contentEditModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="editModalLabel">Edit Content</h5>
@@ -244,19 +395,129 @@
                 </div>
                 <div class="modal-body">
                     <input type="hidden" id="currentSectionId">
-                    <textarea id="contentEditor" class="form-control" rows="10"></textarea>
+                    
+                    <!-- Rich Text Editor Toolbar -->
+                    <div class="editor-toolbar mb-3">
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="bold" title="Bold">
+                                <i class="bi bi-type-bold"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="italic" title="Italic">
+                                <i class="bi bi-type-italic"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="underline" title="Underline">
+                                <i class="bi bi-type-underline"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="insertUnorderedList" title="Bullet List">
+                                <i class="bi bi-list-ul"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="insertOrderedList" title="Numbered List">
+                                <i class="bi bi-list-ol"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="justifyLeft" title="Align Left">
+                                <i class="bi bi-text-left"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="justifyCenter" title="Align Center">
+                                <i class="bi bi-text-center"></i>
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="justifyRight" title="Align Right">
+                                <i class="bi bi-text-right"></i>
+                            </button>
+                        </div>
+                        
+                        <div class="btn-group me-2" role="group">
+                            <select class="form-select form-select-sm" id="headingSelect" style="width: auto;">
+                                <option value="">Normal</option>
+                                <option value="h2">Heading 2</option>
+                                <option value="h3">Heading 3</option>
+                                <option value="h4">Heading 4</option>
+                            </select>
+                        </div>
+                        
+                        <div class="btn-group" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" data-command="removeFormat" title="Clear Formatting">
+                                <i class="bi bi-eraser"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Split View: Editor and Preview -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Editor</label>
+                            <div id="richTextEditor" class="rich-text-editor" contenteditable="true"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Live Preview</label>
+                            <div id="livePreview" class="live-preview"></div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" id="saveContentBtn">Save Changes</button>
                 </div>
             </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="module" src="../js/app.js"></script>
+        </div>    </div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>    <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/notifications.js"></script>
+    <script type="module" src="../js/pizza-selection.js"></script>
+    <script type="module" src="../js/schedule-notifications.js"></script>
+    <script type="module" src="../js/offline-storage.js"></script>
     <script type="module" src="../js/admin/content-editor.js"></script>
+    <script src="../js/pwa-test.js"></script>
+    
+    <!-- PWA Install prompt and service worker registration -->
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('../sw.js')
+                    .then(function(registration) {
+                        console.log('ServiceWorker registration successful');
+                    }, function(err) {
+                        console.log('ServiceWorker registration failed: ', err);
+                    });
+            });
+        }
+
+        // PWA install prompt
+        let deferredPrompt;
+        const installButton = document.createElement('button');
+        installButton.textContent = 'Install App';
+        installButton.style.display = 'none';
+        installButton.className = 'btn btn-primary btn-sm position-fixed';
+        installButton.style.bottom = '20px';
+        installButton.style.left = '20px';
+        installButton.style.zIndex = '1050';
+        document.body.appendChild(installButton);
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installButton.style.display = 'block';
+
+            installButton.addEventListener('click', (e) => {
+                installButton.style.display = 'none';
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the A2HS prompt');
+                    }
+                    deferredPrompt = null;
+                });
+            });
+        });
+
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed');
+            installButton.style.display = 'none';
+        });
+    </script>
 </body>
 </html>

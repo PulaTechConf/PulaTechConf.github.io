@@ -34,6 +34,10 @@ body {
     color: white;
 }
 
+.app-header .nav-item {
+    position: relative;
+}
+
 .notification {
     position: fixed;
     right: 20px;
@@ -42,42 +46,76 @@ body {
     min-width: 300px;
 }
 
-/* Updated notifications dropdown styles */
-.notifications-dropdown {
+/* Updated notifications panel styles */
+.notifications-panel {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    z-index: 1000;
+    background-color: white;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);
     width: 350px;
     max-height: 500px;
     overflow-y: auto;
+}
+
+.notifications-content {
     padding: 0;
 }
 
-.notification-item {
+.notification-expandable {
     border-bottom: 1px solid #eee;
-    padding: 10px 15px;
-    cursor: pointer;
-    word-wrap: break-word;
-    white-space: normal;
 }
 
-.notification-item:hover {
-    background-color: #f8f9fa;
-}
-
-.notification-item:last-child {
+.notification-expandable:last-child {
     border-bottom: none;
 }
 
-.notification-item strong {
-    word-break: break-word;
-    max-width: 270px;
-    display: inline-block;
+.notification-header {
+    background-color: #fff;
+    color: #333;
 }
+
+.notification-details {
+    font-size: 0.9rem;
+    color: #555;
+    background-color: #f8f9fa;
+}
+
+/* Lunch expandable styles */
+.lunch-expandable {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-top: 10px;
+    background-color: #ffffff;
+}
+
+.lunch-title {
+    padding: 10px 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px 8px 0 0;
+    transition: background-color 0.2s ease;
+}
+
+.lunch-title:hover {
+    background-color: #e9ecef;
+}
+
+.lunch-details {
+    padding: 15px;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Old notification styles removed - using new expandable system */
 
 /* Updated notification styles to properly show content */
 .notification-content {
     display: none;
     padding-top: 8px;
     font-size: 0.9rem;
-    color: #555;
+    color: #555 !important;
     border-top: 1px dashed #eee;
     margin-top: 5px;
     padding-top: 8px;
@@ -110,6 +148,99 @@ body {
 
 .editable-section:hover .edit-button {
     display: block;
+}
+
+/* Rich Text Editor Styles */
+.editor-toolbar {
+    border: 1px solid #dee2e6;
+    border-bottom: none;
+    padding: 8px;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem 0.375rem 0 0;
+}
+
+.editor-toolbar .btn.active {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+}
+
+.editor-toolbar .btn:hover {
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.editor-toolbar .btn.active:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.rich-text-editor {
+    border: 1px solid #dee2e6;
+    border-radius: 0 0 0.375rem 0.375rem;
+    padding: 12px;
+    min-height: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+}
+
+.rich-text-editor:focus {
+    outline: none;
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.live-preview {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 12px;
+    min-height: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.5;
+}
+
+/* Rich text editor content styling */
+.rich-text-editor h2,
+.live-preview h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.rich-text-editor h3,
+.live-preview h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.rich-text-editor h4,
+.live-preview h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.rich-text-editor ul,
+.rich-text-editor ol,
+.live-preview ul,
+.live-preview ol {
+    margin-left: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.rich-text-editor p,
+.live-preview p {
+    margin-bottom: 1rem;
 }
 
 .editor-container {
@@ -185,3 +316,84 @@ body {
     display: flex;
     flex-direction: column;
 }
+
+/* Pizza selection styles */
+.pizza-selection {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.pizza-selection .alert-sm {
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.pizza-selection select {
+    border-radius: 6px;
+}
+
+.pizza-selection .btn {
+    border-radius: 6px;
+}
+
+/* Schedule item enhancements */
+.schedule-item {
+    border-left: 3px solid transparent;
+    padding-left: 15px;
+    margin-bottom: 15px;
+    transition: border-color 0.3s ease;
+}
+
+.schedule-item:hover {
+    border-left-color: #2c3e50;
+}
+
+/* Badge color variations */
+.badge.bg-secondary {
+    background-color: #6c757d !important;
+}
+
+.badge.bg-info {
+    background-color: #0dcaf0 !important;
+}
+
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+
+.badge.bg-warning {
+    background-color: #ffc107 !important;
+}
+
+.badge.bg-primary {
+    background-color: #0d6efd !important;
+}
+
+/* Notifications styles */
+.notification-header {
+    transition: all 0.2s ease;
+}
+
+.notification-header:hover {
+    color: #0d6efd;
+}
+
+.notification-preview {
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.notification-full-content {
+    border-top: 1px solid #e9ecef;
+    padding-top: 10px;
+}
+
+.notification-full-content .alert {
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+/* Simplified notification styles - removed hover effects */

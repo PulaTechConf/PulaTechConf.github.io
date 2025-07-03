@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', function() {
     if (editModal) {
         const saveButton = editModal.querySelector('#saveContentBtn');
         saveButton.addEventListener('click', saveContent);
+        
+        // Initialize rich text editor when modal is shown
+        editModal.addEventListener('shown.bs.modal', initializeRichTextEditor);
     }
     
     // Function to initialize edit buttons
@@ -46,33 +49,178 @@ document.addEventListener('DOMContentLoaded', function() {
             section.appendChild(editButton);
         });
     }
-    
-    // Function to open edit modal for a section
+      // Function to open edit modal for a section
     function openEditModal(section) {
         const modal = new bootstrap.Modal(document.getElementById('contentEditModal'));
         const modalTitle = document.getElementById('editModalLabel');
-        const contentEditor = document.getElementById('contentEditor');
         
         // Set modal title
         modalTitle.textContent = `Edit: ${section.dataset.title || section.id}`;
         
-        // Populate editor with current content
-        contentEditor.value = section.innerHTML;
-        
         // Store section ID for saving
         document.getElementById('currentSectionId').value = section.id;
         
-        // Show modal
+        // Show modal (rich text editor will be initialized when modal is shown)
         modal.show();
+        
+        // Set the content after modal is shown
+        setTimeout(() => {
+            const richTextEditor = document.getElementById('richTextEditor');
+            const livePreview = document.getElementById('livePreview');
+            
+            if (richTextEditor && livePreview) {
+                // Get content without the edit button
+                const sectionClone = section.cloneNode(true);
+                const editButton = sectionClone.querySelector('.edit-button');
+                if (editButton) {
+                    editButton.remove();
+                }
+                
+                const content = sectionClone.innerHTML;
+                richTextEditor.innerHTML = content;
+                livePreview.innerHTML = content;
+            }
+        }, 100);
+    }
+    
+    // Initialize rich text editor functionality
+    function initializeRichTextEditor() {
+        const richTextEditor = document.getElementById('richTextEditor');
+        const livePreview = document.getElementById('livePreview');
+        const toolbar = document.querySelector('.editor-toolbar');
+        
+        if (!richTextEditor || !livePreview || !toolbar) return;
+        
+        // Update live preview when editor content changes
+        richTextEditor.addEventListener('input', function() {
+            livePreview.innerHTML = richTextEditor.innerHTML;
+        });
+        
+        // Toolbar button handlers
+        toolbar.addEventListener('click', function(e) {
+            const button = e.target.closest('button[data-command]');
+            if (button) {
+                e.preventDefault();
+                const command = button.dataset.command;
+                
+                // Focus editor before executing command
+                richTextEditor.focus();
+                
+                // Execute formatting command
+                document.execCommand(command, false, null);
+                
+                // Update live preview
+                livePreview.innerHTML = richTextEditor.innerHTML;
+                
+                // Update button states
+                updateToolbarStates();
+            }
+        });
+        
+        // Heading select handler
+        const headingSelect = document.getElementById('headingSelect');
+        if (headingSelect) {
+            headingSelect.addEventListener('change', function() {
+                const value = this.value;
+                richTextEditor.focus();
+                
+                if (value) {
+                    document.execCommand('formatBlock', false, value);
+                } else {
+                    document.execCommand('formatBlock', false, 'div');
+                }
+                
+                // Update live preview
+                livePreview.innerHTML = richTextEditor.innerHTML;
+                updateToolbarStates();
+            });
+        }
+        
+        // Prevent default browser shortcuts that might interfere
+        richTextEditor.addEventListener('keydown', function(e) {
+            // Handle common keyboard shortcuts
+            if (e.ctrlKey) {
+                switch(e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault();
+                        document.execCommand('bold');
+                        livePreview.innerHTML = richTextEditor.innerHTML;
+                        updateToolbarStates();
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        document.execCommand('italic');
+                        livePreview.innerHTML = richTextEditor.innerHTML;
+                        updateToolbarStates();
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        document.execCommand('underline');
+                        livePreview.innerHTML = richTextEditor.innerHTML;
+                        updateToolbarStates();
+                        break;
+                }
+            }
+        });
+        
+        // Handle paste events to clean up content
+        richTextEditor.addEventListener('paste', function(e) {
+            e.preventDefault();
+            
+            // Get plain text from clipboard
+            const text = (e.clipboardData || window.clipboardData).getData('text/plain');
+            
+            // Insert as plain text
+            document.execCommand('insertText', false, text);
+            
+            // Update live preview
+            setTimeout(() => {
+                livePreview.innerHTML = richTextEditor.innerHTML;
+            }, 10);
+        });
+        
+        // Update toolbar button states based on current selection
+        richTextEditor.addEventListener('keyup', updateToolbarStates);
+        richTextEditor.addEventListener('mouseup', updateToolbarStates);
+        
+        function updateToolbarStates() {
+            const commands = ['bold', 'italic', 'underline'];
+            
+            commands.forEach(command => {
+                const button = toolbar.querySelector(`[data-command="${command}"]`);
+                if (button) {
+                    if (document.queryCommandState(command)) {
+                        button.classList.add('active');
+                    } else {
+                        button.classList.remove('active');
+                    }
+                }
+            });
+            
+            // Update heading select
+            const headingSelect = document.getElementById('headingSelect');
+            if (headingSelect) {
+                const block = document.queryCommandValue('formatBlock');
+                if (block && ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(block.toLowerCase())) {
+                    headingSelect.value = block.toLowerCase();
+                } else {
+                    headingSelect.value = '';
+                }
+            }
+        }
+          // Initialize toolbar states
+        updateToolbarStates();
     }
     
     // Function to save edited content
     async function saveContent() {
         const sectionId = document.getElementById('currentSectionId').value;
         const section = document.getElementById(sectionId);
-        const content = document.getElementById('contentEditor').value;
+        const richTextEditor = document.getElementById('richTextEditor');
         
-        if (!section || !content) return;
+        if (!section || !richTextEditor) return;
+        
+        const content = richTextEditor.innerHTML;
         
         try {
             // Save to Firebase
@@ -83,8 +231,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 updatedBy: localStorage.getItem('userId')
             }, { merge: true });
             
-            // Update section in UI
-            section.innerHTML = content;
+            // Update section in UI (preserve existing content structure)
+            const sectionClone = section.cloneNode(false); // Clone without children
+            sectionClone.innerHTML = content;
             
             // Add edit button back
             const editButton = document.createElement('button');
@@ -94,7 +243,10 @@ document.addEventListener('DOMContentLoaded', function() {
             editButton.addEventListener('click', function() {
                 openEditModal(section);
             });
-            section.appendChild(editButton);
+            sectionClone.appendChild(editButton);
+            
+            // Replace the original section
+            section.parentNode.replaceChild(sectionClone, section);
             
             // Close modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('contentEditModal'));
