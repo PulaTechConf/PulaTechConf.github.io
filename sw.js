@@ -1,14 +1,16 @@
 const CACHE_NAME = 'pulatech-conf-v1';
 const urlsToCache = [
   '/app/home.html',
+  '/app/profile.html',
+  '/app/users.html',
   '/app/admin/dashboard.html',
-  '/app/admin/users.html',
   '/css/styles.css',
   '/js/app.js',
   '/js/auth.js',
   '/js/auth-check.js',
   '/js/notifications.js',
   '/js/pizza-selection.js',
+  '/js/user-profile.js',
   '/js/firebase-config.js',
   '/js/admin/content-editor.js',
   '/js/admin/pizza-tracking.js',
