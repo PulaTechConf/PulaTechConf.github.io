@@ -2,12 +2,11 @@ import { db } from './firebase-config.js';
 import { doc, getDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Check if user is logged in - this should happen first
+    // Auth-check.js already handles authentication, so we just proceed with app functionality
     const userId = localStorage.getItem('userId');
     if (!userId) {
-        console.log("No user ID found, redirecting to login page");
-        window.location.href = getLoginPagePath();
-        return; // Stop execution if not logged in
+        // If no user ID, auth-check.js will handle the redirect
+        return;
     }
 
     const logoutBtn = document.getElementById('logoutBtn');
@@ -48,24 +47,19 @@ function handleLogout(e) {
     
     // Redirect to login page with a small delay to ensure localStorage is cleared
     setTimeout(() => {
-        const loginPath = getLoginPagePath();
+        // Determine correct path to index.html based on current location
+        // Check for /admin/ first since it's more specific than /app/
+        let loginPath;
+        if (window.location.pathname.includes('/admin/')) {
+            loginPath = '../../index.html';
+        } else if (window.location.pathname.includes('/app/')) {
+            loginPath = '../index.html';
+        } else {
+            loginPath = 'index.html';
+        }
         console.log("Redirecting to:", loginPath);
         window.location.href = loginPath;
     }, 100);
-}
-
-// Helper function to determine the correct path to the login page
-function getLoginPagePath() {
-    // If we're in an app subfolder, we need to go up one level
-    if (window.location.pathname.includes('/app/')) {
-        return '../index.html';
-    }
-    // If we're in the admin subfolder, we need to go up two levels
-    if (window.location.pathname.includes('/admin/')) {
-        return '../../index.html';
-    }
-    // Otherwise we're at the root
-    return 'index.html';
 }
 
 // Function to setup schedule reminders
