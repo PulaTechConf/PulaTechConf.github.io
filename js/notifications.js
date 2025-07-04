@@ -7,6 +7,52 @@ import {
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
+// Utility functions for managing read notifications
+function getReadNotifications() {
+    const stored = localStorage.getItem('readNotifications');
+    return stored ? JSON.parse(stored) : [];
+}
+
+function markNotificationAsRead(notificationId) {
+    const readNotifications = getReadNotifications();
+    if (!readNotifications.includes(notificationId)) {
+        readNotifications.push(notificationId);
+        localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
+        console.log(`Marked notification ${notificationId} as read`);
+    }
+}
+
+function markAllNotificationsAsRead(notificationIds) {
+    const readNotifications = getReadNotifications();
+    let hasNewReads = false;
+    
+    notificationIds.forEach(id => {
+        if (!readNotifications.includes(id)) {
+            readNotifications.push(id);
+            hasNewReads = true;
+        }
+    });
+    
+    if (hasNewReads) {
+        localStorage.setItem('readNotifications', JSON.stringify(readNotifications));
+        console.log(`Marked ${notificationIds.length} notifications as read`);
+    }
+}
+
+function cleanupOldReadNotifications(currentNotificationIds) {
+    // Remove read notification IDs that are no longer in the current notifications
+    // This prevents localStorage from growing indefinitely
+    const readNotifications = getReadNotifications();
+    const cleanedReadNotifications = readNotifications.filter(id => 
+        currentNotificationIds.includes(id)
+    );
+    
+    if (cleanedReadNotifications.length !== readNotifications.length) {
+        localStorage.setItem('readNotifications', JSON.stringify(cleanedReadNotifications));
+        console.log(`Cleaned up ${readNotifications.length - cleanedReadNotifications.length} old read notification records`);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Notifications.js loaded");
     
@@ -28,11 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
             notificationsPanel.style.display = 'block';
             console.log('Notifications panel opened');
             
-            // Clear unread count when opening notifications
-            setTimeout(() => {
-                notificationBadge.classList.add('d-none');
-                console.log('Notification badge cleared');
-            }, 500);
+            // Mark all current notifications as read when panel is opened
+            markAllCurrentNotificationsAsRead();
             
         } else {
             notificationsPanel.style.display = 'none';
@@ -47,8 +90,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
+    // Keep track of current notifications for marking as read
+    let currentNotificationIds = [];
+    
+    function markAllCurrentNotificationsAsRead() {
+        if (currentNotificationIds.length > 0) {
+            markAllNotificationsAsRead(currentNotificationIds);
+            // Update badge immediately
+            updateNotificationBadge();
+        }
+    }
+    
     // Set up notifications listener
     setupNotificationsListener();
+    
+    // Initialize badge state immediately
+    updateNotificationBadge();
     
     function setupNotificationsListener() {
         console.log("Setting up notifications listener");
@@ -64,16 +121,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Listen for notifications in real time
         onSnapshot(q, (snapshot) => {
             console.log(`Received ${snapshot.size} notifications`);
-            let unreadCount = 0;
             let notifications = [];
             
             if (snapshot.empty) {
+                currentNotificationIds = [];
                 if (notificationsPanel) {
                     notificationsPanel.innerHTML = '<div class="notifications-content"><div class="text-center p-3">No notifications</div></div>';
                 }
-                notificationBadge.classList.add('d-none');
+                updateNotificationBadge();
                 return;
             }
+            
+            const readNotifications = getReadNotifications();
             
             // Process all notifications
             snapshot.forEach(doc => {
@@ -82,30 +141,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     id: doc.id,
                     title: data.title || 'Notification',
                     message: data.message || '',
-                    timestamp: data.timestamp
+                    timestamp: data.timestamp,
+                    isRead: readNotifications.includes(doc.id)
                 });
-                
-                // Check if notification is recent (less than 24 hours old)
-                if (data.timestamp) {
-                    const notificationTime = data.timestamp.toDate ? 
-                        data.timestamp.toDate() : 
-                        new Date(data.timestamp.seconds * 1000);
-                    
-                    const hoursSinceNotification = (new Date() - notificationTime) / (1000 * 60 * 60);
-                    
-                    if (hoursSinceNotification < 24) {
-                        unreadCount++;
-                    }
-                }
             });
             
-            // Update badge
-            if (unreadCount > 0) {
-                notificationBadge.textContent = unreadCount;
-                notificationBadge.classList.remove('d-none');
-            } else {
-                notificationBadge.classList.add('d-none');
-            }
+            // Update current notification IDs
+            currentNotificationIds = notifications.map(n => n.id);
+            
+            // Clean up old read notification records
+            cleanupOldReadNotifications(currentNotificationIds);
+            
+            // Update badge with unread count
+            updateNotificationBadge();
             
             // Update notifications panel
             if (notificationsPanel) {
@@ -115,6 +163,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }, (error) => {
             console.error("Error getting notifications:", error);
         });
+    }
+    
+    function updateNotificationBadge() {
+        const readNotifications = getReadNotifications();
+        const unreadCount = currentNotificationIds.filter(id => !readNotifications.includes(id)).length;
+        
+        console.log(`Unread notifications count: ${unreadCount}`);
+        
+        if (unreadCount > 0) {
+            notificationBadge.textContent = unreadCount;
+            notificationBadge.classList.remove('d-none');
+        } else {
+            notificationBadge.classList.add('d-none');
+        }
     }
     
     // Function to update the notifications panel UI
@@ -154,12 +216,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     formattedDate = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
                 }
             }
-              const notificationItem = document.createElement('div');
+            
+            // Style based on read status
+            const headerBgColor = notification.isRead ? '#f8f9fa' : '#fff';
+            const unreadIndicator = notification.isRead ? '' : '<span style="color: #007bff; font-weight: bold; margin-left: 5px;">•</span>';
+            
+            const notificationItem = document.createElement('div');
             notificationItem.className = 'notification-expandable';
             notificationItem.innerHTML = `
-                <div class="notification-header" style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background-color: #fff; color: #333;">
+                <div class="notification-header" style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background-color: ${headerBgColor}; color: #333;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <strong style="color: #333;">${notification.title}</strong>
+                        <strong style="color: #333;">${notification.title}${unreadIndicator}</strong>
                         <small class="text-muted" style="color: #666;">${formattedDate}</small>
                     </div>
                     <i class="bi bi-chevron-down mt-1" style="color: #333;"></i>
@@ -176,6 +243,22 @@ document.addEventListener('DOMContentLoaded', () => {
             
             header.addEventListener('click', function(e) {
                 e.stopPropagation();
+                
+                // Mark this notification as read when expanded
+                if (!notification.isRead) {
+                    markNotificationAsRead(notification.id);
+                    notification.isRead = true;
+                    
+                    // Update visual style
+                    header.style.backgroundColor = '#f8f9fa';
+                    const unreadDot = header.querySelector('span');
+                    if (unreadDot) {
+                        unreadDot.remove();
+                    }
+                    
+                    // Update badge
+                    updateNotificationBadge();
+                }
                 
                 if (details.style.display === 'none') {
                     details.style.display = 'block';

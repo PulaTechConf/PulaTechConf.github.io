@@ -271,23 +271,28 @@ window.reinitializePizzaSelection = function() {
     const lunchIcon = document.getElementById('lunchIcon');
     
     if (lunchTitle && lunchDetails && lunchIcon) {
-        // Remove any existing listeners
-        lunchTitle.replaceWith(lunchTitle.cloneNode(true));
-        const newLunchTitle = document.getElementById('lunchTitle');
+        // Remove any existing listeners by cloning the element
+        const newLunchTitle = lunchTitle.cloneNode(true);
+        lunchTitle.parentNode.replaceChild(newLunchTitle, lunchTitle);
         
-        newLunchTitle.style.cursor = 'pointer';
-        newLunchTitle.addEventListener('click', function() {
+        // Get fresh references after replacement
+        const freshLunchTitle = document.getElementById('lunchTitle');
+        const freshLunchDetails = document.getElementById('lunchDetails');
+        const freshLunchIcon = document.getElementById('lunchIcon');
+        
+        freshLunchTitle.style.cursor = 'pointer';
+        freshLunchTitle.addEventListener('click', function() {
             console.log('Lunch title clicked (reinitialized)');
             
-            if (lunchDetails.style.display === 'none') {
-                lunchDetails.style.display = 'block';
-                lunchIcon.classList.remove('bi-chevron-down');
-                lunchIcon.classList.add('bi-chevron-up');
+            if (freshLunchDetails.style.display === 'none') {
+                freshLunchDetails.style.display = 'block';
+                freshLunchIcon.classList.remove('bi-chevron-down');
+                freshLunchIcon.classList.add('bi-chevron-up');
                 console.log('Lunch details expanded');
             } else {
-                lunchDetails.style.display = 'none';
-                lunchIcon.classList.remove('bi-chevron-up');
-                lunchIcon.classList.add('bi-chevron-down');
+                freshLunchDetails.style.display = 'none';
+                freshLunchIcon.classList.remove('bi-chevron-up');
+                freshLunchIcon.classList.add('bi-chevron-down');
                 console.log('Lunch details collapsed');
             }
         });
@@ -300,10 +305,11 @@ window.reinitializePizzaSelection = function() {
     
     if (pizzaChoice) {
         // Remove existing listeners and add new ones
-        pizzaChoice.replaceWith(pizzaChoice.cloneNode(true));
-        const newPizzaChoice = document.getElementById('pizzaChoice');
+        const newPizzaChoice = pizzaChoice.cloneNode(true);
+        pizzaChoice.parentNode.replaceChild(newPizzaChoice, pizzaChoice);
+        const freshPizzaChoice = document.getElementById('pizzaChoice');
         
-        newPizzaChoice.addEventListener('change', function() {
+        freshPizzaChoice.addEventListener('change', function() {
             console.log('Pizza choice changed (reinitialized):', this.value);
             if (this.value) {
                 savePizzaChoice(this.value);
@@ -313,10 +319,11 @@ window.reinitializePizzaSelection = function() {
     
     if (clearPizzaBtn) {
         // Remove existing listeners and add new ones
-        clearPizzaBtn.replaceWith(clearPizzaBtn.cloneNode(true));
-        const newClearBtn = document.getElementById('clearPizzaBtn');
+        const newClearBtn = clearPizzaBtn.cloneNode(true);
+        clearPizzaBtn.parentNode.replaceChild(newClearBtn, clearPizzaBtn);
+        const freshClearBtn = document.getElementById('clearPizzaBtn');
         
-        newClearBtn.addEventListener('click', function() {
+        freshClearBtn.addEventListener('click', function() {
             console.log('Clear pizza button clicked (reinitialized)');
             clearPizzaChoice();
         });
