@@ -45,8 +45,16 @@ document.addEventListener("DOMContentLoaded", () => {
     console.log("DOM loaded, checking login state");
     const userId = localStorage.getItem('userId');
     if (userId) {
+        // Determine correct path to home.html based on current location
+        let homePath;
+        if (window.location.pathname.includes('/app/')) {
+            homePath = 'home.html'; // Already in app folder
+        } else {
+            homePath = 'app/home.html'; // At root level
+        }
+        
         // Redirect to home page if already logged in
-        window.location.href = 'app/home.html';
+        window.location.href = homePath;
     }
 });
 
@@ -105,9 +113,17 @@ if (loginForm) {
             console.log("Login successful, redirecting...");
             showMessage('Login successful! Redirecting...', 'success');
             
+            // Determine correct path to home.html based on current location
+            let homePath;
+            if (window.location.pathname.includes('/app/')) {
+                homePath = 'home.html'; // Already in app folder
+            } else {
+                homePath = 'app/home.html'; // At root level
+            }
+            
             // Redirect to home page
             setTimeout(() => {
-                window.location.href = 'app/home.html';
+                window.location.href = homePath;
             }, 1000);
             
         } catch (error) {
