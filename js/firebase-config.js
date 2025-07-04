@@ -1,11 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { getStorage } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-storage.js";
 import { getAnalytics } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-analytics.js";
 
 console.log("Loading Firebase config module...");
 
 let app;
 let db;
+let storage;
 let analytics;
 
 try {
@@ -27,10 +29,11 @@ try {
   console.log("Initializing Firebase...");
   app = initializeApp(firebaseConfig);
   db = getFirestore(app);
+  storage = getStorage(app);
   analytics = getAnalytics(app);
   console.log("Firebase initialized successfully");
 } catch (error) {
   console.error("Firebase initialization error:", error);
 }
 
-export { app, db, analytics };
+export { app, db, storage, analytics };

@@ -36,11 +36,14 @@
                     <li class="nav-item">
                         <a class="nav-link active" href="home.html">Information</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="profile.html">Profile</a>
+                    </li>
                     <li class="nav-item admin-only d-none">
                         <a class="nav-link" href="admin/dashboard.html">Admin</a>
                     </li>
                 </ul>
-                <ul class="navbar-nav ms-auto">                    <li class="nav-item admin-only d-none">
+                <ul class="navbar-nav ms-auto">                    <li class="nav-item organizer-admin-only d-none">
                         <a class="nav-link" href="#" id="notificationsBtn">
                             <i class="bi bi-bell"></i>
                             <span class="badge bg-danger notification-badge d-none">0</span>
@@ -70,6 +73,9 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="general-info-tab" data-bs-toggle="tab" data-bs-target="#general-info" type="button" role="tab" aria-controls="general-info" aria-selected="false">General Info</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab" aria-controls="notifications" aria-selected="false">Notifications</button>
             </li>
         </ul>
 
@@ -384,6 +390,23 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Notifications Tab -->
+            <div class="tab-pane fade" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
+                <div class="notifications-tab-content">
+                    <h2>Conference Notifications</h2>
+                    <p>Stay updated with important conference announcements and reminders.</p>
+                    
+                    <div id="notificationsTabPanel" class="notifications-panel-large">
+                        <div class="notifications-content">
+                            <div class="text-center p-3">
+                                <i class="bi bi-bell-slash fs-1 text-muted"></i>
+                                <p class="text-muted">Loading notifications...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>    <!-- Content Edit Modal -->
     <div class="modal fade" id="contentEditModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
@@ -440,6 +463,12 @@
                             </select>
                         </div>
                         
+                        <div class="btn-group me-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary btn-sm" id="hyperlinkBtn" title="Add Hyperlink">
+                                <i class="bi bi-link"></i>
+                            </button>
+                        </div>
+                        
                         <div class="btn-group" role="group">
                             <button type="button" class="btn btn-outline-secondary btn-sm" data-command="removeFormat" title="Clear Formatting">
                                 <i class="bi bi-eraser"></i>
@@ -468,9 +497,9 @@
     <script type="module" src="../js/notifications.js"></script>
     <script type="module" src="../js/pizza-selection.js"></script>
     <script type="module" src="../js/schedule-notifications.js"></script>
+    <script type="module" src="../js/scheduled-notifications.js"></script>
     <script type="module" src="../js/offline-storage.js"></script>
     <script type="module" src="../js/admin/content-editor.js"></script>
-    <script src="../js/pwa-test.js"></script>
     
     <!-- PWA Install prompt and service worker registration -->
     <script>

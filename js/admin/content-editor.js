@@ -137,6 +137,37 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
+        // Hyperlink button handler
+        const hyperlinkBtn = document.getElementById('hyperlinkBtn');
+        if (hyperlinkBtn) {
+            hyperlinkBtn.addEventListener('click', function() {
+                richTextEditor.focus();
+                
+                const selection = window.getSelection();
+                const selectedText = selection.toString();
+                
+                let url = prompt('Enter the URL:', 'https://');
+                if (url && url.trim()) {
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                        url = 'https://' + url;
+                    }
+                    
+                    if (selectedText) {
+                        // Create link with selected text
+                        document.execCommand('createLink', false, url);
+                    } else {
+                        // Insert link with URL as text
+                        const linkHtml = `<a href="${url}" target="_blank">${url}</a>`;
+                        document.execCommand('insertHTML', false, linkHtml);
+                    }
+                    
+                    // Update live preview
+                    livePreview.innerHTML = richTextEditor.innerHTML;
+                    updateToolbarStates();
+                }
+            });
+        }
+        
         // Update toolbar button states based on current selection
         richTextEditor.addEventListener('keyup', updateToolbarStates);
         richTextEditor.addEventListener('mouseup', updateToolbarStates);

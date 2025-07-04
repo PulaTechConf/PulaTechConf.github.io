@@ -60,35 +60,51 @@ document.addEventListener('DOMContentLoaded', () => {
     const notificationsBtn = document.getElementById('notificationsBtn');
     const notificationBadge = document.querySelector('.notification-badge');
     const notificationsPanel = document.getElementById('notificationsPanel');
+    const notificationsTabPanel = document.getElementById('notificationsTabPanel');
     
-    if (!notificationsBtn || !notificationBadge || !notificationsPanel) {
+    if (!notificationsBtn || !notificationBadge) {
         console.log("Notification elements not found on page");
         return;
     }
       // Add manual dropdown toggle
-    notificationsBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
+    if (notificationsPanel) {
+        notificationsBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            if (notificationsPanel.style.display === 'none') {
+                notificationsPanel.style.display = 'block';
+                console.log('Notifications panel opened');
+                
+                // Mark all current notifications as read when panel is opened
+                markAllCurrentNotificationsAsRead();
+                
+            } else {
+                notificationsPanel.style.display = 'none';
+                console.log('Notifications panel closed');
+            }
+        });
         
-        if (notificationsPanel.style.display === 'none') {
-            notificationsPanel.style.display = 'block';
-            console.log('Notifications panel opened');
-            
-            // Mark all current notifications as read when panel is opened
-            markAllCurrentNotificationsAsRead();
-            
-        } else {
-            notificationsPanel.style.display = 'none';
-            console.log('Notifications panel closed');
-        }
-    });
+        // Close panel when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!notificationsBtn.contains(e.target) && !notificationsPanel.contains(e.target)) {
+                notificationsPanel.style.display = 'none';
+            }
+        });
+    }
     
-    // Close panel when clicking outside
-    document.addEventListener('click', function(e) {
-        if (!notificationsBtn.contains(e.target) && !notificationsPanel.contains(e.target)) {
-            notificationsPanel.style.display = 'none';
+    // Handle notifications tab functionality
+    if (notificationsTabPanel) {
+        const notificationsTab = document.getElementById('notifications-tab');
+        if (notificationsTab) {
+            notificationsTab.addEventListener('shown.bs.tab', function() {
+                // Mark all notifications as read when tab is opened
+                markAllCurrentNotificationsAsRead();
+                // Update the tab panel with current notifications
+                updateNotificationsTabPanel();
+            });
         }
-    });
+    }
     
     // Keep track of current notifications for marking as read
     let currentNotificationIds = [];
@@ -148,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Update current notification IDs
             currentNotificationIds = notifications.map(n => n.id);
+            currentNotifications = notifications; // Store for tab panel
             
             // Clean up old read notification records
             cleanupOldReadNotifications(currentNotificationIds);
@@ -158,6 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
             // Update notifications panel
             if (notificationsPanel) {
                 updateNotificationsPanel(notifications);
+            }
+            
+            // Update notifications tab panel if it exists
+            if (notificationsTabPanel) {
+                updateNotificationsTabPanel(notifications);
             }
             
         }, (error) => {
@@ -276,4 +298,116 @@ document.addEventListener('DOMContentLoaded', () => {
         
         notificationsPanel.appendChild(container);
     }
-});
+    
+    // Function to update the notifications tab panel UI
+    function updateNotificationsTabPanel(notifications = currentNotifications) {
+        if (!notificationsTabPanel) return;
+        
+        // Clear current content
+        notificationsTabPanel.innerHTML = '';
+        
+        if (!notifications || notifications.length === 0) {
+            notificationsTabPanel.innerHTML = `
+                <div class="text-center p-5">
+                    <i class="bi bi-bell-slash fs-1 text-muted mb-3"></i>
+                    <h5 class="text-muted">No notifications</h5>
+                    <p class="text-muted">Conference notifications will appear here when available.</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Create container
+        const container = document.createElement('div');
+        container.className = 'notifications-content';
+        
+        // Add each notification with enhanced styling for tab view
+        notifications.forEach(notification => {
+            // Format date
+            let formattedDate = "Recent";
+            if (notification.timestamp) {
+                const date = notification.timestamp.toDate ? 
+                    notification.timestamp.toDate() : 
+                    new Date(notification.timestamp.seconds * 1000);
+                
+                const now = new Date();
+                const isToday = date.toDateString() === now.toDateString();
+                const isYesterday = new Date(now.setDate(now.getDate() - 1)).toDateString() === date.toDateString();
+                
+                if (isToday) {
+                    formattedDate = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                } else if (isYesterday) {
+                    formattedDate = `Yesterday, ${date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+                } else {
+                    formattedDate = date.toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+                }
+            }
+            
+            // Style based on read status
+            const headerBgColor = notification.isRead ? '#f8f9fa' : '#fff';
+            const unreadIndicator = notification.isRead ? '' : '<span style="color: #007bff; font-weight: bold; margin-left: 8px;">•</span>';
+            const borderColor = notification.isRead ? '#e9ecef' : '#007bff';
+            
+            const notificationCard = document.createElement('div');
+            notificationCard.className = 'card mb-3';
+            notificationCard.style.borderLeft = `4px solid ${borderColor}`;
+            notificationCard.innerHTML = `
+                <div class="card-header notification-tab-header" style="cursor: pointer; background-color: ${headerBgColor};">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h6 class="mb-0">${notification.title}${unreadIndicator}</h6>
+                        <div class="d-flex align-items-center">
+                            <small class="text-muted me-2">${formattedDate}</small>
+                            <i class="bi bi-chevron-down"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body notification-tab-details" style="display: none;">
+                    <p class="card-text">${notification.message}</p>
+                </div>
+            `;
+            
+            // Add click handler for expanding
+            const header = notificationCard.querySelector('.notification-tab-header');
+            const details = notificationCard.querySelector('.notification-tab-details');
+            const icon = notificationCard.querySelector('i');
+            
+            header.addEventListener('click', function(e) {
+                e.stopPropagation();
+                
+                // Mark this notification as read when expanded
+                if (!notification.isRead) {
+                    markNotificationAsRead(notification.id);
+                    notification.isRead = true;
+                    
+                    // Update visual style
+                    header.style.backgroundColor = '#f8f9fa';
+                    notificationCard.style.borderLeft = '4px solid #e9ecef';
+                    const unreadDot = header.querySelector('span');
+                    if (unreadDot) {
+                        unreadDot.remove();
+                    }
+                    
+                    // Update badge
+                    updateNotificationBadge();
+                }
+                
+                if (details.style.display === 'none') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            
+            container.appendChild(notificationCard);
+        });
+        
+        notificationsTabPanel.appendChild(container);
+    }
+    
+    // Keep reference to current notifications for tab panel
+    let currentNotifications = [];
+}); 

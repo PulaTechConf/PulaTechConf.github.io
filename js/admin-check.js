@@ -41,6 +41,11 @@ document.addEventListener('DOMContentLoaded', function() {
         document.querySelectorAll('.organizer-only').forEach(el => {
             el.classList.remove('d-none');
         });
+        
+        // Show elements for both organizers and admins
+        document.querySelectorAll('.organizer-admin-only').forEach(el => {
+            el.classList.remove('d-none');
+        });
     }
 });
 
