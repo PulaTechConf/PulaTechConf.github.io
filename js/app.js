@@ -50,13 +50,15 @@ function handleLogout(e) {
         // Determine correct path to index.html based on current location
         // Check for /admin/ first since it's more specific than /app/
         let loginPath;
-        if (window.location.pathname.includes('/admin/')) {
+        if (window.location.pathname.includes('/admin/dashboard.html') || 
+            window.location.pathname.includes('/app/admin/')) {
             loginPath = '../../index.html';
         } else if (window.location.pathname.includes('/app/')) {
             loginPath = '../index.html';
         } else {
             loginPath = 'index.html';
         }
+        console.log("Current pathname:", window.location.pathname);
         console.log("Redirecting to:", loginPath);
         window.location.href = loginPath;
     }, 100);
