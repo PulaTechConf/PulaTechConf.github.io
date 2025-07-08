@@ -351,6 +351,84 @@ body {
     border-left-color: #2c3e50;
 }
 
+/* Real-time schedule progress line */
+.schedule-current-time {
+    position: relative;
+    border-left: 4px solid #dc3545;
+    padding-left: 15px;
+    margin-left: -15px;
+    background: linear-gradient(90deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 50%, transparent 100%);
+}
+
+.schedule-current-time::before {
+    content: "🔴 NOW";
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #dc3545;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.schedule-current-time .fw-bold {
+    color: #dc3545;
+    font-weight: 700;
+}
+
+.schedule-past-event {
+    opacity: 0.6;
+    background: rgba(108, 117, 125, 0.05);
+}
+
+.schedule-past-event .fw-bold {
+    color: #6c757d;
+}
+
+.schedule-next-event {
+    background: rgba(40, 167, 69, 0.05);
+    border-left: 2px solid #28a745;
+    padding-left: 13px;
+    margin-left: -13px;
+}
+
+.schedule-next-event::before {
+    content: "NEXT";
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #28a745;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.schedule-next-event .fw-bold {
+    color: #28a745;
+    font-weight: 700;
+}
+
+/* Pulse animation for current event */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+.schedule-current-time {
+    animation: pulse 2s ease-in-out infinite;
+}
+
 /* Badge color variations */
 .badge.bg-secondary {
     background-color: #6c757d !important;
@@ -502,6 +580,65 @@ body {
     border-color: #86b7fe;
 }
 
+/* Mobile notification bell styles */
+.navbar .d-flex .nav-link {
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.navbar .d-flex .nav-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.navbar .d-flex .nav-link .bi-bell {
+    font-size: 1.2rem;
+}
+
+.navbar .d-flex .notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    font-size: 0.7rem;
+    min-width: 1.2rem;
+    height: 1.2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ensure notification panel is positioned correctly on mobile */
+@media (max-width: 991.98px) {
+    .notifications-panel {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: auto;
+        width: 90vw;
+        max-width: 400px;
+        margin-top: 0.5rem;
+        margin-right: 1rem;
+    }
+}
+
+/* Toast notification styles for FCM */
+.notification-toast {
+    max-width: 400px;
+    z-index: 9999;
+}
+
+.notification-toast .toast-header {
+    background-color: #2c3e50;
+    color: white;
+    border-bottom: 1px solid #34495e;
+}
+
+.notification-toast .toast-body {
+    background-color: #ecf0f1;
+    color: #2c3e50;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .notifications-panel-large {
@@ -509,6 +646,107 @@ body {
     }
     
     .card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Schedule functionality styles */
+.coffee-expandable, .massage-expandable, .roundtable-expandable {
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    margin-bottom: 0.5rem;
+}
+
+.coffee-title, .massage-title, .roundtable-title {
+    padding: 0.75rem;
+    background-color: #f8f9fa;
+    border-radius: 0.375rem 0.375rem 0 0;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.coffee-title:hover, .massage-title:hover, .roundtable-title:hover {
+    background-color: #e9ecef;
+}
+
+.coffee-details, .massage-details, .roundtable-details {
+    padding: 0.75rem;
+    border-top: 1px solid #dee2e6;
+}
+
+.massage-expandable {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+}
+
+.massage-title {
+    background-color: #bbdefb;
+}
+
+.roundtable-expandable {
+    background-color: #f3e5f5;
+    border-color: #9c27b0;
+}
+
+.roundtable-title {
+    background-color: #e1bee7;
+}
+
+/* Google Calendar button */
+#addToCalendarBtn {
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+/* Massage booking styles */
+.massage-details .form-select,
+.massage-details .btn {
+    font-size: 0.875rem;
+}
+
+/* Tourist attraction cards */
+.card {
+    transition: transform 0.15s ease-in-out;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Transportation table styles */
+.table-responsive {
+    margin-top: 1rem;
+}
+
+.table-sm td, .table-sm th {
+    padding: 0.5rem;
+    text-align: center;
+}
+
+/* Alert styles for different sections */
+.alert-success h6 {
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .coffee-title, .massage-title, .roundtable-title {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+    
+    .coffee-details, .massage-details, .roundtable-details {
+        padding: 0.5rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .row .col-md-4, .row .col-md-6 {
         margin-bottom: 1rem;
     }
 }

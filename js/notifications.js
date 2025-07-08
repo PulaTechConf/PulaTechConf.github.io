@@ -58,36 +58,49 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Find UI elements
     const notificationsBtn = document.getElementById('notificationsBtn');
+    const notificationsBtnDesktop = document.getElementById('notificationsBtnDesktop');
     const notificationBadge = document.querySelector('.notification-badge');
     const notificationsPanel = document.getElementById('notificationsPanel');
     const notificationsTabPanel = document.getElementById('notificationsTabPanel');
     
-    if (!notificationsBtn || !notificationBadge) {
+    if (!notificationsBtn && !notificationsBtnDesktop) {
         console.log("Notification elements not found on page");
         return;
     }
-      // Add manual dropdown toggle
-    if (notificationsPanel) {
-        notificationsBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
+    
+    // Function to handle notification button clicks
+    function handleNotificationClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (notificationsPanel.style.display === 'none') {
+            notificationsPanel.style.display = 'block';
+            console.log('Notifications panel opened');
             
-            if (notificationsPanel.style.display === 'none') {
-                notificationsPanel.style.display = 'block';
-                console.log('Notifications panel opened');
-                
-                // Mark all current notifications as read when panel is opened
-                markAllCurrentNotificationsAsRead();
-                
-            } else {
-                notificationsPanel.style.display = 'none';
-                console.log('Notifications panel closed');
-            }
-        });
+            // Mark all current notifications as read when panel is opened
+            markAllCurrentNotificationsAsRead();
+            
+        } else {
+            notificationsPanel.style.display = 'none';
+            console.log('Notifications panel closed');
+        }
+    }
+    
+    // Add manual dropdown toggle for both buttons
+    if (notificationsPanel) {
+        if (notificationsBtn) {
+            notificationsBtn.addEventListener('click', handleNotificationClick);
+        }
+        if (notificationsBtnDesktop) {
+            notificationsBtnDesktop.addEventListener('click', handleNotificationClick);
+        }
         
         // Close panel when clicking outside
         document.addEventListener('click', function(e) {
-            if (!notificationsBtn.contains(e.target) && !notificationsPanel.contains(e.target)) {
+            const isNotificationBtn = (notificationsBtn && notificationsBtn.contains(e.target)) || 
+                                    (notificationsBtnDesktop && notificationsBtnDesktop.contains(e.target));
+            
+            if (!isNotificationBtn && !notificationsPanel.contains(e.target)) {
                 notificationsPanel.style.display = 'none';
             }
         });

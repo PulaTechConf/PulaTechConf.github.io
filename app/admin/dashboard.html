@@ -25,9 +25,19 @@
     <nav class="navbar navbar-expand-lg navbar-dark app-header">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">PulaTechConf Admin</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>            <div class="collapse navbar-collapse" id="navbarNav">
+            
+            <!-- Notifications button - always visible on mobile -->
+            <div class="d-flex align-items-center">
+                <a class="nav-link text-white me-3" href="#" id="notificationsBtn">
+                    <i class="bi bi-bell"></i>
+                    <span class="badge bg-danger notification-badge d-none">0</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link" href="../home.html">Information</a>
@@ -40,19 +50,24 @@
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="notificationsBtn" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <!-- Desktop notifications (hidden on mobile) -->
+                    <li class="nav-item d-none d-lg-block">
+                        <a class="nav-link" href="#" id="notificationsBtnDesktop">
                             <i class="bi bi-bell"></i>
                             <span class="badge bg-danger notification-badge d-none">0</span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-end notifications-dropdown" id="notificationsDropdown">
-                            <div class="dropdown-item text-center">Loading notifications...</div>
-                        </div>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="logoutBtn">Logout</a>
                     </li>
                 </ul>
+            </div>
+            
+            <!-- Notifications panel -->
+            <div class="notifications-panel" id="notificationsPanel" style="display: none;">
+                <div class="notifications-content">
+                    <div class="text-center p-3">Loading notifications...</div>
+                </div>
             </div>
         </div>
     </nav>
@@ -66,6 +81,9 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="pizza-tab" data-bs-toggle="tab" data-bs-target="#pizza" type="button" role="tab">Pizza Tracking</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="massage-tab" data-bs-toggle="tab" data-bs-target="#massage" type="button" role="tab">Massage Bookings</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications" type="button" role="tab">Notifications</button>
@@ -179,6 +197,19 @@
                 </div>
             </div>
             
+            <!-- Massage Bookings Tab -->
+            <div class="tab-pane fade" id="massage" role="tabpanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h2 class="h4">Massage Bookings</h2>
+                    <button id="refreshMassageBookings" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div id="massageBookingsContainer">
+                    <div class="text-center p-3">Loading massage bookings...</div>
+                </div>
+            </div>
+            
             <!-- Notifications Tab -->
             <div class="tab-pane fade" id="notifications" role="tabpanel">
                 <h2 class="h4 mb-3">Send Notification</h2>
@@ -231,9 +262,11 @@
         </div>    </div>    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script type="module" src="../../js/app.js"></script>
     <script type="module" src="../../js/notifications.js"></script>
+    <script type="module" src="../../js/push-notifications.js"></script>
     <script type="module" src="../../js/admin/dashboard-users.js"></script>
     <script type="module" src="../../js/admin/notifications.js"></script>
     <script type="module" src="../../js/admin/pizza-tracking.js"></script>
+    <script type="module" src="../../js/admin/massage-tracking.js"></script>
     
     <!-- Service worker registration -->
     <script>

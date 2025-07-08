@@ -29,9 +29,19 @@
     <nav class="navbar navbar-expand-lg navbar-dark app-header">
         <div class="container-fluid">
             <a class="navbar-brand" href="#">PulaTechConf</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>            <div class="collapse navbar-collapse" id="navbarNav">
+            
+            <!-- Notifications button - always visible on mobile -->
+            <div class="d-flex align-items-center">
+                <a class="nav-link text-white me-3" href="#" id="notificationsBtn">
+                    <i class="bi bi-bell"></i>
+                    <span class="badge bg-danger notification-badge d-none">0</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
                         <a class="nav-link active" href="home.html">Information</a>
@@ -44,21 +54,24 @@
                     </li>
                 </ul>
                 <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" id="notificationsBtn">
+                    <!-- Desktop notifications (hidden on mobile) -->
+                    <li class="nav-item d-none d-lg-block">
+                        <a class="nav-link" href="#" id="notificationsBtnDesktop">
                             <i class="bi bi-bell"></i>
                             <span class="badge bg-danger notification-badge d-none">0</span>
                         </a>
-                        <div class="notifications-panel" id="notificationsPanel" style="display: none;">
-                            <div class="notifications-content">
-                                <div class="text-center p-3">Loading notifications...</div>
-                            </div>
-                        </div>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="logoutBtn">Logout</a>
                     </li>
                 </ul>
+            </div>
+            
+            <!-- Notifications panel -->
+            <div class="notifications-panel" id="notificationsPanel" style="display: none;">
+                <div class="notifications-content">
+                    <div class="text-center p-3">Loading notifications...</div>
+                </div>
             </div>
         </div>
     </nav>    <div class="container mt-4">
@@ -84,6 +97,11 @@
         <div class="tab-content" id="informationTabContent">
             <!-- Schedule Tab -->
             <div class="tab-pane fade show active" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
+                <div class="mb-3">
+                    <button class="btn btn-primary" id="addToCalendarBtn">
+                        <i class="bi bi-calendar-plus"></i> Add All Events to Google Calendar
+                    </button>
+                </div>
                 <div class="accordion" id="conferenceSchedule">
                     <!-- Day 1 -->
                     <div class="accordion-item">
@@ -153,7 +171,25 @@
                                             <span class="fw-bold">11:00 – 11:10</span>
                                             <span class="badge bg-secondary">Break</span>
                                         </div>
-                                        <p>Coffee Break – Refreshments</p>
+                                        <div class="coffee-expandable">
+                                            <div class="coffee-title" style="cursor: pointer;">
+                                                <span class="fw-bold">☕ Coffee Break – Refreshments</span>
+                                                <i class="bi bi-chevron-down ms-2"></i>
+                                            </div>
+                                            <div class="coffee-details" style="display: none;">
+                                                <div class="mt-3 p-3 bg-light rounded">
+                                                    <h6><strong>Coffee & Refreshments by CafePula</strong></h6>
+                                                    <p><small>Premium coffee selection including:</small></p>
+                                                    <ul class="small">
+                                                        <li>Espresso, Cappuccino, Latte</li>
+                                                        <li>Tea selection (Black, Green, Herbal)</li>
+                                                        <li>Fresh pastries and light snacks</li>
+                                                        <li>Bottled water and juices</li>
+                                                    </ul>
+                                                    <p class="small text-muted"><i class="bi bi-info-circle"></i> Complimentary for all conference participants. Special thanks to our coffee partner CafePula for supporting TFPU 2025.</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -162,6 +198,39 @@
                                             <span class="badge bg-success">Lecture</span>
                                         </div>
                                         <p>Invited Lecture 2</p>
+                                        
+                                        <!-- Parallel Massage Service -->
+                                        <div class="mt-2 alert alert-info alert-sm">
+                                            <div class="massage-expandable">
+                                                <div class="massage-title" style="cursor: pointer;">
+                                                    <span class="fw-bold"><i class="bi bi-heart-pulse"></i> Parallel Service: Quick Physio Massage (11:00-12:30)</span>
+                                                    <i class="bi bi-chevron-down ms-2"></i>
+                                                </div>
+                                                <div class="massage-details" style="display: none;">
+                                                    <div class="mt-3">
+                                                        <p><strong>Medical School Physiotherapy Service</strong></p>
+                                                        <p class="small">Make reservation and recharge in just 5 minutes with a targeted physio massage. Designed for congress attendees, these sessions focus on common tension areas like the neck, shoulders, and back. Our physiotherapists will use techniques to improve circulation, reduce stiffness, and boost mental clarity, leaving you refreshed and ready to re-engage. A quick, effective way to enhance your well-being and productivity.</p>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-bold">Available Time Slots:</label>
+                                                                <select class="form-select form-select-sm" id="massageTimeSlot">
+                                                                    <option value="">Select appointment time...</option>
+                                                                    <!-- Time slots will be populated by JavaScript -->
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-6 d-flex align-items-end">
+                                                                <button class="btn btn-success btn-sm" id="bookMassageBtn" disabled>
+                                                                    <i class="bi bi-calendar-check"></i> Book Appointment
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div id="massageBookingStatus" class="mt-2"></div>
+                                                        <p class="small text-muted mt-2"><i class="bi bi-clock"></i> Sessions: 5 minutes each • <i class="bi bi-geo-alt"></i> Location: Coworking Pula (separate room)</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -177,7 +246,20 @@
                                             <span class="fw-bold">12:00 – 12:40</span>
                                             <span class="badge bg-info">Discussion</span>
                                         </div>
-                                        <p>Round Table Discussion: Education and Opportunities in Dual Studies</p>
+                                        <div class="roundtable-expandable">
+                                            <div class="roundtable-title" style="cursor: pointer;">
+                                                <span class="fw-bold">🎯 Round Table Discussion: Education and Opportunities in Dual Studies</span>
+                                                <i class="bi bi-chevron-down ms-2"></i>
+                                            </div>
+                                            <div class="roundtable-details" style="display: none;">
+                                                <div class="mt-3 p-3 bg-light rounded">
+                                                    <p><strong>Moderator:</strong> assist.prof. Benedikt Perak</p>
+                                                    <p><strong>Panelists:</strong> Hochrinner, Hagen Helge, Gordana Nikolić, Martina Hervat, Martincic, Biljana and Damir Medved</p>
+                                                    
+                                                    <p class="small">This roundtable discussion will explore the critical role of dual education in preparing students for the modern workforce. We'll delve into how this integrated approach, combining classroom learning with practical, on-the-job training, benefits both individuals and industries. Experts will share insights on successful models, challenges, and future prospects for dual education, highlighting its significance in fostering skilled talent and bridging the gap between academia and real-world demands. Join us to discuss strategies for strengthening vocational pathways and enhancing employability.</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>                                    <div class="schedule-item">
                                         <div class="d-flex justify-content-between">
                                             <span class="fw-bold">12:40 – 13:30</span>
@@ -231,7 +313,25 @@
                                             <span class="fw-bold">14:20 – 14:30</span>
                                             <span class="badge bg-secondary">Break</span>
                                         </div>
-                                        <p>Coffee Break – Refreshments</p>
+                                        <div class="coffee-expandable">
+                                            <div class="coffee-title" style="cursor: pointer;">
+                                                <span class="fw-bold">☕ Coffee Break – Refreshments</span>
+                                                <i class="bi bi-chevron-down ms-2"></i>
+                                            </div>
+                                            <div class="coffee-details" style="display: none;">
+                                                <div class="mt-3 p-3 bg-light rounded">
+                                                    <h6><strong>Coffee & Refreshments by CafePula</strong></h6>
+                                                    <p><small>Premium coffee selection including:</small></p>
+                                                    <ul class="small">
+                                                        <li>Espresso, Cappuccino, Latte</li>
+                                                        <li>Tea selection (Black, Green, Herbal)</li>
+                                                        <li>Fresh pastries and light snacks</li>
+                                                        <li>Bottled water and juices</li>
+                                                    </ul>
+                                                    <p class="small text-muted"><i class="bi bi-info-circle"></i> Complimentary for all conference participants. Special thanks to our coffee partner CafePula for supporting TFPU 2025.</p>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -304,71 +404,39 @@
             </div>            <!-- Conference Info Tab -->
             <div class="tab-pane fade" id="conference-info" role="tabpanel" aria-labelledby="conference-info-tab">
                 <div id="conferenceInfoSection" class="editable-section" data-title="Conference Info">
-                    <h2>About PulaTechConf 2025</h2>
-                    <p>Join us for an enriching experience in Pula, Croatia, from July 16th to 18th, 2025!</p>
-                    
-                    <p>The Second Central and Mediterranean European Conference on New Technologies, Society, and Development builds upon the success of its inaugural edition in 2024. This conference continues to serve as a platform for collaboration and innovation across diverse scientific disciplines. Esteemed scholars and industry experts will gather to advance technological knowledge and explore its societal impacts.</p>
-                    
-                    <h3>Conference Highlights</h3>
-                    <ul>
-                        <li>Dynamic research presentations</li>
-                        <li>Thought-provoking debates</li>
-                        <li>Networking opportunities</li>
-                        <li>Cooperation among professionals from various fields</li>
-                    </ul>
-                    
-                    <h3>Important Information</h3>
-                    <p><strong>Abstract Deadline Extended:</strong> The new deadline for abstract submissions is June 25th. We will shortly send instructions for the full article submission to your registered email address.</p>
-                    
-                    <p><strong>Free Participation:</strong> Based on last year's experience, we are pleased to announce that participation in the conference will remain free of charge.</p>
-                    
-                    <p><strong>Review Process:</strong> Every submitted abstract will undergo a thorough peer-review process, and accepted abstracts will be published in the conference proceedings.</p>
-                    
-                    <h3>Useful Information During Conference</h3>
-                    <ul>
-                        <li><strong>Name badges:</strong> Please wear your badge at all times during conference hours</li>
-                        <li><strong>Coffee & Water:</strong> Complimentary coffee and water will be provided at breaks. For ordering pizza for lunch you need to choose it on time on tablet</li>
-                        <li><strong>Info point:</strong> The info desk will be staffed throughout all sessions</li>
-                        <li><strong>Presentation uploads:</strong> If you're presenting, please send your slides to the organizers at least 2 hours before</li>
-                        <li><strong>Wi-Fi at Venues:</strong> Free Wi-Fi will be available via QR barcode on conference poster</li>
-                    </ul>
-                    
-                    <h3>Venue Information</h3>
-                    <p><strong>Campus Restaurant:</strong> <a href="https://www.scpu.hr/hr/prehrana/restoran/" target="_blank">Official website</a></p>
-                    
-                    <h3>Fratarski Island Information</h3>
-                    <p><strong>Day 3 Transfer:</strong> Transportation to Fratarski Island Student Camp will be provided. Please note:</p>
-                    <ul>
-                        <li>Registration for island visit is required in advance</li>
-                        <li>Boat tickets are included</li>
-                        <li>Bring personal items if planning to stay overnight</li>
-                        <li>Additional food may be needed depending on availability</li>
-                    </ul>
-                    
-                    <h3>Organization</h3>
-                    <p>Organized through a partnership between academic institutions and global technical firms, this conference reaffirms a commitment to the advancement and dissemination of technological knowledge.</p>
-                    
-                    <p><strong>Official website:</strong> <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></p>
-                </div>
-            </div>
-
-            <!-- General Info Tab -->
-            <div class="tab-pane fade" id="general-info" role="tabpanel" aria-labelledby="general-info-tab">
-                <div id="generalInfoSection" class="editable-section" data-title="General Info">
-                    <h2>Participant Guide – TFPU 2025 Conference</h2>
+                    <h2>TFPU 2025 Conference</h2>
                     <p><strong>Dates:</strong> July 16–18, 2025<br>
-                    <strong>Location:</strong> Pula, Croatia</p>
+                    <strong>Location:</strong> Pula, Croatia<br>
+                    <strong>Official website:</strong> <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></p>
                     
-                    <h3>Parking Information</h3>
-                    <div class="alert alert-warning">
-                        <p><strong>Important:</strong> Conference parking is not organized. Participants will need to find parking themselves.</p>
-                        <p>For all three days, it's recommended to park at available public parking areas as the conference location at Marka Marulića 5, Pula only offers street parking if available. Due to tourist season, expect crowds in the city, so arrive early to secure parking.</p>
+                    <div class="alert alert-info">
+                        <h5><i class="bi bi-info-circle"></i> Welcome to TFPU 2025 Conference!</h5>
+                        <p>Below you'll find all key details about the venues, full event schedule, and suggestions on what to explore in and around the city.</p>
                     </div>
                     
-                    <h3>Walking Directions</h3>
-                    <p><strong>Campus Restaurant → Coworking Pula:</strong> <a href="https://maps.app.goo.gl/EtaB5Hq296jLoncZ7" target="_blank">Google Maps Route</a></p>
+                    <h3>ℹ️ Useful Information for Participants During Conference</h3>
+                    <ul>
+                        <li><strong>Conference schedule:</strong> <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></li>
+                        <li><strong>Name badges:</strong> Please wear your badge at all times during conference hours</li>
+                        <li><strong>Coffee & Water:</strong> Complimentary coffee and water provided at breaks. For ordering pizza for lunch you need to choose it on time on tablet</li>
+                        <li><strong>Info point:</strong> Info desk staffed throughout all sessions</li>
+                        <li><strong>Presentation uploads:</strong> Send slides to organizers at least 2 hours before presenting</li>
+                        <li><strong>Wi-Fi:</strong> Free Wi-Fi available via QR barcode on conference poster</li>
+                    </ul>
                     
-                    <h4>Coworking Pula Entrance Instructions:</h4>
+                    <h3>📍 Conference Venues</h3>
+                    
+                    <h4>Day 1: Campus Restaurant</h4>
+                    <p><strong>Address:</strong> Petra Preradovića 9a, Pula<br>
+                    <strong>Google Maps:</strong> <a href="https://g.co/kgs/WXB7oWG" target="_blank">View Location</a><br>
+                    <strong>Website:</strong> <a href="https://www.scpu.hr/hr/prehrana/restoran/" target="_blank">Official website</a></p>
+                    
+                    <h4>Day 2: Coworking Pula</h4>
+                    <p><strong>Address:</strong> Marka Marulića 5, Pula<br>
+                    <strong>Google Maps:</strong> <a href="https://g.co/kgs/yBKZvAS" target="_blank">View Location</a><br>
+                    <strong>Hybrid Access:</strong> <a href="http://meet.google.com/hbu-njzw-ijz" target="_blank">meet.google.com/hbu-njzw-ijz</a></p>
+                    
+                    <h5>Coworking Pula Entrance Instructions:</h5>
                     <ol>
                         <li>Go straight through the entrance to the reception</li>
                         <li>Immediately turn left to find the elevator</li>
@@ -377,17 +445,205 @@
                         <li>If using stairs, speak to the reception desk for directions</li>
                     </ol>
                     
-                    <h3>What to See in Pula</h3>
+                    <h4>Day 3: Campus Restaurant & Fratarski Island</h4>
+                    <p><strong>Morning:</strong> Campus Restaurant (same as Day 1)<br>
+                    <strong>Afternoon:</strong> Fratarski Island Student Camp<br>
+                    <strong>Island Maps:</strong> <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">View Location</a></p>
+                    
+                    <h3>🚗 Transportation Information</h3>
+                    
+                    <h4>Parking</h4>
+                    <div class="alert alert-warning">
+                        <h5><i class="bi bi-info-circle"></i> Important Parking Information</h5>
+                        <p><strong>Conference parking is not organized.</strong> Participants will need to find parking themselves.</p>
+                        <p>For all three days, it's recommended to park at available public parking areas as the conference location at Marka Marulića 5, Pula only offers street parking if available. Due to tourist season, expect crowds in the city, so arrive early to secure parking.</p>
+                    </div>
+                    
+                    <h4>Walking Route</h4>
+                    <p><strong>Campus Restaurant → Coworking Pula:</strong> <a href="https://maps.app.goo.gl/EtaB5Hq296jLoncZ7" target="_blank">Google Maps Route</a></p>
+                    
+                    <h4>Transportation to Fratarski Island (Day 3)</h4>
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle"></i> Registration for Fratarski Island visit is required in advance</h6>
+                        <ul>
+                            <li>Boat tickets are included</li>
+                            <li>Bring personal items if planning to stay overnight</li>
+                            <li>Additional food may be needed depending on availability</li>
+                        </ul>
+                    </div>
+                    
+                    <h5>1. Shuttle bus: Pula Airport → Pula Train Station</h5>
+                    <p><strong>Ticket:</strong> €4 if purchased on the bus<br>
+                    <strong>Schedule:</strong> <a href="https://airport-pula.hr/info-za-putnike/shuttle-bus/" target="_blank">View timetable</a></p>
+                    
+                    <h5>2. City bus: Train station → Veruda</h5>
+                    <p><strong>Lines:</strong> 2A or 3A Pulaprometa<br>
+                    <strong>Duration:</strong> 10–15 minutes<br>
+                    <strong>Price:</strong> €1–1.50 (purchased from driver or by SMS)</p>
+                    
+                    <h5>3. Boat: Veruda → Fratarski Island</h5>
+                    <p><strong>Boat:</strong> "Odisej" (runs every full hour from 09:00 to 21:00 during season)<br>
+                    <strong>Route:</strong> Veruda ↔ Fratarski otok<br>
+                    <strong>Ticket:</strong> €2.50 one way (€5 return)<br>
+                    <strong>Total cost:</strong> €4 + €1.50 + €2.50 = ~€8</p>
+                    
+                    <div class="table-responsive">
+                        <table class="table table-sm table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Veruda → Island</th>
+                                    <th>Island → Veruda</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td>09:00</td><td>09:15</td></tr>
+                                <tr><td>10:00</td><td>10:15</td></tr>
+                                <tr><td>11:00</td><td>11:15</td></tr>
+                                <tr><td>12:00</td><td>12:15</td></tr>
+                                <tr><td>13:00</td><td>13:15</td></tr>
+                                <tr><td>14:00</td><td>14:15</td></tr>
+                                <tr><td>15:00</td><td>15:15</td></tr>
+                                <tr><td>16:00</td><td>16:15</td></tr>
+                                <tr><td>17:00</td><td>17:15</td></tr>
+                                <tr><td>18:00</td><td>18:15</td></tr>
+                                <tr><td>19:00</td><td>19:15</td></tr>
+                                <tr><td>20:00</td><td>20:15</td></tr>
+                                <tr><td>21:00</td><td>21:15</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <p><strong>🛥️ Boat runs every hour. Total duration: 2–2.5 hours.</strong></p>
+                </div>
+            </div>
+
+            <!-- General Info Tab -->
+            <div class="tab-pane fade" id="general-info" role="tabpanel" aria-labelledby="general-info-tab">
+                <div id="generalInfoSection" class="editable-section" data-title="General Info">
+                    <h2>What to See in Pula & Around</h2>
+                    <p>Make the most of your visit to Pula! Here are the top attractions and activities to explore during your stay.</p>
+                    
+                    <h3>🏛️ Historical Attractions in Pula</h3>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-building"></i> Pula Arena</h5>
+                                    <p class="card-text">Roman amphitheatre from the 1st century - one of the best-preserved Roman amphitheatres in the world.</p>
+                                    <p class="small text-muted">Must-see attraction, hosts concerts and events</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-bank"></i> Temple of Augustus & Forum</h5>
+                                    <p class="card-text">Ancient Roman square in the old town center with well-preserved Roman temple.</p>
+                                    <p class="small text-muted">Perfect for photos and historical exploration</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-tunnel"></i> Zerostrasse Tunnels</h5>
+                                    <p class="card-text">WWI underground shelters beneath the city - a unique underground tour experience.</p>
+                                    <p class="small text-muted">Cool refuge from summer heat</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title"><i class="bi bi-castle"></i> Kaštel & Historical Museum</h5>
+                                    <p class="card-text">Hilltop fortress with panoramic views of Pula and the Adriatic Sea.</p>
+                                    <p class="small text-muted">Best views in the city, great for sunset</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <h3>🌊 Waterfront & Nature</h3>
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title"><i class="bi bi-water"></i> Riva & Lungomare Promenade</h5>
+                            <p class="card-text">Ideal for an evening stroll by the sea. The waterfront promenade offers beautiful views, cafes, and restaurants.</p>
+                            <p class="small text-muted">Perfect for networking walks and relaxation</p>
+                        </div>
+                    </div>
+                    
+                    <h3>🎯 Conference Networking Suggestions</h3>
+                    <div class="alert alert-success">
+                        <h6><i class="bi bi-people"></i> Self-Organized City Tour & Networking</h6>
+                        <p><strong>Thursday, July 17 - 18:00</strong></p>
+                        <p>Join fellow conference participants for a self-organized city tour and networking session. Great opportunity to explore Pula while connecting with other attendees!</p>
+                        <ul class="small">
+                            <li>Meet at Coworking Pula after presentations</li>
+                            <li>Suggested route: Forum → Arena → Waterfront</li>
+                            <li>Dinner recommendations will be shared</li>
+                        </ul>
+                    </div>
+                    
+                    <h3>🍽️ Dining Recommendations</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <h6>Traditional Istrian</h6>
+                            <ul class="small">
+                                <li>Konoba Boccaporta</li>
+                                <li>Restaurant Oasi</li>
+                                <li>Konoba Čakula</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Seafood</h6>
+                            <ul class="small">
+                                <li>Restaurant Farabuto</li>
+                                <li>Ribarska Koliba</li>
+                                <li>Pompana</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-4">
+                            <h6>Casual Dining</h6>
+                            <ul class="small">
+                                <li>Pizzeria Jupiter</li>
+                                <li>Bistro Alighieri</li>
+                                <li>Cafe Bar Uliks</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <h3>🏨 Accommodation Tips</h3>
+                    <div class="alert alert-info">
+                        <p><strong>Peak Season Notice:</strong> July is high tourist season in Pula. Book accommodation well in advance!</p>
+                        <ul class="small">
+                            <li>Hotels near city center: Hotel Scaletta, Hotel Omir</li>
+                            <li>Budget options: Youth Hostel Pula, private apartments</li>
+                            <li>Luxury: Park Plaza Histria, Hotel Brioni</li>
+                        </ul>
+                    </div>
+                    
+                    <h3>🚌 Getting Around Pula</h3>
                     <ul>
-                        <li><strong>Pula Arena</strong> – Roman amphitheatre from the 1st century</li>
-                        <li><strong>Temple of Augustus & Forum</strong> – Ancient Roman square in the old town</li>
-                        <li><strong>Zerostrasse Tunnels</strong> – WWI underground shelters under the city</li>
-                        <li><strong>Kaštel & Historical Museum of Istria</strong> – Hilltop fortress with panoramic views</li>
-                        <li><strong>Riva & Lungomare Promenade</strong> – Ideal for an evening stroll by the sea</li>
+                        <li><strong>Walking:</strong> City center is compact and walkable</li>
+                        <li><strong>Public transport:</strong> City buses connect main areas</li>
+                        <li><strong>Taxi:</strong> Available, but more expensive during tourist season</li>
+                        <li><strong>Bike rental:</strong> Several rental shops in the city center</li>
                     </ul>
                     
-                    <div class="alert alert-info">
-                        <strong>Note:</strong> Some venue details are still being finalized. Updated information will be provided closer to the conference date.
+                    <h3>📱 Useful Apps & Contacts</h3>
+                    <ul class="small">
+                        <li><strong>Bus schedules:</strong> Pulapromet app</li>
+                        <li><strong>Weather:</strong> Check local forecasts</li>
+                        <li><strong>Tourist info:</strong> TZ Pula website</li>
+                        <li><strong>Emergency:</strong> 112 (EU emergency number)</li>
+                    </ul>
+                    
+                    <div class="alert alert-warning">
+                        <p><strong>Conference Schedule:</strong> For the most up-to-date conference information, visit: <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></p>
                     </div>
                 </div>
             </div>
@@ -496,7 +752,9 @@
             </div>
         </div>    </div><script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>    <script type="module" src="../js/app.js"></script>
     <script type="module" src="../js/notifications.js"></script>
+    <script type="module" src="../js/push-notifications.js"></script>
     <script type="module" src="../js/pizza-selection.js"></script>
+    <script type="module" src="../js/schedule-functionality.js"></script>
     <script type="module" src="../js/schedule-notifications.js"></script>
     <script type="module" src="../js/scheduled-notifications.js"></script>
     <script type="module" src="../js/offline-storage.js"></script>
