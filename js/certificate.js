@@ -143,37 +143,6 @@ function preloadResources() {
     });
 }
 
-// Fallback function to show image preview when PDF generation fails
-async function showImagePreview(userData) {
-    if (!certificatePreview) return;
-    
-    try {
-        // Show the static certificate image as fallback
-        certificatePreview.innerHTML = `
-            <div class="position-relative">
-                <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
-                <div class="position-absolute" style="top: 45%; left: 0; right: 0; text-align: center;">
-                    <h2 style="font-family: 'Italianno', cursive; font-size: 72px; color: #333;">
-                        ${userData.firstName} ${userData.lastName}
-                    </h2>
-                </div>
-                <p class="text-muted mt-2 small">Preview of your certificate (image only)</p>
-            </div>
-        `;
-        
-        return true;
-    } catch (error) {
-        console.error("Error showing image preview:", error);
-        certificatePreview.innerHTML = `
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Could not display certificate preview
-            </div>
-        `;
-        return false;
-    }
-}
-
 // Enhanced certificate generation using JPG image directly
 async function generateCertificate(userData) {
     if (!certificatePreview) return null;
@@ -232,8 +201,8 @@ async function generateCertificate(userData) {
         // Draw the certificate image on the canvas
         ctx.drawImage(img, 0, 0);
         
-        // Add the name text
-        ctx.font = "82px Italianno, cursive";
+        // Add the name text with updated font size (72px)
+        ctx.font = "72px Italianno, cursive";
         ctx.fillStyle = "#333333";
         ctx.textAlign = "center";
         
@@ -378,6 +347,37 @@ async function downloadCertificate(userData) {
         // Restore button
         downloadCertificateBtn.innerHTML = originalBtnContent;
         downloadCertificateBtn.disabled = false;
+    }
+}
+
+// Fallback function to show image preview when PDF generation fails
+async function showImagePreview(userData) {
+    if (!certificatePreview) return;
+    
+    try {
+        // Show the static certificate image as fallback
+        certificatePreview.innerHTML = `
+            <div class="position-relative">
+                <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
+                <div class="position-absolute" style="top: 45%; left: 0; right: 0; text-align: center;">
+                    <h2 style="font-family: 'Italianno', cursive; font-size: 72px; color: #333;">
+                        ${userData.firstName} ${userData.lastName}
+                    </h2>
+                </div>
+                <p class="text-muted mt-2 small">Preview of your certificate (image only)</p>
+            </div>
+        `;
+        
+        return true;
+    } catch (error) {
+        console.error("Error showing image preview:", error);
+        certificatePreview.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Could not display certificate preview
+            </div>
+        `;
+        return false;
     }
 }
 
