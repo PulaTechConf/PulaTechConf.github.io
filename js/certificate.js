@@ -89,7 +89,7 @@ function checkFontLoaded() {
     // Create an element with the font
     const fontTest = document.createElement('span');
     fontTest.style.fontFamily = "'Italianno', cursive";
-    fontTest.style.fontSize = "72px";
+    fontTest.style.fontSize = "200px";
     fontTest.style.visibility = "hidden";
     fontTest.textContent = "Font Test";
     document.body.appendChild(fontTest);
@@ -201,8 +201,8 @@ async function generateCertificate(userData) {
         // Draw the certificate image on the canvas
         ctx.drawImage(img, 0, 0);
         
-        // Add the name text with updated font size (72px)
-        ctx.font = "72px Italianno, cursive";
+        // Add the name text with updated font size (200px)
+        ctx.font = "200px Italianno, cursive";
         ctx.fillStyle = "#333333";
         ctx.textAlign = "center";
         
@@ -360,7 +360,7 @@ async function showImagePreview(userData) {
             <div class="position-relative">
                 <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
                 <div class="position-absolute" style="top: 45%; left: 0; right: 0; text-align: center;">
-                    <h2 style="font-family: 'Italianno', cursive; font-size: 72px; color: #333;">
+                    <h2 style="font-family: 'Italianno', cursive; font-size: 200px; color: #333;">
                         ${userData.firstName} ${userData.lastName}
                     </h2>
                 </div>
