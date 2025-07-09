@@ -115,6 +115,25 @@ function initializeExpandableSections() {
             }
         });
     });
+    
+    // Online presentations expandable sections
+    document.querySelectorAll('.online-expandable').forEach(onlineSection => {
+        const title = onlineSection.querySelector('.online-title');
+        const details = onlineSection.querySelector('.online-details');
+        const icon = title.querySelector('i');
+        
+        title.addEventListener('click', () => {
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            } else {
+                details.style.display = 'none';
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        });
+    });
 }
 
 // Google Calendar integration
