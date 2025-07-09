@@ -89,7 +89,7 @@ function checkFontLoaded() {
     // Create an element with the font
     const fontTest = document.createElement('span');
     fontTest.style.fontFamily = "'Italianno', cursive";
-    fontTest.style.fontSize = "550px";
+    fontTest.style.fontSize = "450px";  // Use a more reasonable size for testing
     fontTest.style.visibility = "hidden";
     fontTest.textContent = "Font Test";
     document.body.appendChild(fontTest);
@@ -134,12 +134,12 @@ function preloadResources() {
             }
         }, 100);
         
-        // Fallback after 3 seconds if font doesn't load properly
+        // Fallback after 1 minute if font doesn't load properly
         setTimeout(() => {
             clearInterval(checkFontInterval);
-            console.warn("Font loading timeout reached, continuing anyway");
+            console.warn("Font loading timeout reached after 1 minute, continuing with fallbacks");
             resolve();
-        }, 3000);
+        }, 60000); // Increased to 1 minute (60000ms)
     });
 }
 
@@ -201,10 +201,16 @@ async function generateCertificate(userData) {
         // Draw the certificate image on the canvas
         ctx.drawImage(img, 0, 0);
         
-        // Add the name text with appropriate font size (550px)
-        ctx.font = "550px Italianno, cursive";
+        // Add the name text - first check if Italianno is loaded
+        const fontLoaded = checkFontLoaded();
+        const fontFamily = fontLoaded ? "Italianno, cursive" : "serif";
+        const fontSize = fontLoaded ? "450px" : "120px";  // Use smaller size for fallback font
+        
+        ctx.font = `${fontSize} ${fontFamily}`;
         ctx.fillStyle = "#333333";
         ctx.textAlign = "center";
+        
+        console.log(`Using font: ${fontFamily} at size ${fontSize}`);
         
         // Position the text in the center-ish of the certificate
         const text = `${userData.firstName} ${userData.lastName}`;
