@@ -22,8 +22,8 @@ messaging.onBackgroundMessage((payload) => {
   const notificationTitle = payload.notification?.title || payload.data?.title || 'PulaTechConf Notification';
   const notificationOptions = {
     body: payload.notification?.body || payload.data?.body || 'You have a new notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/icons/ikona(svitla).png',
+    badge: '/favicon.ico',
     tag: 'pulatech-notification',
     requireInteraction: true,
     vibrate: [200, 100, 200], // For mobile devices

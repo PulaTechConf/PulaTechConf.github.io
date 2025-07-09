@@ -162,8 +162,8 @@ class MassageReminderService {
                 payload: {
                     title: data.title,
                     body: data.message,
-                    icon: '/icons/icon-192x192.png',
-                    badge: '/icons/icon-72x72.png',
+                    icon: '/icons/ikona(svitla).png',
+                    badge: '/favicon.ico',
                     tag: 'massage-reminder',
                     requireInteraction: true,
                     vibrate: [200, 100, 200],
@@ -179,7 +179,7 @@ class MassageReminderService {
             // Fallback to regular notification
             new Notification(data.title, {
                 body: data.message,
-                icon: '/icons/icon-192x192.png',
+                icon: '/icons/ikona(svitla).png',
                 tag: 'massage-reminder'
             });
         }

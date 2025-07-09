@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pulatech-conf-v1';
+const CACHE_NAME = 'pulatech-conf-v2';
 const urlsToCache = [
   '/app/home.html',
   '/app/profile.html',
@@ -17,6 +17,8 @@ const urlsToCache = [
   '/js/admin/notifications.js',
   '/js/admin/users.js',
   '/favicon.ico',
+  '/icons/ikona(svitla).png',
+  '/icons/ikona(tamna).png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',
   'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js'
@@ -94,8 +96,8 @@ self.addEventListener('push', function(event) {
   let notificationData = {
     title: 'PulaTech Conference',
     body: 'New notification',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-72x72.png',
+    icon: '/icons/ikona(svitla).png',
+    badge: '/favicon.ico',
     tag: 'pulatech-notification',
     requireInteraction: false,
     actions: [

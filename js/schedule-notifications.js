@@ -347,8 +347,8 @@ class ScheduleNotifications {    constructor() {
             // Use service worker to show notification (works even when app is closed)
             this.swRegistration.showNotification(title, {
                 body: message,
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
+                icon: '/icons/ikona(svitla).png',
+                badge: '/favicon.ico',
                 tag: 'schedule-notification',
                 requireInteraction: false,
                 actions: [
@@ -362,7 +362,7 @@ class ScheduleNotifications {    constructor() {
             // Fallback to regular notification
             new Notification(title, {
                 body: message,
-                icon: '/icons/icon-192x192.png'
+                icon: '/icons/ikona(svitla).png'
             });
         }
     }

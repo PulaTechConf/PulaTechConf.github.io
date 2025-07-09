@@ -148,8 +148,8 @@ class PushNotificationManager {
             const title = payload.notification?.title || 'PulaTechConf';
             const options = {
                 body: payload.notification?.body || '',
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/icon-72x72.png',
+                icon: '/icons/ikona(svitla).png',
+                badge: '/favicon.ico',
                 tag: 'pulatech-notification',
                 requireInteraction: true
             };

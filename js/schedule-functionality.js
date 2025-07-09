@@ -221,18 +221,7 @@ function addAllEventsToCalendar() {
     
     // Create Google Calendar links for all events
     const calendarLinks = events.map(event => {
-        const startTime = event.start.replace(/[-:]/g, '').replace('T', 'T');
-        const endTime = event.end.replace(/[-:]/g, '').replace('T', 'T');
-        
-        const params = new URLSearchParams({
-            action: 'TEMPLATE',
-            text: event.title,
-            dates: `${startTime}/${endTime}`,
-            location: event.location,
-            details: event.description
-        });
-        
-        return `https://calendar.google.com/calendar/render?${params.toString()}`;
+        return createGoogleCalendarUrl(event);
     });
     
     // Open multiple calendar windows (browsers might block this)
@@ -243,6 +232,22 @@ function addAllEventsToCalendar() {
             }, index * 500); // Stagger the opening to avoid popup blockers
         });
     }
+}
+
+// Helper function to create Google Calendar URL
+function createGoogleCalendarUrl(event) {
+    const startTime = event.start.replace(/[-:]/g, '').replace('T', 'T');
+    const endTime = event.end.replace(/[-:]/g, '').replace('T', 'T');
+    
+    const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: event.title,
+        dates: `${startTime}/${endTime}`,
+        location: event.location,
+        details: event.description
+    });
+    
+    return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
 
 // Massage booking functionality
