@@ -293,13 +293,17 @@ export async function sendNotificationToAccommodationUsers(title, message) {
         const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
         const { db } = await import("../firebase-config.js");
         
-        // Get all users first, then filter client-side for accommodation
+        // Use a single query with array-contains or exists check instead of multiple != queries
+        // This approach avoids the Firebase limitation of multiple != filters
         const usersRef = collection(db, "users");
-        const allUsersSnapshot = await getDocs(usersRef);
         
-        // Filter users with accommodation information client-side
+        // Get all users and filter for accommodation info on the client side
+        // This is more reliable than trying to create complex Firebase queries
+        const allUsersQuery = await getDocs(usersRef);
+        
+        // Count users with accommodation info (non-empty accommodation field)
         let accommodationUsersCount = 0;
-        allUsersSnapshot.forEach((doc) => {
+        allUsersQuery.forEach((doc) => {
             const userData = doc.data();
             if (userData.accommodation && userData.accommodation.trim() !== "") {
                 accommodationUsersCount++;
