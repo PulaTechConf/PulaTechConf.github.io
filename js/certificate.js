@@ -89,9 +89,9 @@ function checkFontLoaded() {
     // Create an element with the font
     const fontTest = document.createElement('span');
     fontTest.style.fontFamily = "'Italianno', cursive";
-    fontTest.style.fontSize = "450px";  // Use a more reasonable size for testing
+    fontTest.style.fontSize = "50px"; // Use a smaller size for more reliable testing
     fontTest.style.visibility = "hidden";
-    fontTest.textContent = "Font Test";
+    fontTest.textContent = "Test Font Loading"; // Use a longer text for better comparison
     document.body.appendChild(fontTest);
     
     // Force a reflow
@@ -109,15 +109,16 @@ function checkFontLoaded() {
     // If widths are different, custom font was loaded
     const fontLoaded = initialWidth !== afterWidth;
     console.log(`Font test: ${fontLoaded ? 'Italianno loaded' : 'Italianno NOT loaded'}`);
-    console.log(`Initial width: ${initialWidth}, After width: ${afterWidth}`);
+    console.log(`Width comparison: initial=${initialWidth}, after=${afterWidth}, difference=${Math.abs(initialWidth - afterWidth)}`);
     
     return fontLoaded;
 }
 
-// Enhanced preloading function that handles fonts
+// Enhanced preloading function that handles fonts with better timeout handling
 function preloadResources() {
-    return new Promise(async (resolve) => {
+    return new Promise((resolve) => {
         console.log("Preloading fonts and resources...");
+        const startTime = Date.now();
         
         // Load Italianno font
         const fontLoader = document.createElement('link');
@@ -125,21 +126,42 @@ function preloadResources() {
         fontLoader.href = 'https://fonts.googleapis.com/css2?family=Italianno&display=swap';
         document.head.appendChild(fontLoader);
         
+        // Use more robust font loading detection
+        let fontLoaded = false;
+        let attempts = 0;
+        
         // Create a function to check if font is loaded
         const checkFontInterval = setInterval(() => {
-            if (checkFontLoaded()) {
-                console.log("Italianno font loaded successfully");
+            attempts++;
+            const elapsedTime = Date.now() - startTime;
+            const isLoaded = checkFontLoaded();
+            
+            console.log(`Font load check attempt #${attempts} after ${elapsedTime}ms: ${isLoaded ? 'SUCCESS' : 'WAITING'}`);
+            
+            if (isLoaded) {
+                fontLoaded = true;
+                console.log(`Italianno font loaded successfully after ${elapsedTime}ms`);
                 clearInterval(checkFontInterval);
-                resolve();
+                clearTimeout(timeoutHandler);
+                resolve(true);
             }
-        }, 100);
+            // Continue checking in the interval
+        }, 500); // Check every 500ms
         
-        // Fallback after 1 minute if font doesn't load properly
-        setTimeout(() => {
+        // Fallback after exactly 1 minute (60000ms)
+        const timeoutHandler = setTimeout(() => {
             clearInterval(checkFontInterval);
-            console.warn("Font loading timeout reached after 1 minute, continuing with fallbacks");
-            resolve();
-        }, 60000); // Increased to 1 minute (60000ms)
+            const elapsedTime = Date.now() - startTime;
+            console.warn(`Font loading timeout reached after ${elapsedTime}ms, continuing with fallbacks`);
+            
+            // Check one last time
+            if (!fontLoaded && checkFontLoaded()) {
+                console.log("Font loaded just in time during final check");
+                resolve(true);
+            } else {
+                resolve(false);
+            }
+        }, 60000);
     });
 }
 
@@ -179,7 +201,8 @@ async function generateCertificate(userData) {
         }
         
         // Preload fonts before generating certificate
-        await preloadResources();
+        const fontLoadResult = await preloadResources();
+        console.log(`Font preloading complete, success: ${fontLoadResult}`);
         
         // First, create a canvas to draw the certificate
         console.log("Creating certificate on canvas...");
@@ -201,10 +224,19 @@ async function generateCertificate(userData) {
         // Draw the certificate image on the canvas
         ctx.drawImage(img, 0, 0);
         
-        // Add the name text - first check if Italianno is loaded
-        const fontLoaded = checkFontLoaded();
-        const fontFamily = fontLoaded ? "Italianno, cursive" : "serif";
-        const fontSize = fontLoaded ? "450px" : "120px";  // Use smaller size for fallback font
+        // Add the name text - use information from font loading result
+        let fontFamily, fontSize;
+        
+        if (fontLoadResult) {
+            fontFamily = "'Italianno', cursive";
+            fontSize = "400px";
+            console.log("Using Italianno font for certificate");
+        } else {
+            // Fallback font options
+            fontFamily = "serif";
+            fontSize = "120px";
+            console.log("Using fallback font for certificate");
+        }
         
         ctx.font = `${fontSize} ${fontFamily}`;
         ctx.fillStyle = "#333333";
