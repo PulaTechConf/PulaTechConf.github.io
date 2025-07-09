@@ -89,7 +89,7 @@ function checkFontLoaded() {
     // Create an element with the font
     const fontTest = document.createElement('span');
     fontTest.style.fontFamily = "'Italianno', cursive";
-    fontTest.style.fontSize = "200px";
+    fontTest.style.fontSize = "600px";
     fontTest.style.visibility = "hidden";
     fontTest.textContent = "Font Test";
     document.body.appendChild(fontTest);
@@ -201,8 +201,8 @@ async function generateCertificate(userData) {
         // Draw the certificate image on the canvas
         ctx.drawImage(img, 0, 0);
         
-        // Add the name text with updated font size (200px)
-        ctx.font = "200px Italianno, cursive";
+        // Add the name text with appropriate font size (600px)
+        ctx.font = "600px Italianno, cursive";
         ctx.fillStyle = "#333333";
         ctx.textAlign = "center";
         
@@ -249,12 +249,6 @@ async function generateCertificate(userData) {
                 <img src="${imageData}" alt="Certificate Preview" class="img-fluid certificate-thumbnail mb-2">
                 <p class="text-muted small">Image preview of your personalized certificate</p>
             </div>
-            <object data="${pdfUrl}" type="application/pdf" class="certificate-pdf-preview" style="width:100%; height:300px;">
-                <div class="alert alert-warning">
-                    <p>Your browser doesn't support PDF previews. 
-                    <a href="${pdfUrl}" target="_blank">Open PDF</a></p>
-                </div>
-            </object>
         `;
         
         // Return the PDF bytes for download
@@ -267,18 +261,13 @@ async function generateCertificate(userData) {
         console.error("Detailed error in certificate generation:", error);
         console.error("Error stack:", error.stack);
         
-        // Try fallback to image preview
-        console.log("Attempting fallback to image preview...");
-        const fallbackSuccess = await showImagePreview(userData);
-        
-        if (!fallbackSuccess) {
-            certificatePreview.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Error generating certificate: ${error.message}
-                </div>
-            `;
-        }
+        // Show error in certificate preview
+        certificatePreview.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Error generating certificate: ${error.message}
+            </div>
+        `;
         
         return null;
     }
@@ -347,37 +336,6 @@ async function downloadCertificate(userData) {
         // Restore button
         downloadCertificateBtn.innerHTML = originalBtnContent;
         downloadCertificateBtn.disabled = false;
-    }
-}
-
-// Fallback function to show image preview when PDF generation fails
-async function showImagePreview(userData) {
-    if (!certificatePreview) return;
-    
-    try {
-        // Show the static certificate image as fallback
-        certificatePreview.innerHTML = `
-            <div class="position-relative">
-                <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
-                <div class="position-absolute" style="top: 45%; left: 0; right: 0; text-align: center;">
-                    <h2 style="font-family: 'Italianno', cursive; font-size: 200px; color: #333;">
-                        ${userData.firstName} ${userData.lastName}
-                    </h2>
-                </div>
-                <p class="text-muted mt-2 small">Preview of your certificate (image only)</p>
-            </div>
-        `;
-        
-        return true;
-    } catch (error) {
-        console.error("Error showing image preview:", error);
-        certificatePreview.innerHTML = `
-            <div class="alert alert-warning">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Could not display certificate preview
-            </div>
-        `;
-        return false;
     }
 }
 
@@ -470,79 +428,6 @@ function initCertificate() {
     }, 1500);
 }
 
-// Simple test function to check if basic functionality works
-function testCertificateGeneration() {
-    if (!certificatePreview) {
-        console.error("Certificate preview element not found");
-        return;
-    }
-    
-    console.log("Starting certificate test...");
-    
-    // Show a message in the preview area
-    certificatePreview.innerHTML = `
-        <div class="alert alert-info">
-            <i class="bi bi-info-circle me-2"></i>
-            Running certificate test...
-        </div>
-    `;
-    
-    // Test data - doesn't require Firebase
-    const testUserData = {
-        firstName: "John",
-        lastName: "Doe",
-        affiliation: "Test Organization",
-        email: "test@example.com"
-    };
-    
-    // First check if we can load the certificate image
-    try {
-        const img = new Image();
-        img.onload = () => {
-            certificatePreview.innerHTML = `
-                <div class="alert alert-success mb-3">
-                    <i class="bi bi-check-circle me-2"></i>
-                    Test step 1: Certificate image loaded!
-                </div>
-                <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Test" class="img-fluid certificate-thumbnail mb-3">
-                <button id="generateTestBtn" class="btn btn-primary mt-2">Generate Test Certificate</button>
-                <button id="fallbackTestBtn" class="btn btn-secondary mt-2 ms-2">Test Fallback Preview</button>
-            `;
-            
-            // Add event listener for the test generation button
-            document.getElementById('generateTestBtn').addEventListener('click', () => {
-                downloadCertificate(testUserData);
-            });
-            
-            // Add event listener for the fallback test button
-            document.getElementById('fallbackTestBtn').addEventListener('click', () => {
-                showImagePreview(testUserData);
-            });
-        };
-        
-        img.onerror = (error) => {
-            certificatePreview.innerHTML = `
-                <div class="alert alert-warning">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Certificate image not found!
-                </div>
-                <div class="mt-3">
-                    <p>Please make sure you have an image at: <code>${CERTIFICATE_IMAGE_PATH}</code></p>
-                </div>
-            `;
-        };
-        
-        img.src = CERTIFICATE_IMAGE_PATH;
-    } catch (error) {
-        certificatePreview.innerHTML = `
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Test failed: ${error.message}
-            </div>
-        `;
-    }
-}
-
 // Initialize with proper DOM checks and delayed to allow profile page to load
 document.addEventListener('DOMContentLoaded', () => {
     if (downloadCertificateBtn && certificatePreview) {
@@ -550,16 +435,10 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             initCertificate();
         }, 2000); // Ensure profile is loaded
-        
-        // Add event listener for the test certificate button
-        const testCertificateBtn = document.getElementById('testCertificateBtn');
-        if (testCertificateBtn) {
-            testCertificateBtn.addEventListener('click', testCertificateGeneration);
-        }
     } else {
         console.warn("Certificate elements not found in DOM");
     }
 });
 
 // Update your exports
-export { generateCertificate, downloadCertificate, testCertificateGeneration };
+export { generateCertificate, downloadCertificate };
