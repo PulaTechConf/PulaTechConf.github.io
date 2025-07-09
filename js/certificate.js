@@ -1,15 +1,4 @@
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-auth.js";
-import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 import { app } from "./firebase-config.js";
-
-// Initialize Firebase services - with try/catch to handle initialization errors
-let auth, db;
-try {
-    auth = getAuth(app);
-    db = getFirestore(app);
-} catch (error) {
-    console.error("Error initializing Firebase services:", error);
-}
 
 // DOM elements - with null checks
 const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
@@ -393,22 +382,11 @@ async function downloadCertificate(userData) {
 
 // Initialize certificate functionality
 function initCertificate() {
-    if (!auth || !db) {
-        console.error("Firebase services not initialized properly");
-        if (certificatePreview) {
-            certificatePreview.innerHTML = `
-                <div class="alert alert-danger">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    Authentication service not available. Please reload the page or try again later.
-                </div>
-            `;
-        }
-        return;
-    }
-    
-    // Try to get user data from profile page first
+    // Try to get user data from profile page
     const profileData = getUserDataFromProfilePage();
+    
     if (profileData) {
+        console.log("Using data from profile page for certificate");
         // Generate certificate preview with profile data
         generateCertificate(profileData);
         
@@ -419,45 +397,76 @@ function initCertificate() {
         return;
     }
     
-    // If profile data not available, use Firebase as fallback
-    onAuthStateChanged(auth, async (user) => {
-        if (user) {
-            try {
-                // Get user data from Firestore
-                const userDoc = await getDoc(doc(db, "users", user.uid));
-                if (userDoc.exists()) {
-                    const userData = userDoc.data();
-                    
-                    // Generate certificate preview
-                    await generateCertificate(userData);
-                    
-                    // Add click event to download button
-                    if (downloadCertificateBtn) {
-                        downloadCertificateBtn.addEventListener('click', () => downloadCertificate(userData));
+    // If data is not available yet, wait and retry
+    console.log("Profile data not ready, will retry shortly...");
+    
+    // Show waiting message
+    if (certificatePreview) {
+        certificatePreview.innerHTML = `
+            <div class="alert alert-info">
+                <i class="bi bi-hourglass-split me-2"></i>
+                Loading your certificate data...
+            </div>
+        `;
+    }
+    
+    // Try again after a delay
+    setTimeout(() => {
+        const retryProfileData = getUserDataFromProfilePage();
+        
+        if (retryProfileData) {
+            console.log("Successfully loaded profile data on retry");
+            generateCertificate(retryProfileData);
+            
+            if (downloadCertificateBtn) {
+                downloadCertificateBtn.addEventListener('click', () => downloadCertificate(retryProfileData));
+            }
+        } else {
+            // Still no data, use fallback
+            console.warn("Could not load profile data, using fallback");
+            const fallbackData = {
+                firstName: "Conference",
+                lastName: "Participant"
+            };
+            
+            if (certificatePreview) {
+                certificatePreview.innerHTML = `
+                    <div class="alert alert-warning mb-3">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Note:</strong> Using generic data for certificate. Please try reloading the page.
+                    </div>
+                `;
+                
+                // Add event listener for the retry button
+                const retryButton = document.createElement('button');
+                retryButton.className = 'btn btn-outline-primary mb-3';
+                retryButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Retry Loading Data';
+                retryButton.addEventListener('click', () => {
+                    const latestData = getUserDataFromProfilePage();
+                    if (latestData) {
+                        generateCertificate(latestData);
+                        if (downloadCertificateBtn) {
+                            downloadCertificateBtn.addEventListener('click', () => downloadCertificate(latestData));
+                        }
+                    } else {
+                        // Still no data, generate with fallback
+                        generateCertificate(fallbackData);
                     }
-                } else {
-                    if (certificatePreview) {
-                        certificatePreview.innerHTML = `
-                            <div class="alert alert-warning">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                User profile not found. Please contact support.
-                            </div>
-                        `;
-                    }
+                });
+                
+                // Add retry button to the preview
+                certificatePreview.prepend(retryButton);
+                
+                // Still add functionality to generate certificate with generic data
+                if (downloadCertificateBtn) {
+                    downloadCertificateBtn.addEventListener('click', () => downloadCertificate(fallbackData));
                 }
-            } catch (error) {
-                console.error("Error loading user data:", error);
-                if (certificatePreview) {
-                    certificatePreview.innerHTML = `
-                        <div class="alert alert-danger">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            Error loading certificate. Please try again later.
-                        </div>
-                    `;
-                }
+                
+                // Generate preview with fallback data
+                generateCertificate(fallbackData);
             }
         }
-    });
+    }, 1500);
 }
 
 // Simple test function to check if basic functionality works
@@ -543,10 +552,10 @@ function testCertificateGeneration() {
 // Initialize with proper DOM checks and delayed to allow profile page to load
 document.addEventListener('DOMContentLoaded', () => {
     if (downloadCertificateBtn && certificatePreview) {
-        // Wait a moment to let user-profile.js load the data first
+        // Wait a longer moment to let user-profile.js load the data first
         setTimeout(() => {
             initCertificate();
-        }, 1000);
+        }, 2000); // Ensure profile is loaded
         
         // Add event listener for the test certificate button
         const testCertificateBtn = document.getElementById('testCertificateBtn');
