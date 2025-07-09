@@ -96,6 +96,25 @@ function initializeExpandableSections() {
             }
         });
     });
+    
+    // Lecture sections
+    document.querySelectorAll('.lecture-expandable').forEach(lectureSection => {
+        const title = lectureSection.querySelector('.lecture-title');
+        const details = lectureSection.querySelector('.lecture-details');
+        const icon = title.querySelector('i');
+        
+        title.addEventListener('click', () => {
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                icon.classList.remove('bi-chevron-down');
+                icon.classList.add('bi-chevron-up');
+            } else {
+                details.style.display = 'none';
+                icon.classList.remove('bi-chevron-up');
+                icon.classList.add('bi-chevron-down');
+            }
+        });
+    });
 }
 
 // Google Calendar integration
