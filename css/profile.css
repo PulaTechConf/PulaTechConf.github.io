@@ -418,6 +418,103 @@ body{
     min-width: 80px;
 }
 
+/* Certificate styling */
+.certificate-preview {
+    border-radius: 8px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border: 1px dashed #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.certificate-thumbnail {
+    width: 100%;
+    height: auto;
+    max-height: 250px;
+    object-fit: contain;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    border-radius: 4px;
+    transition: all 0.3s ease;
+}
+
+.certificate-thumbnail:hover {
+    transform: scale(1.03);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+}
+
+#downloadCertificateBtn {
+    background-color: #28a745;
+    border-color: #28a745;
+    transition: all 0.3s ease;
+}
+
+#downloadCertificateBtn:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(40, 167, 69, 0.2);
+}
+
+#downloadCertificateBtn:active {
+    transform: translateY(0);
+}
+
+/* Certificate loading animation */
+.certificate-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px; /* Reduced from 200px for sidebar */
+}
+
+.certificate-loading .spinner-border {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #356FBE;
+}
+
+.certificate-loading p {
+    margin-top: 1rem;
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+/* Additional responsive styling for certificate in sidebar */
+@media (max-width: 991.98px) {
+    .certificate-preview {
+        max-width: 350px;
+        margin: 0 auto;
+    }
+    
+    .certificate-thumbnail {
+        max-height: 200px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .certificate-preview {
+        padding: 8px;
+    }
+    
+    .certificate-thumbnail {
+        max-height: 180px;
+    }
+    
+    .certificate-loading {
+        min-height: 120px;
+    }
+    
+    .certificate-loading .spinner-border {
+        width: 2rem;
+        height: 2rem;
+    }
+    
+    .certificate-loading p {
+        font-size: 0.8rem;
+    }
+}
+
 /* Mobile responsive styling */
 @media (max-width: 991.98px) {
     .container {
