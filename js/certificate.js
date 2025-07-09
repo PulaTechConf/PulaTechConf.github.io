@@ -9,9 +9,7 @@ if (!certificatePreview) {
     console.error("Certificate preview element not found");
 }
 
-// Certificate PDF template path
-const CERTIFICATE_TEMPLATE_PATH = '../icons/img/certificat.pdf';
-// Fallback image path for preview
+// Use JPG image directly instead of PDF template
 const CERTIFICATE_IMAGE_PATH = '../icons/img/certifikat-01.jpg';
 
 // Function to get user data from profile page DOM elements
@@ -176,7 +174,7 @@ async function showImagePreview(userData) {
     }
 }
 
-// Enhanced certificate generation using PDF template
+// Enhanced certificate generation using JPG image directly
 async function generateCertificate(userData) {
     if (!certificatePreview) return null;
     
@@ -214,77 +212,80 @@ async function generateCertificate(userData) {
         // Preload fonts before generating certificate
         await preloadResources();
         
-        console.log("Loading PDF template...");
-        // Fetch the PDF template
-        const templateResponse = await fetch(CERTIFICATE_TEMPLATE_PATH);
-        if (!templateResponse.ok) {
-            throw new Error(`Failed to load PDF template: ${templateResponse.status} ${templateResponse.statusText}`);
-        }
+        // First, create a canvas to draw the certificate
+        console.log("Creating certificate on canvas...");
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
         
-        const templateArrayBuffer = await templateResponse.arrayBuffer();
-        console.log("PDF template loaded successfully");
-        
-        // Load PDF document with PDF-Lib
-        const { PDFDocument, rgb, StandardFonts } = PDFLib;
-        const pdfDoc = await PDFDocument.load(templateArrayBuffer);
-        
-        // Register fontkit
-        pdfDoc.registerFontkit(fontkit);
-        
-        // Load custom font for the name
-        console.log("Loading Italianno font for PDF...");
-        let italiannoFont;
-        
-        try {
-            const fontResponse = await fetch('https://cdn.jsdelivr.net/npm/@fontsource/italianno@5.0.17/files/italianno-latin-400-normal.woff');
-            const fontBytes = await fontResponse.arrayBuffer();
-            italiannoFont = await pdfDoc.embedFont(fontBytes);
-        } catch (fontError) {
-            console.warn("Failed to load Italianno font, falling back to standard font:", fontError);
-            // Fall back to a standard font
-            italiannoFont = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
-        }
-        
-        // Get the first page of the PDF
-        const page = pdfDoc.getPages()[0];
-        const { width, height } = page.getSize();
-        
-        // Add recipient name to certificate
-        const fontSize = 64;
-        const text = `${userData.firstName} ${userData.lastName}`;
-        
-        // Calculate text width to center it
-        const textWidth = italiannoFont.widthOfTextAtSize(text, fontSize);
-        const textX = (width - textWidth) / 2;
-        
-        // Position for the name (adjust Y position based on your template)
-        const textY = height / 2 + 30; // Adjust this based on your PDF template design
-        
-        // Add text to the page
-        page.drawText(text, {
-            x: textX,
-            y: textY,
-            size: fontSize,
-            font: italiannoFont,
-            color: rgb(0.1, 0.1, 0.1), // Dark gray color
+        // Load the certificate image
+        const img = await new Promise((resolve, reject) => {
+            const image = new Image();
+            image.onload = () => resolve(image);
+            image.onerror = () => reject(new Error("Failed to load certificate image"));
+            image.src = CERTIFICATE_IMAGE_PATH;
         });
         
-        // Save the modified PDF
+        // Set canvas size to match the certificate image
+        canvas.width = img.width;
+        canvas.height = img.height;
+        
+        // Draw the certificate image on the canvas
+        ctx.drawImage(img, 0, 0);
+        
+        // Add the name text
+        ctx.font = "82px Italianno, cursive";
+        ctx.fillStyle = "#333333";
+        ctx.textAlign = "center";
+        
+        // Position the text in the center-ish of the certificate
+        const text = `${userData.firstName} ${userData.lastName}`;
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        
+        // Get the image data from canvas
+        const imageData = canvas.toDataURL('image/jpeg', 0.95);
+        
+        // Create a PDF document
+        console.log("Creating PDF...");
+        const { PDFDocument, rgb } = PDFLib;
+        const pdfDoc = await PDFDocument.create();
+        
+        // Add a page with the correct aspect ratio
+        const pageWidth = 850;  // Adjust these values to match your certificate proportions
+        const pageHeight = 650; // Adjust these values to match your certificate proportions
+        const page = pdfDoc.addPage([pageWidth, pageHeight]);
+        
+        // Embed the certificate image with text
+        const jpgImage = await pdfDoc.embedJpg(imageData);
+        
+        // Draw the image to fill the page
+        const { width, height } = page.getSize();
+        page.drawImage(jpgImage, {
+            x: 0,
+            y: 0,
+            width: width,
+            height: height,
+        });
+        
+        // Save the PDF
         const pdfBytes = await pdfDoc.save();
+        console.log("PDF created successfully");
         
         // Convert to base64 for preview
-        const base64Data = await arrayBufferToBase64(pdfBytes);
+        const base64Data = arrayBufferToBase64(pdfBytes);
         const pdfUrl = `data:application/pdf;base64,${base64Data}`;
         
         // Generate preview
         certificatePreview.innerHTML = `
+            <div class="mb-3">
+                <img src="${imageData}" alt="Certificate Preview" class="img-fluid certificate-thumbnail mb-2">
+                <p class="text-muted small">Image preview of your personalized certificate</p>
+            </div>
             <object data="${pdfUrl}" type="application/pdf" class="certificate-pdf-preview" style="width:100%; height:300px;">
                 <div class="alert alert-warning">
                     <p>Your browser doesn't support PDF previews. 
                     <a href="${pdfUrl}" target="_blank">Open PDF</a></p>
                 </div>
             </object>
-            <p class="text-muted mt-2 small">Preview of your personalized certificate</p>
         `;
         
         // Return the PDF bytes for download
@@ -494,51 +495,44 @@ function testCertificateGeneration() {
         email: "test@example.com"
     };
     
-    // First check if we can load the PDF template
+    // First check if we can load the certificate image
     try {
-        // First verify we can access the PDF template
-        fetch(CERTIFICATE_TEMPLATE_PATH)
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`PDF template not found: ${response.status} ${response.statusText}`);
-                }
-                
-                certificatePreview.innerHTML = `
-                    <div class="alert alert-success mb-3">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Test step 1: PDF template found!
-                    </div>
-                    <button id="generateTestBtn" class="btn btn-primary mt-2">Generate Test Certificate</button>
-                    <button id="fallbackTestBtn" class="btn btn-secondary mt-2 ms-2">Test Fallback Preview</button>
-                `;
-                
-                // Add event listener for the test generation button
-                document.getElementById('generateTestBtn').addEventListener('click', () => {
-                    downloadCertificate(testUserData);
-                });
-                
-                // Add event listener for the fallback test button
-                document.getElementById('fallbackTestBtn').addEventListener('click', () => {
-                    showImagePreview(testUserData);
-                });
-            })
-            .catch(error => {
-                certificatePreview.innerHTML = `
-                    <div class="alert alert-warning">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        PDF template not found: ${error.message}
-                    </div>
-                    <div class="mt-3">
-                        <p>Testing fallback to image preview...</p>
-                        <button id="fallbackTestBtn" class="btn btn-primary mt-2">Test Image Fallback</button>
-                    </div>
-                `;
-                
-                // Add event listener for the fallback test button
-                document.getElementById('fallbackTestBtn').addEventListener('click', () => {
-                    showImagePreview(testUserData);
-                });
+        const img = new Image();
+        img.onload = () => {
+            certificatePreview.innerHTML = `
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Test step 1: Certificate image loaded!
+                </div>
+                <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Test" class="img-fluid certificate-thumbnail mb-3">
+                <button id="generateTestBtn" class="btn btn-primary mt-2">Generate Test Certificate</button>
+                <button id="fallbackTestBtn" class="btn btn-secondary mt-2 ms-2">Test Fallback Preview</button>
+            `;
+            
+            // Add event listener for the test generation button
+            document.getElementById('generateTestBtn').addEventListener('click', () => {
+                downloadCertificate(testUserData);
             });
+            
+            // Add event listener for the fallback test button
+            document.getElementById('fallbackTestBtn').addEventListener('click', () => {
+                showImagePreview(testUserData);
+            });
+        };
+        
+        img.onerror = (error) => {
+            certificatePreview.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Certificate image not found!
+                </div>
+                <div class="mt-3">
+                    <p>Please make sure you have an image at: <code>${CERTIFICATE_IMAGE_PATH}</code></p>
+                </div>
+            `;
+        };
+        
+        img.src = CERTIFICATE_IMAGE_PATH;
     } catch (error) {
         certificatePreview.innerHTML = `
             <div class="alert alert-danger">
