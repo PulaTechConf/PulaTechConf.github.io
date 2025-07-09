@@ -17,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize schedule tracking
     initializeScheduleTracking();
     
+    // Initialize lunch navigation
+    initializeLunchNavigation();
+    
     // Add tab switching handler to auto-scroll to current event
     const scheduleTab = document.getElementById('schedule-tab');
     if (scheduleTab) {
@@ -728,4 +731,77 @@ function addSingleEventToCalendar(title, timeText, date, location) {
     }
 }
 
-export { initializeExpandableSections, initializeCalendarIntegration, initializeMassageBooking, initializeScheduleTracking };
+// Initialize lunch navigation from Conference Info
+function initializeLunchNavigation() {
+    const lunchSelectionLink = document.getElementById('lunchSelectionLink');
+    if (lunchSelectionLink) {
+        lunchSelectionLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // 1. Switch to Schedule tab if not already active
+            const scheduleTab = document.getElementById('schedule-tab');
+            const scheduleContent = document.getElementById('schedule');
+            
+            if (scheduleTab && scheduleContent) {
+                // Activate the schedule tab
+                if (!scheduleTab.classList.contains('active')) {
+                    // Remove active from all tabs
+                    document.querySelectorAll('.tabs-link').forEach(tab => {
+                        tab.classList.remove('active');
+                        tab.setAttribute('aria-selected', 'false');
+                    });
+                    document.querySelectorAll('.tab-pane').forEach(pane => {
+                        pane.classList.remove('show', 'active');
+                    });
+                    
+                    // Activate schedule tab
+                    scheduleTab.classList.add('active');
+                    scheduleTab.setAttribute('aria-selected', 'true');
+                    scheduleContent.classList.add('show', 'active');
+                }
+                
+                // Small delay to ensure tab content is visible
+                setTimeout(() => {
+                    // 2. Expand Day 2 if not already expanded
+                    const day2Collapse = document.getElementById('collapseDay2');
+                    const day2Button = document.querySelector('[data-bs-target="#collapseDay2"]');
+                    
+                    if (day2Collapse && day2Button) {
+                        if (!day2Collapse.classList.contains('show')) {
+                            // Expand Day 2
+                            day2Button.classList.remove('collapsed');
+                            day2Button.setAttribute('aria-expanded', 'true');
+                            day2Collapse.classList.add('show');
+                        }
+                        
+                        // Another small delay to ensure Day 2 content is visible
+                        setTimeout(() => {
+                            // 3. Find and expand the lunch section
+                            const lunchExpandable = document.querySelector('.lunch-expandable');
+                            const lunchTitle = document.getElementById('lunchTitle');
+                            const lunchDetails = document.getElementById('lunchDetails');
+                            const lunchIcon = document.getElementById('lunchIcon');
+                            
+                            if (lunchExpandable && lunchTitle && lunchDetails && lunchIcon) {
+                                // Expand lunch section if not already expanded
+                                if (lunchDetails.style.display === 'none') {
+                                    lunchDetails.style.display = 'block';
+                                    lunchIcon.classList.remove('bi-chevron-down');
+                                    lunchIcon.classList.add('bi-chevron-up');
+                                }
+                                
+                                // 4. Scroll to the lunch section
+                                lunchExpandable.scrollIntoView({ 
+                                    behavior: 'smooth', 
+                                    block: 'center' 
+                                });
+                            }
+                        }, 300);
+                    }
+                }, 100);
+            }
+        });
+    }
+}
+
+export { initializeExpandableSections, initializeCalendarIntegration, initializeMassageBooking, initializeScheduleTracking, initializeLunchNavigation };
