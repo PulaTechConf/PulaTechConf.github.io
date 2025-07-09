@@ -25,6 +25,30 @@ const CERTIFICATE_TEMPLATE_PATH = '../icons/img/certificat.pdf';
 // Fallback image path for preview
 const CERTIFICATE_IMAGE_PATH = '../icons/img/certifikat-01.jpg';
 
+// Function to get user data from profile page DOM elements
+function getUserDataFromProfilePage() {
+    try {
+        const firstNameElement = document.getElementById('firstName');
+        const lastNameElement = document.getElementById('lastName');
+        
+        if (firstNameElement && lastNameElement) {
+            const firstName = firstNameElement.textContent.trim();
+            const lastName = lastNameElement.textContent.trim();
+            
+            // Only use the data if it's not a placeholder
+            if (firstName !== 'Loading...' && lastName !== 'Loading...' && 
+                firstName !== 'Not provided' && lastName !== 'Not provided') {
+                console.log("Using user data from profile page:", { firstName, lastName });
+                return { firstName, lastName };
+            }
+        }
+    } catch (error) {
+        console.error("Error getting user data from profile page:", error);
+    }
+    
+    return null;
+}
+
 // Helper function to convert ArrayBuffer to base64
 function arrayBufferToBase64(buffer) {
     let binary = '';
@@ -167,6 +191,14 @@ async function showImagePreview(userData) {
 async function generateCertificate(userData) {
     if (!certificatePreview) return null;
     
+    // Try to get user data from profile page if not provided
+    if (!userData || !userData.firstName || !userData.lastName) {
+        const profileData = getUserDataFromProfilePage();
+        if (profileData) {
+            userData = profileData;
+        }
+    }
+    
     console.log("Starting certificate generation for:", userData);
     // Show loading state
     certificatePreview.innerHTML = `
@@ -300,6 +332,14 @@ async function downloadCertificate(userData) {
         return;
     }
     
+    // Try to get user data from profile page if not provided
+    if (!userData || !userData.firstName || !userData.lastName) {
+        const profileData = getUserDataFromProfilePage();
+        if (profileData) {
+            userData = profileData;
+        }
+    }
+    
     // Show loading indicator on button
     const originalBtnContent = downloadCertificateBtn.innerHTML;
     downloadCertificateBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Generating...`;
@@ -366,6 +406,20 @@ function initCertificate() {
         return;
     }
     
+    // Try to get user data from profile page first
+    const profileData = getUserDataFromProfilePage();
+    if (profileData) {
+        // Generate certificate preview with profile data
+        generateCertificate(profileData);
+        
+        // Add click event to download button with profile data
+        if (downloadCertificateBtn) {
+            downloadCertificateBtn.addEventListener('click', () => downloadCertificate(profileData));
+        }
+        return;
+    }
+    
+    // If profile data not available, use Firebase as fallback
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
@@ -486,10 +540,13 @@ function testCertificateGeneration() {
     }
 }
 
-// Initialize with proper DOM checks
+// Initialize with proper DOM checks and delayed to allow profile page to load
 document.addEventListener('DOMContentLoaded', () => {
     if (downloadCertificateBtn && certificatePreview) {
-        initCertificate();
+        // Wait a moment to let user-profile.js load the data first
+        setTimeout(() => {
+            initCertificate();
+        }, 1000);
         
         // Add event listener for the test certificate button
         const testCertificateBtn = document.getElementById('testCertificateBtn');
