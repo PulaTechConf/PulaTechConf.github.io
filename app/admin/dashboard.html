@@ -27,18 +27,20 @@
             <a class="navbar-brand" href="../home.html">
                 <img class="logo" src="../../icons/ikona(tamna).png">
             </a>
-            
-            <!-- Notifications button - always visible on mobile -->
-            <div class="d-md-none d-flex align-items-center">
-                <a class="nav-link text-white me-3" href="#" id="notificationsBtn">
+    
+            <!-- Notification button (always visible) and hamburger menu -->
+            <div class="d-flex align-items-center gap-2">
+                <a class="notification-wrapper" href="#" id="notificationsBtn">
                     <i class="bi bi-bell"></i>
                     <span class="badge bg-danger notification-badge d-none">0</span>
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                
+                <!-- Only visible on mobile -->
+                <button class="navbar-toggler d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
             </div>
-            
+    
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav">
                     <li class="nav-item">
@@ -47,18 +49,13 @@
                     <li class="nav-item">
                         <a class="nav-link" href="../profile.html">Profile</a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item admin-only">
                         <a class="nav-link active" href="dashboard.html">Admin</a>
                     </li>
                 </ul>
+                
                 <ul class="navbar-nav ms-auto">
-                    <!-- Desktop notifications (hidden on mobile) -->
-                    <li class="nav-item d-none d-lg-block">
-                        <a class="nav-link" href="#" id="notificationsBtnDesktop">
-                            <i class="bi bi-bell"></i>
-                            <span class="badge bg-danger notification-badge d-none">0</span>
-                        </a>
-                    </li>
+                    <!-- No duplicate notification button here -->
                     <li class="nav-item">
                         <a class="nav-link" href="#" id="logoutBtn">Logout</a>
                     </li>
@@ -282,6 +279,9 @@
                     });
             });
         }
+    </script>
+</body>
+</html>
     </script>
 </body>
 </html>
