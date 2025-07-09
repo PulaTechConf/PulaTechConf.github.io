@@ -89,7 +89,7 @@ function checkFontLoaded() {
     // Create an element with the font
     const fontTest = document.createElement('span');
     fontTest.style.fontFamily = "'Italianno', cursive";
-    fontTest.style.fontSize = "30px";
+    fontTest.style.fontSize = "72px";
     fontTest.style.visibility = "hidden";
     fontTest.textContent = "Font Test";
     document.body.appendChild(fontTest);
