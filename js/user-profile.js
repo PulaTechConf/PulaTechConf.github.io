@@ -17,6 +17,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load pizza selection
     loadPizzaSelection();
     
+    // Add logout functionality
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Clear all localStorage data
+            localStorage.removeItem('userId');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userEmail');
+            localStorage.removeItem('userRole');
+            
+            // Redirect to main index page
+            window.location.href = '../index.html';
+        });
+    }
+    
     async function loadUserProfile() {
         const userId = localStorage.getItem('userId');
         if (!userId) return;

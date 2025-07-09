@@ -20,6 +20,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Initialize lunch navigation
     initializeLunchNavigation();
     
+    // Initialize presentation upload buttons for user's own presentations
+    initializePresentationUpload();
+    
     // Add tab switching handler to auto-scroll to current event
     const scheduleTab = document.getElementById('schedule-tab');
     if (scheduleTab) {
@@ -804,4 +807,103 @@ function initializeLunchNavigation() {
     }
 }
 
-export { initializeExpandableSections, initializeCalendarIntegration, initializeMassageBooking, initializeScheduleTracking, initializeLunchNavigation };
+// Initialize presentation upload buttons for user's own presentations
+async function initializePresentationUpload() {
+    try {
+        // Get current user's name from Firebase
+        const userId = localStorage.getItem('userId');
+        if (!userId) return;
+        
+        const userDoc = await getDoc(doc(db, 'users', userId));
+        if (!userDoc.exists()) return;
+        
+        const userData = userDoc.data();
+        const userFirstName = userData.firstName?.trim();
+        const userLastName = userData.lastName?.trim();
+        
+        if (!userFirstName || !userLastName) return;
+        
+        const fullName = `${userFirstName} ${userLastName}`;
+        console.log(`Checking for presentations by: ${fullName}`);
+        
+        // Find all schedule items with presentations
+        const scheduleItems = document.querySelectorAll('.schedule-item');
+        console.log(`Found ${scheduleItems.length} schedule items to check`);
+        
+        scheduleItems.forEach((item) => {
+            const presentationText = item.querySelector('p strong');
+            if (presentationText) {
+                const text = presentationText.textContent;
+                
+                // Check if this presentation includes the user's name
+                if (isPresentationByUser(text, fullName)) {
+                    console.log(`Found matching presentation: ${text}`);
+                    addUploadButton(item);
+                }
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error checking for user presentations:', error);
+    }
+}
+
+// Add upload presentation button next to calendar button
+function addUploadButton(scheduleItem) {
+    // Check if button already exists
+    if (scheduleItem.querySelector('.upload-presentation-btn')) return;
+    
+    // Find the button container (where calendar button is)
+    const buttonContainer = scheduleItem.querySelector('.d-flex.justify-content-between.align-items-center div');
+    
+    if (buttonContainer) {
+        // Create upload button
+        const uploadBtn = document.createElement('a');
+        uploadBtn.href = 'https://forms.gle/wy2aG3UxL1ncZsEU8';
+        uploadBtn.target = '_blank';
+        uploadBtn.className = 'btn btn-sm btn-warning ms-2 upload-presentation-btn';
+        uploadBtn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Upload';
+        uploadBtn.title = 'Upload your presentation';
+        
+        // Add button after existing buttons
+        buttonContainer.appendChild(uploadBtn);
+        console.log('✓ Added upload button to presentation');
+    } else {
+        console.log('❌ Could not find button container');
+    }
+}
+
+// Check if a presentation is by the current user (handles multiple authors)
+function isPresentationByUser(presentationText, userFullName) {
+    // Extract the presenter part (everything before the first colon)
+    const colonIndex = presentationText.indexOf(':');
+    if (colonIndex === -1) return false;
+    
+    const presentersString = presentationText.substring(0, colonIndex).trim();
+    console.log(`Checking presenters: "${presentersString}" against user: "${userFullName}"`);
+    
+    // Handle different separators: comma and "and"
+    // First replace " and " with ", " to normalize separators
+    const normalizedPresenters = presentersString.replace(/ and /g, ', ');
+    
+    // Split by comma and check each presenter
+    const presenters = normalizedPresenters.split(',').map(name => name.trim());
+    console.log(`Split into presenters:`, presenters);
+    
+    // Check if any presenter matches the user's full name
+    const isMatch = presenters.some(presenter => {
+        // Clean up any extra whitespace and compare
+        const cleanPresenter = presenter.replace(/\s+/g, ' ').trim();
+        const cleanUserName = userFullName.replace(/\s+/g, ' ').trim();
+        
+        const matches = cleanPresenter === cleanUserName;
+        if (matches) {
+            console.log(`✓ Match found: "${cleanPresenter}" === "${cleanUserName}"`);
+        }
+        return matches;
+    });
+    
+    return isMatch;
+}
+
+export { initializeExpandableSections, initializeCalendarIntegration, initializeMassageBooking, initializeScheduleTracking, initializeLunchNavigation, initializePresentationUpload };

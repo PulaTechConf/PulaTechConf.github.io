@@ -35,59 +35,7 @@ export async function schedulePizzaReminder() {
     }
 }
 
-// Schedule initial notifications (call this once during setup)
-export async function scheduleInitialNotifications() {
-    try {
-        // Schedule pizza reminder
-        await schedulePizzaReminder();
-        
-        // Schedule welcome notification
-        const welcomeData = {
-            title: "Welcome to PulaTechConf 2025!",
-            message: "Welcome to the Second Central and Mediterranean European Conference on New Technologies, Society, and Development. Check the schedule and don't forget to select your pizza preference for Day 2 lunch.",
-            timestamp: serverTimestamp(),
-            type: 'welcome',
-            createdBy: 'system',
-            createdAt: serverTimestamp()
-        };
-        
-        const notificationsRef = collection(db, "notifications");
-        await addDoc(notificationsRef, welcomeData);
-        
-        console.log("Initial notifications scheduled successfully");
-        return { success: true };
-    } catch (error) {
-        console.error("Error scheduling initial notifications:", error);
-        return { success: false, error: error.message };
-    }
-}
-
 // Call this when the app loads (for admin users to set up notifications)
 document.addEventListener('DOMContentLoaded', () => {
     const userRole = localStorage.getItem('userRole');
-    
-    // Only allow admins to schedule notifications
-    if (userRole === 'admin') {
-        // Add a button to schedule notifications (for testing/setup)
-        const scheduleBtn = document.createElement('button');
-        scheduleBtn.textContent = 'Schedule Initial Notifications';
-        scheduleBtn.className = 'btn btn-outline-secondary btn-sm';
-        scheduleBtn.style.position = 'fixed';
-        scheduleBtn.style.bottom = '20px';
-        scheduleBtn.style.right = '20px';
-        scheduleBtn.style.zIndex = '1000';
-        scheduleBtn.addEventListener('click', async () => {
-            const result = await scheduleInitialNotifications();
-            if (result.success) {
-                alert('Notifications scheduled successfully!');
-            } else {
-                alert('Error scheduling notifications: ' + result.error);
-            }
-        });
-        
-        // Only show the button if we're on a dev/test environment
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            document.body.appendChild(scheduleBtn);
-        }
-    }
 });
