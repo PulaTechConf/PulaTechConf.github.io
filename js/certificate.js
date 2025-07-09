@@ -2,35 +2,76 @@ import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/
 import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.1.0/firebase-firestore.js";
 import { app } from "./firebase-config.js";
 
-// Initialize Firebase services
-const auth = getAuth(app);
-const db = getFirestore(app);
+// Initialize Firebase services - with try/catch to handle initialization errors
+let auth, db;
+try {
+    auth = getAuth(app);
+    db = getFirestore(app);
+} catch (error) {
+    console.error("Error initializing Firebase services:", error);
+}
 
-// DOM elements
+// DOM elements - with null checks
 const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
 const certificatePreview = document.getElementById('certificatePreview');
 
-// Certificate PDF template path
-const CERTIFICATE_TEMPLATE_PATH = '../icons/img/certificat.pdf';
-
-// Certificate generation function
-
-function preloadImage(src) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            console.log(`Image loaded successfully: ${src}`);
-            resolve(img);
-        };
-        img.onerror = (e) => {
-            console.error(`Error loading image: ${src}`, e);
-            reject(new Error(`Failed to load image: ${src}`));
-        };
-        img.src = src;
-    });
+// Check if elements exist
+if (!certificatePreview) {
+    console.error("Certificate preview element not found");
 }
 
-// Add this function near your other functions
+// Certificate PDF template path
+const CERTIFICATE_TEMPLATE_PATH = '../icons/img/certificat.pdf';
+// Fallback image path for preview
+const CERTIFICATE_IMAGE_PATH = '../icons/img/certifikat-01.jpg';
+
+// Helper function to convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+}
+
+// Helper function to load external scripts
+function loadScripts(urls) {
+    const promises = urls.map(url => {
+        return new Promise((resolve, reject) => {
+            if (url.endsWith('.css')) {
+                // Load CSS
+                const link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = url;
+                link.onload = () => {
+                    console.log(`Loaded CSS: ${url}`);
+                    resolve();
+                };
+                link.onerror = (e) => {
+                    console.error(`Failed to load CSS: ${url}`, e);
+                    reject(new Error(`Failed to load stylesheet: ${url}`));
+                };
+                document.head.appendChild(link);
+            } else {
+                // Load JS
+                const script = document.createElement('script');
+                script.src = url;
+                script.onload = () => {
+                    console.log(`Loaded script: ${url}`);
+                    resolve();
+                };
+                script.onerror = (e) => {
+                    console.error(`Failed to load script: ${url}`, e);
+                    reject(new Error(`Failed to load script: ${url}`));
+                };
+                document.head.appendChild(script);
+            }
+        });
+    });
+    return Promise.all(promises);
+}
 
 // Function to test if the Italianno font is actually loaded
 function checkFontLoaded() {
@@ -91,8 +132,41 @@ function preloadResources() {
     });
 }
 
+// Fallback function to show image preview when PDF generation fails
+async function showImagePreview(userData) {
+    if (!certificatePreview) return;
+    
+    try {
+        // Show the static certificate image as fallback
+        certificatePreview.innerHTML = `
+            <div class="position-relative">
+                <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
+                <div class="position-absolute" style="top: 45%; left: 0; right: 0; text-align: center;">
+                    <h2 style="font-family: 'Italianno', cursive; font-size: 42px; color: #333;">
+                        ${userData.firstName} ${userData.lastName}
+                    </h2>
+                </div>
+                <p class="text-muted mt-2 small">Preview of your certificate (image only)</p>
+            </div>
+        `;
+        
+        return true;
+    } catch (error) {
+        console.error("Error showing image preview:", error);
+        certificatePreview.innerHTML = `
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                Could not display certificate preview
+            </div>
+        `;
+        return false;
+    }
+}
+
 // Enhanced certificate generation using PDF template
 async function generateCertificate(userData) {
+    if (!certificatePreview) return null;
+    
     console.log("Starting certificate generation for:", userData);
     // Show loading state
     certificatePreview.innerHTML = `
@@ -110,6 +184,11 @@ async function generateCertificate(userData) {
             'https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js'
         ]);
         console.log("External scripts loaded successfully");
+        
+        // Verify PDFLib loaded correctly
+        if (typeof PDFLib === 'undefined' || !PDFLib.PDFDocument) {
+            throw new Error("PDF libraries didn't load correctly");
+        }
         
         // Preload fonts before generating certificate
         await preloadResources();
@@ -133,9 +212,17 @@ async function generateCertificate(userData) {
         
         // Load custom font for the name
         console.log("Loading Italianno font for PDF...");
-        const fontResponse = await fetch('https://cdn.jsdelivr.net/npm/@fontsource/italianno@5.0.17/files/italianno-latin-400-normal.woff');
-        const fontBytes = await fontResponse.arrayBuffer();
-        const italiannoFont = await pdfDoc.embedFont(fontBytes);
+        let italiannoFont;
+        
+        try {
+            const fontResponse = await fetch('https://cdn.jsdelivr.net/npm/@fontsource/italianno@5.0.17/files/italianno-latin-400-normal.woff');
+            const fontBytes = await fontResponse.arrayBuffer();
+            italiannoFont = await pdfDoc.embedFont(fontBytes);
+        } catch (fontError) {
+            console.warn("Failed to load Italianno font, falling back to standard font:", fontError);
+            // Fall back to a standard font
+            italiannoFont = await pdfDoc.embedFont(StandardFonts.TimesRomanItalic);
+        }
         
         // Get the first page of the PDF
         const page = pdfDoc.getPages()[0];
@@ -170,7 +257,7 @@ async function generateCertificate(userData) {
         
         // Generate preview
         certificatePreview.innerHTML = `
-            <object data="${pdfUrl}" type="application/pdf" class="certificate-pdf-preview">
+            <object data="${pdfUrl}" type="application/pdf" class="certificate-pdf-preview" style="width:100%; height:300px;">
                 <div class="alert alert-warning">
                     <p>Your browser doesn't support PDF previews. 
                     <a href="${pdfUrl}" target="_blank">Open PDF</a></p>
@@ -188,66 +275,31 @@ async function generateCertificate(userData) {
     } catch (error) {
         console.error("Detailed error in certificate generation:", error);
         console.error("Error stack:", error.stack);
-        certificatePreview.innerHTML = `
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                Error generating certificate: ${error.message}
-            </div>
-        `;
+        
+        // Try fallback to image preview
+        console.log("Attempting fallback to image preview...");
+        const fallbackSuccess = await showImagePreview(userData);
+        
+        if (!fallbackSuccess) {
+            certificatePreview.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Error generating certificate: ${error.message}
+                </div>
+            `;
+        }
+        
         return null;
     }
 }
 
-// Helper function to convert ArrayBuffer to base64
-function arrayBufferToBase64(buffer) {
-    let binary = '';
-    const bytes = new Uint8Array(buffer);
-    const len = bytes.byteLength;
-    for (let i = 0; i < len; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return window.btoa(binary);
-}
-
-// Helper function to load external scripts
-function loadScripts(urls) {
-    const promises = urls.map(url => {
-        return new Promise((resolve, reject) => {
-            if (url.endsWith('.css')) {
-                // Load CSS
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = url;
-                link.onload = () => {
-                    console.log(`Loaded CSS: ${url}`);
-                    resolve();
-                };
-                link.onerror = (e) => {
-                    console.error(`Failed to load CSS: ${url}`, e);
-                    reject(new Error(`Failed to load stylesheet: ${url}`));
-                };
-                document.head.appendChild(link);
-            } else {
-                // Load JS
-                const script = document.createElement('script');
-                script.src = url;
-                script.onload = () => {
-                    console.log(`Loaded script: ${url}`);
-                    resolve();
-                };
-                script.onerror = (e) => {
-                    console.error(`Failed to load script: ${url}`, e);
-                    reject(new Error(`Failed to load script: ${url}`));
-                };
-                document.head.appendChild(script);
-            }
-        });
-    });
-    return Promise.all(promises);
-}
-
 // Download certificate as PDF
 async function downloadCertificate(userData) {
+    if (!downloadCertificateBtn || !certificatePreview) {
+        console.error("Required DOM elements not found");
+        return;
+    }
+    
     // Show loading indicator on button
     const originalBtnContent = downloadCertificateBtn.innerHTML;
     downloadCertificateBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-2"></span>Generating...`;
@@ -301,6 +353,19 @@ async function downloadCertificate(userData) {
 
 // Initialize certificate functionality
 function initCertificate() {
+    if (!auth || !db) {
+        console.error("Firebase services not initialized properly");
+        if (certificatePreview) {
+            certificatePreview.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Authentication service not available. Please reload the page or try again later.
+                </div>
+            `;
+        }
+        return;
+    }
+    
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             try {
@@ -313,51 +378,41 @@ function initCertificate() {
                     await generateCertificate(userData);
                     
                     // Add click event to download button
-                    downloadCertificateBtn.addEventListener('click', () => downloadCertificate(userData));
+                    if (downloadCertificateBtn) {
+                        downloadCertificateBtn.addEventListener('click', () => downloadCertificate(userData));
+                    }
                 } else {
-                    certificatePreview.innerHTML = `
-                        <div class="alert alert-warning">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            User profile not found. Please contact support.
-                        </div>
-                    `;
+                    if (certificatePreview) {
+                        certificatePreview.innerHTML = `
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                User profile not found. Please contact support.
+                            </div>
+                        `;
+                    }
                 }
             } catch (error) {
                 console.error("Error loading user data:", error);
-                certificatePreview.innerHTML = `
-                    <div class="alert alert-danger">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Error loading certificate. Please try again later.
-                    </div>
-                `;
+                if (certificatePreview) {
+                    certificatePreview.innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            Error loading certificate. Please try again later.
+                        </div>
+                    `;
+                }
             }
         }
     });
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', initCertificate);
-
-// Add window resize listener to handle responsiveness
-window.addEventListener('resize', () => {
-    const certificateImg = certificatePreview.querySelector('img');
-    if (certificateImg) {
-        // Keep aspect ratio but ensure it fits in container
-        certificateImg.style.maxWidth = '100%';
-    }
-});
-
-// Initialize certificate functionality immediately if DOM is already loaded
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initCertificate);
-} else {
-    // DOM already loaded, run initialization directly
-    console.log("DOM already loaded, initializing certificate directly");
-    setTimeout(initCertificate, 0);
-}
-
 // Simple test function to check if basic functionality works
 function testCertificateGeneration() {
+    if (!certificatePreview) {
+        console.error("Certificate preview element not found");
+        return;
+    }
+    
     console.log("Starting certificate test...");
     
     // Show a message in the preview area
@@ -391,23 +446,35 @@ function testCertificateGeneration() {
                         Test step 1: PDF template found!
                     </div>
                     <button id="generateTestBtn" class="btn btn-primary mt-2">Generate Test Certificate</button>
+                    <button id="fallbackTestBtn" class="btn btn-secondary mt-2 ms-2">Test Fallback Preview</button>
                 `;
                 
                 // Add event listener for the test generation button
                 document.getElementById('generateTestBtn').addEventListener('click', () => {
                     downloadCertificate(testUserData);
                 });
+                
+                // Add event listener for the fallback test button
+                document.getElementById('fallbackTestBtn').addEventListener('click', () => {
+                    showImagePreview(testUserData);
+                });
             })
             .catch(error => {
                 certificatePreview.innerHTML = `
-                    <div class="alert alert-danger">
+                    <div class="alert alert-warning">
                         <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Test failed: ${error.message}
+                        PDF template not found: ${error.message}
                     </div>
                     <div class="mt-3">
-                        <p>Make sure you have a PDF template at: <code>${CERTIFICATE_TEMPLATE_PATH}</code></p>
+                        <p>Testing fallback to image preview...</p>
+                        <button id="fallbackTestBtn" class="btn btn-primary mt-2">Test Image Fallback</button>
                     </div>
                 `;
+                
+                // Add event listener for the fallback test button
+                document.getElementById('fallbackTestBtn').addEventListener('click', () => {
+                    showImagePreview(testUserData);
+                });
             });
     } catch (error) {
         certificatePreview.innerHTML = `
@@ -419,12 +486,18 @@ function testCertificateGeneration() {
     }
 }
 
-// Add this after your DOM loaded event listener
+// Initialize with proper DOM checks
 document.addEventListener('DOMContentLoaded', () => {
-    // Add event listener for the test certificate button
-    const testCertificateBtn = document.getElementById('testCertificateBtn');
-    if (testCertificateBtn) {
-        testCertificateBtn.addEventListener('click', testCertificateGeneration);
+    if (downloadCertificateBtn && certificatePreview) {
+        initCertificate();
+        
+        // Add event listener for the test certificate button
+        const testCertificateBtn = document.getElementById('testCertificateBtn');
+        if (testCertificateBtn) {
+            testCertificateBtn.addEventListener('click', testCertificateGeneration);
+        }
+    } else {
+        console.warn("Certificate elements not found in DOM");
     }
 });
 
