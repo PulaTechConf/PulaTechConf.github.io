@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pulatech-conf-v2';
+const CACHE_NAME = 'pulatech-conf-v3';
 const urlsToCache = [
   '/app/home.html',
   '/app/profile.html',
@@ -31,7 +31,18 @@ self.addEventListener('install', function(event) {
     caches.open(CACHE_NAME)
       .then(function(cache) {
         console.log('Opened cache');
-        return cache.addAll(urlsToCache);
+        // Cache local resources only, skip external CDN resources for now
+        const localResources = urlsToCache.filter(url => !url.startsWith('https://cdn.jsdelivr.net'));
+        return cache.addAll(localResources)
+          .then(() => {
+            // Try to cache external resources individually to avoid blocking install
+            const externalResources = urlsToCache.filter(url => url.startsWith('https://cdn.jsdelivr.net'));
+            return Promise.allSettled(
+              externalResources.map(url => 
+                fetch(url).then(response => cache.put(url, response)).catch(e => console.log('Failed to cache:', url, e))
+              )
+            );
+          });
       })
       .catch(function(error) {
         console.log('Cache failed:', error);
@@ -41,6 +52,11 @@ self.addEventListener('install', function(event) {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', function(event) {
+  // Skip non-http schemes (chrome-extension, etc.)
+  if (!event.request.url.startsWith('http')) {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(function(response) {
@@ -62,6 +78,9 @@ self.addEventListener('fetch', function(event) {
             caches.open(CACHE_NAME)
               .then(function(cache) {
                 cache.put(event.request, responseToCache);
+              })
+              .catch(function(error) {
+                console.log('Failed to cache response:', error);
               });
 
             return response;

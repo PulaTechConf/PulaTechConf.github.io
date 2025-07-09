@@ -99,8 +99,52 @@ function initializeCalendarIntegration() {
         addToCalendarBtn.addEventListener('click', addAllEventsToCalendar);
     }
     
-    // Add individual calendar buttons to each schedule item
+    // Add event listeners to existing calendar buttons
+    attachCalendarButtonListeners();
+    
+    // Add individual calendar buttons to items that don't have them
     addIndividualCalendarButtons();
+}
+
+// Function to attach event listeners to existing calendar buttons
+function attachCalendarButtonListeners() {
+    const calendarButtons = document.querySelectorAll('.add-to-calendar-btn');
+    
+    calendarButtons.forEach(button => {
+        // Remove existing listeners to avoid duplicates
+        button.removeEventListener('click', handleCalendarButtonClick);
+        button.addEventListener('click', handleCalendarButtonClick);
+    });
+}
+
+// Handle calendar button clicks
+function handleCalendarButtonClick(e) {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const button = e.currentTarget;
+    
+    // Get event data from data attributes
+    const title = button.getAttribute('data-event-title');
+    const start = button.getAttribute('data-event-start');
+    const end = button.getAttribute('data-event-end');
+    const location = button.getAttribute('data-event-location');
+    const description = button.getAttribute('data-event-description');
+    
+    if (title && start && end && location) {
+        const event = {
+            title: title,
+            start: start,
+            end: end,
+            location: location,
+            description: description || title
+        };
+        
+        const googleCalendarUrl = createGoogleCalendarUrl(event);
+        window.open(googleCalendarUrl, '_blank');
+    } else {
+        console.error('Missing event data on calendar button:', button);
+    }
 }
 
 function addAllEventsToCalendar() {
