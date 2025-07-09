@@ -1,0 +1,29 @@
+/* Header */
+.navbar-brand .logo{
+    max-width: 115px;
+}
+
+.app-header {
+    background-color: #00357E;
+    color: white;
+}
+
+.app-header .nav-item {
+    position: relative;
+}
+
+.nav-link{
+    font-weight: bold;
+    color: #fff;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.nav-link:hover{
+    color: #fff;
+}
+
+.nav-item:hover{
+    background-color: #356FBE;
+    border-radius: 8px;
+}
