@@ -98,11 +98,6 @@
         <div class="tab-content" id="informationTabContent">
             <!-- Schedule Tab -->
             <div class="tab-pane fade show active" id="schedule" role="tabpanel" aria-labelledby="schedule-tab">
-                <div class="mb-3">
-                    <button class="btn btn-primary" id="addToCalendarBtn">
-                        <i class="bi bi-calendar-plus"></i> Add All Events to Google Calendar
-                    </button>
-                </div>
                 <div class="accordion" id="conferenceSchedule">
                     <!-- Day 1 -->
                     <div class="accordion-item">
@@ -113,8 +108,8 @@
                         </h2>
                         <div id="collapseDay1" class="accordion-collapse collapse show">
                             <div class="accordion-body">
-                                <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
-                                <p>📌 <a href="https://g.co/kgs/WXB7oWG" target="_blank">Google maps</a></p>
+                                <p class="fw-bold">Location: Campus Restaurant, Petra Preradovića 9a, Pula</p>
+                                <p><a href="https://g.co/kgs/WXB7oWG" target="_blank">Google Maps location</a></p>
                                 
                                 <div id="day1ScheduleSection" class="editable-section" data-title="Day 1 Schedule">
                                     <div class="schedule-item">
@@ -130,7 +125,7 @@
                                             <span class="fw-bold">20:00 – 21:30</span>
                                             <span class="badge bg-info">Networking</span>
                                         </div>
-                                        <p>Cocktail and Ice-breaking Event – Refreshments and networking</p>
+                                        <p>Cocktail and ice-breaking event – Refreshments and networking</p>
                                     </div>
                                 </div>
                             </div>
@@ -146,9 +141,9 @@
                         </h2>
                         <div id="collapseDay2" class="accordion-collapse collapse">
                             <div class="accordion-body">
-                                <p class="fw-bold">📍 Coworking Pula, Marka Marulića 5, Pula</p>
-                                <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
-                                <p>🔗 Hybrid Access: <a href="meet.google.com/hbu-njzw-ijz" target="_blank">meet.google.com/hbu-njzw-ijz</a></p>
+                                <p class="fw-bold">Location: Coworking Pula, Marka Marulića 5, Pula</p>
+                                <p><a href="https://g.co/kgs/yBKZvAS" target="_blank">Google Maps location</a></p>
+                                <p>Hybrid Access: <a href="meet.google.com/hbu-njzw-ijz" target="_blank">meet.google.com/hbu-njzw-ijz</a></p>
                                 
                                 <div id="day2ScheduleSection" class="editable-section" data-title="Day 2 Schedule">
                                     <div class="schedule-item">
@@ -156,7 +151,46 @@
                                             <span class="fw-bold">10:00 – 10:35</span>
                                             <span class="badge bg-primary">Opening</span>
                                         </div>
-                                        <p>Opening Ceremony – Official welcome</p>
+                                        <p>Opening ceremony – Official welcome</p>
+                                    </div>
+                                    
+                                    <!-- Parallel Massage Service as separate item -->
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-bold">10:00 – 14:30</span>
+                                            <span class="badge bg-info">Wellness</span>
+                                        </div>
+                                        <div class="mt-2">
+                                            <div class="massage-expandable">
+                                                <div class="massage-title" style="cursor: pointer;">
+                                                    <span class="fw-bold">Parallel Service: Quick Physio Massage</span>
+                                                    <i class="bi bi-chevron-down ms-2"></i>
+                                                </div>
+                                                <div class="massage-details" style="display: none;">
+                                                    <div class="mt-3">
+                                                        <p><strong>Medical School Physiotherapy Service</strong></p>
+                                                        <p class="small">Make reservation and recharge in just 10 minutes with a targeted physio massage. Designed for congress attendees, these sessions focus on common tension areas like the neck and shoulders. Our physiotherapists will use techniques to improve circulation, reduce stiffness, and boost mental clarity, leaving you refreshed and ready to re-engage. A quick, effective way to enhance your well-being and productivity.</p>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <label class="form-label fw-bold">Available Time Slots:</label>
+                                                                <select class="form-select form-select-sm" id="massageTimeSlot">
+                                                                    <option value="">Select appointment time...</option>
+                                                                    <!-- Time slots will be populated by JavaScript -->
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-md-6 d-flex align-items-end">
+                                                                <button class="btn btn-success btn-sm" id="bookMassageBtn" disabled>
+                                                                    <i class="bi bi-calendar-check"></i> Book Appointment
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div id="massageBookingStatus" class="mt-2"></div>
+                                                        <p class="small text-muted mt-2">Sessions: 10 minutes each • Location: Coworking Pula (separate room)</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -174,7 +208,7 @@
                                         </div>
                                         <div class="coffee-expandable">
                                             <div class="coffee-title" style="cursor: pointer;">
-                                                <span class="fw-bold">☕ Coffee Break – Refreshments</span>
+                                                <span class="fw-bold">Coffee Break – Refreshments</span>
                                                 <i class="bi bi-chevron-down ms-2"></i>
                                             </div>
                                             <div class="coffee-details" style="display: none;">
@@ -187,7 +221,7 @@
                                                         <li>Fresh pastries and light snacks</li>
                                                         <li>Bottled water and juices</li>
                                                     </ul>
-                                                    <p class="small text-muted"><i class="bi bi-info-circle"></i> Complimentary for all conference participants. Special thanks to our coffee partner CafePula for supporting TFPU 2025.</p>
+                                                    <p class="small text-muted">Complimentary for all conference participants. Special thanks to our coffee partner CafePula for supporting TFPU 2025.</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -199,39 +233,6 @@
                                             <span class="badge bg-success">Lecture</span>
                                         </div>
                                         <p>Invited Lecture 2</p>
-                                        
-                                        <!-- Parallel Massage Service -->
-                                        <div class="mt-2 alert alert-info alert-sm">
-                                            <div class="massage-expandable">
-                                                <div class="massage-title" style="cursor: pointer;">
-                                                    <span class="fw-bold"><i class="bi bi-heart-pulse"></i> Parallel Service: Quick Physio Massage (11:00-12:30)</span>
-                                                    <i class="bi bi-chevron-down ms-2"></i>
-                                                </div>
-                                                <div class="massage-details" style="display: none;">
-                                                    <div class="mt-3">
-                                                        <p><strong>Medical School Physiotherapy Service</strong></p>
-                                                        <p class="small">Make reservation and recharge in just 5 minutes with a targeted physio massage. Designed for congress attendees, these sessions focus on common tension areas like the neck, shoulders, and back. Our physiotherapists will use techniques to improve circulation, reduce stiffness, and boost mental clarity, leaving you refreshed and ready to re-engage. A quick, effective way to enhance your well-being and productivity.</p>
-                                                        
-                                                        <div class="row">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label fw-bold">Available Time Slots:</label>
-                                                                <select class="form-select form-select-sm" id="massageTimeSlot">
-                                                                    <option value="">Select appointment time...</option>
-                                                                    <!-- Time slots will be populated by JavaScript -->
-                                                                </select>
-                                                            </div>
-                                                            <div class="col-md-6 d-flex align-items-end">
-                                                                <button class="btn btn-success btn-sm" id="bookMassageBtn" disabled>
-                                                                    <i class="bi bi-calendar-check"></i> Book Appointment
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div id="massageBookingStatus" class="mt-2"></div>
-                                                        <p class="small text-muted mt-2"><i class="bi bi-clock"></i> Sessions: 5 minutes each • <i class="bi bi-geo-alt"></i> Location: Coworking Pula (separate room)</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -249,7 +250,7 @@
                                         </div>
                                         <div class="roundtable-expandable">
                                             <div class="roundtable-title" style="cursor: pointer;">
-                                                <span class="fw-bold">🎯 Round Table Discussion: Education and Opportunities in Dual Studies</span>
+                                                <span class="fw-bold">Round Table Discussion: Education and opportunities in dual studies</span>
                                                 <i class="bi bi-chevron-down ms-2"></i>
                                             </div>
                                             <div class="roundtable-details" style="display: none;">
@@ -268,25 +269,25 @@
                                         </div>
                                         <div class="lunch-expandable">
                                             <div class="lunch-title" id="lunchTitle">
-                                                <span class="fw-bold">🍽️ Lunch Break</span>
+                                                <span class="fw-bold">Lunch Break</span>
                                                 <i class="bi bi-chevron-down ms-2" id="lunchIcon"></i>
                                             </div>
                                             <div class="lunch-details" id="lunchDetails" style="display: none;">
                                                 <div class="pizza-selection mt-3">
-                                                    <p><strong>🍕 Pizza Selection:</strong></p>
+                                                    <p><strong>Pizza Selection:</strong></p>
                                                     <div class="alert alert-info alert-sm">
-                                                        <small><i class="bi bi-info-circle"></i> Please select your pizza choice below. Selection will be saved automatically.</small>
+                                                        <small>Please select your pizza choice below. Selection will be saved automatically.</small>
                                                     </div>
                                                     <div class="row">
                                                         <div class="col-md-6">
                                                             <select class="form-select" id="pizzaChoice">
                                                                 <option value="">Select your pizza...</option>
-                                                                <option value="margherita">🍅 Margherita</option>
-                                                                <option value="pepperoni">🍕 Pepperoni</option>
-                                                                <option value="vegetarian">🥬 Vegetarian</option>
-                                                                <option value="quattro-formaggi">🧀 Quattro Formaggi</option>
-                                                                <option value="prosciutto">🥓 Prosciutto</option>
-                                                                <option value="gluten-free">🌾 Gluten Free</option>
+                                                                <option value="margherita">Margherita</option>
+                                                                <option value="pepperoni">Pepperoni</option>
+                                                                <option value="vegetarian">Vegetarian</option>
+                                                                <option value="quattro-formaggi">Quattro Formaggi</option>
+                                                                <option value="prosciutto">Prosciutto</option>
+                                                                <option value="gluten-free">Gluten Free</option>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-6">
@@ -306,7 +307,7 @@
                                             <span class="fw-bold">13:30 – 14:20</span>
                                             <span class="badge bg-success">Lecture</span>
                                         </div>
-                                        <p>Upping Zone: From Failure to Success</p>
+                                        <p>Upping Zone: From failure to success</p>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -316,7 +317,7 @@
                                         </div>
                                         <div class="coffee-expandable">
                                             <div class="coffee-title" style="cursor: pointer;">
-                                                <span class="fw-bold">☕ Coffee Break – Refreshments</span>
+                                                <span class="fw-bold">Coffee Break – Refreshments</span>
                                                 <i class="bi bi-chevron-down ms-2"></i>
                                             </div>
                                             <div class="coffee-details" style="display: none;">
@@ -329,31 +330,506 @@
                                                         <li>Fresh pastries and light snacks</li>
                                                         <li>Bottled water and juices</li>
                                                     </ul>
-                                                    <p class="small text-muted"><i class="bi bi-info-circle"></i> Complimentary for all conference participants. Special thanks to our coffee partner CafePula for supporting TFPU 2025.</p>
+                                                    <p class="small text-muted">Complimentary for all conference participants. Special thanks to our coffee partner CafePula for supporting TFPU 2025.</p>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    
+
+                                    <!-- On-Site Presentations -->
                                     <div class="schedule-item">
-                                        <div class="d-flex justify-content-between">
-                                            <span class="fw-bold">14:30 – 15:50</span>
-                                            <span class="badge bg-warning text-dark">Presentations</span>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">14:30</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Medicine</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Sara Ivančić: Robotics and Artificial Intelligence in the Biomedical Field"
+                                                        data-event-start="2025-07-17T14:30:00"
+                                                        data-event-end="2025-07-17T14:35:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Sara Ivančić on Robotics and Artificial Intelligence in the Biomedical Field">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <p>Presentations (Each presentation: 5-minute time slot)</p>
-                                        <p>Sessions:</p>
-                                        <ul>
-                                            <li>Engineering, Innovations, Industry & Technology</li>
-                                            <li>Medicine, Society & Innovations</li>
-                                        </ul>
+                                        <p><strong>Sara Ivančić:</strong> "Robotics and Artificial Intelligence in the Biomedical Field"</p>
+                                        <p class="small text-muted">Medicine, Society and Innovations Session</p>
                                     </div>
-                                    
+
                                     <div class="schedule-item">
-                                        <div class="d-flex justify-content-between">
-                                            <span class="fw-bold">18:00</span>
-                                            <span class="badge bg-info">Networking</span>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">14:35</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Medicine</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Damir Medved: EDIH ADRIA - Are we ready for AI disruption?"
+                                                        data-event-start="2025-07-17T14:35:00"
+                                                        data-event-end="2025-07-17T14:40:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Damir Medved on EDIH ADRIA - Are we ready for AI disruption?">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
                                         </div>
-                                        <p>City Tour and Networking (self-organized / at your own initiative)</p>
+                                        <p><strong>Damir Medved:</strong> "EDIH ADRIA - Are we ready for AI disruption?"</p>
+                                        <p class="small text-muted">Medicine, Society and Innovations Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">14:40</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Maja Dragan and Hagen Helge Hochrinner: Development and Position of the Dual Higher Education in Austria"
+                                                        data-event-start="2025-07-17T14:40:00"
+                                                        data-event-end="2025-07-17T14:45:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Maja Dragan and Hagen Helge Hochrinner on Development and Position of the Dual Higher Education in Austria: Challenges and Opportunities">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Maja Dragan and Hagen Helge Hochrinner:</strong> "Development and Position of the Dual Higher Education in Austria: Challenges and Opportunities"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">14:45</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Drago Pupavac: Assessment of Process Capability in Nautical Tourism"
+                                                        data-event-start="2025-07-17T14:45:00"
+                                                        data-event-end="2025-07-17T14:50:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Drago Pupavac on Assessment of Process Capability in Nautical Tourism">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Drago Pupavac:</strong> "Assessment of Process Capability in Nautical Tourism"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">14:50</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Marko Kršulja et al.: Integration of Drones in Fire Intervention"
+                                                        data-event-start="2025-07-17T14:50:00"
+                                                        data-event-end="2025-07-17T14:55:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Marko Kršulja, Antonio Zbačnik, Karlo Griparic and Dalibor Fonović on Integration of Drones in Fire Intervention: Operational Benefits and Field Testing">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Marko Kršulja, Antonio Zbačnik, Karlo Griparic and Dalibor Fonović:</strong> "Integration of Drones in Fire Intervention: Operational Benefits and Field Testing"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">14:55</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Marina Banov et al.: Building Cybersecurity Proficiency"
+                                                        data-event-start="2025-07-17T14:55:00"
+                                                        data-event-end="2025-07-17T15:00:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Marina Banov, Darijan Jelušić, Erik Otović, Domagoj Pinčić, Diego Sušanj, Goran Mauša and Kristijan Lenac on Awareness to Application: Building Cybersecurity Proficiency in Computer Science Programs">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Marina Banov, Darijan Jelušić, Erik Otović, Domagoj Pinčić, Diego Sušanj, Goran Mauša and Kristijan Lenac:</strong> "Awareness to Application: Building Cybersecurity Proficiency in Computer Science Programs"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:00</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Paul Adde: Unity VR - Use for Scientific Purposes"
+                                                        data-event-start="2025-07-17T15:00:00"
+                                                        data-event-end="2025-07-17T15:05:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Paul Adde on Unity VR: Use for Scientific Purposes">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Paul Adde:</strong> "Unity VR: Use for Scientific Purposes"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:05</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Quentin Dos Santos Silva: Godot's role in VR application development"
+                                                        data-event-start="2025-07-17T15:05:00"
+                                                        data-event-end="2025-07-17T15:10:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Quentin Dos Santos Silva on Godot's role in VR application development: an engineering">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Quentin Dos Santos Silva:</strong> "Godot's role in VR application development: an engineering"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:10</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Marko Kršulja et al.: Construction Measures to Improve the Microclimate"
+                                                        data-event-start="2025-07-17T15:10:00"
+                                                        data-event-end="2025-07-17T15:15:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Marko Kršulja, Dinko Jurjevic, Lovro Liverić and Damir Karabaić on Construction Measures to Improve the Microclimate">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Marko Kršulja, Dinko Jurjevic, Lovro Liverić and Damir Karabaić:</strong> "Construction Measures to Improve the Microclimate"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:15</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Engineering</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Saša Zelenika et al.: University of Rijeka Innovation Ecosystems"
+                                                        data-event-start="2025-07-17T15:15:00"
+                                                        data-event-end="2025-07-17T15:20:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Saša Zelenika, Nataša Jakominić Marot and Lea Perinić on University of Rijeka: Inspiring and Supporting the Development of Regional Innovation Ecosystems">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Saša Zelenika, Nataša Jakominić Marot and Lea Perinić:</strong> "University of Rijeka: Inspiring and Supporting the Development of Regional Innovation Ecosystems"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:20</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Education</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Antonia Ćurić: Professional role of teachers in AI and inclusion"
+                                                        data-event-start="2025-07-17T15:20:00"
+                                                        data-event-end="2025-07-17T15:25:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Antonia Ćurić on The professional role of teachers in the context of artificial intelligence and inclusion">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Antonia Ćurić:</strong> "The professional role of teachers in the context of artificial intelligence and inclusion"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:25</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Materials</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Daniel Pugar et al.: Self-Healing Thermoplastic Composites"
+                                                        data-event-start="2025-07-17T15:25:00"
+                                                        data-event-end="2025-07-17T15:30:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Daniel Pugar, Andrej Razumić and Antonio Mikulić on Self-Healing Thermoplastic Composites Reinforced with Carbon Fibers: A Step Toward Smarter and More Sustainable Materials">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Daniel Pugar, Andrej Razumić and Antonio Mikulić:</strong> "Self-Healing Thermoplastic Composites Reinforced with Carbon Fibers: A Step Toward Smarter and More Sustainable Materials"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:30</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">AI/Materials</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Petar Pupavac: AI in Materials Prediction"
+                                                        data-event-start="2025-07-17T15:30:00"
+                                                        data-event-end="2025-07-17T15:35:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Petar Pupavac on Application of Artificial Intelligence in Materials Prediction: The Role of Materials Databases">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Petar Pupavac:</strong> "Application of Artificial Intelligence in Materials Prediction: The Role of Materials Databases"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:35</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Materials</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Sunčana Smokvina Hanza et al.: Microstructural Effects on Corrosion"
+                                                        data-event-start="2025-07-17T15:35:00"
+                                                        data-event-end="2025-07-17T15:40:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Sunčana Smokvina Hanza, Dario Kvrgić, Dario Iljkić, Lovro Liverić and Marko Kršulja on Microstructural Effects on Corrosion Behavior of Annealed 20MnCr5 Steel">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Sunčana Smokvina Hanza, Dario Kvrgić, Dario Iljkić, Lovro Liverić and Marko Kršulja:</strong> "Microstructural Effects on Corrosion Behavior of Annealed 20MnCr5 Steel"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:40</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Medicine</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Zvonimir Mrle et al.: Numerical investigation of root teeth irrigation"
+                                                        data-event-start="2025-07-17T15:40:00"
+                                                        data-event-end="2025-07-17T15:45:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Zvonimir Mrle, Damir Šnjarić and Zoran Čarija on Numerical investigation of real root teeth irrigation">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Zvonimir Mrle, Damir Šnjarić and Zoran Čarija:</strong> "Numerical investigation of real root teeth irrigation"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:45</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Education</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Sven Maričić, Mihael Holi: Robotics in Engineering Education"
+                                                        data-event-start="2025-07-17T15:45:00"
+                                                        data-event-end="2025-07-17T15:50:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Sven Maričić, Mihael Holi on Robotics in Engineering Education">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Sven Maričić, Mihael Holi:</strong> "Robotics in Engineering Education"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:50</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Energy</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Dinko Jurjevic et al.: Low Voltage Solar Systems"
+                                                        data-event-start="2025-07-17T15:50:00"
+                                                        data-event-end="2025-07-17T15:55:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Dinko Jurjevic, Marko Kršulja and Karlo Griparić on Low Voltage Solar Systems">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Dinko Jurjevic, Marko Kršulja and Karlo Griparić:</strong> "Low Voltage Solar Systems"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">15:55</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Manufacturing</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Sven Maričić, Nicol Tarlao: Additive technologies in manufacturing"
+                                                        data-event-start="2025-07-17T15:55:00"
+                                                        data-event-end="2025-07-17T16:00:00"
+                                                        data-event-location="Coworking Pula, Marka Marulića 5, Pula"
+                                                        data-event-description="Presentation by Sven Maričić, Nicol Tarlao on Additive technologies in manufacturing">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Sven Maričić, Nicol Tarlao:</strong> "Additive technologies in manufacturing"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session</p>
+                                    </div>
+
+                                    <!-- Online Presentations -->
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:00</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Medicine</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Manvi Singh et al.: MedBuddy - Real-Time Medication Management"
+                                                        data-event-start="2025-07-17T16:00:00"
+                                                        data-event-end="2025-07-17T16:05:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Manvi Singh, Khilee Singhal and Atharva Thorat on MedBuddy: Optimal Real-Time Medication Management for the Elderly">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Manvi Singh, Khilee Singhal and Atharva Thorat:</strong> "MedBuddy: Optimal Real-Time Medication Management for the Elderly"</p>
+                                        <p class="small text-muted">Medicine, Sport, Society and Innovations Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:05</span>
+                                            <div>
+                                                <span class="badge bg-info me-2">AI/Society</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Agustina Belén Fernández González and Finn Thomas Anton Roozen: AI and Robotics in Society"
+                                                        data-event-start="2025-07-17T16:05:00"
+                                                        data-event-end="2025-07-17T16:10:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Agustina Belén Fernández González and Finn Thomas Anton Roozen on AI and Robotics in Society">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Agustina Belén Fernández González and Finn Thomas Anton Roozen:</strong> "AI and Robotics in Society"</p>
+                                        <p class="small text-muted">Medicine, Sport, Society and Innovations Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:10</span>
+                                            <div>
+                                                <span class="badge bg-success me-2">Business</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Stefania Petcu: The Entrepreneurship Imperative in the AI Era"
+                                                        data-event-start="2025-07-17T16:10:00"
+                                                        data-event-end="2025-07-17T16:15:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Stefania Petcu on The Entrepreneurship Imperative in the AI Era">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Stefania Petcu:</strong> "The Entrepreneurship Imperative in the AI Era"</p>
+                                        <p class="small text-muted">Medicine, Sport, Society and Innovations Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:15</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Blockchain</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Miodrag Manić et al.: Blockchain application in supply chain management"
+                                                        data-event-start="2025-07-17T16:15:00"
+                                                        data-event-end="2025-07-17T16:20:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Miodrag Manić, Nikola Vitković, Zorana Stanković and Vladimir Mitrovic on The possibilities of blockchain application in supply chain management with a look from an ethical perspective">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Miodrag Manić, Nikola Vitković, Zorana Stanković and Vladimir Mitrovic:</strong> "The possibilities of blockchain application in supply chain management with a look from an ethical perspective"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:20</span>
+                                            <div>
+                                                <span class="badge bg-warning text-dark me-2">Medicine</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Maryam Soleimani et al.: Advanced Laser and Design Strategies in Dental Implants"
+                                                        data-event-start="2025-07-17T16:20:00"
+                                                        data-event-end="2025-07-17T16:25:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Maryam Soleimani, Wojciech Sitek and Magdalena Szindler on Advanced Laser and Design Strategies in Additive Manufacturing of Co-Cr Dental Implants">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Maryam Soleimani, Wojciech Sitek and Magdalena Szindler:</strong> "Advanced Laser and Design Strategies in Additive Manufacturing of Co-Cr Dental Implants"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:25</span>
+                                            <div>
+                                                <span class="badge bg-primary me-2">Materials</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Mariusz Król and Przemysław Snopiński: Processing of SLM ZK60 alloy"
+                                                        data-event-start="2025-07-17T16:25:00"
+                                                        data-event-end="2025-07-17T16:30:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Mariusz Król and Przemysław Snopiński on Processing of SLM ZK60 alloy at elevated temperatures">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Mariusz Król and Przemysław Snopiński:</strong> "Processing of SLM ZK60 alloy at elevated temperatures"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:30</span>
+                                            <div>
+                                                <span class="badge bg-info me-2">Networks</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Siddhartha Goutam: Algorithm for Vertical Handover based on GRA"
+                                                        data-event-start="2025-07-17T16:30:00"
+                                                        data-event-end="2025-07-17T16:35:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Siddhartha Goutam on Algorithm for Vertical Handover based on GRA and User">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Siddhartha Goutam:</strong> "Algorithm for Vertical Handover based on GRA and User"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session (Online)</p>
+                                    </div>
+
+                                    <div class="schedule-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <span class="fw-bold">16:35</span>
+                                            <div>
+                                                <span class="badge bg-info me-2">Networks</span>
+                                                <button class="btn btn-sm btn-outline-primary add-to-calendar-btn" 
+                                                        data-event-title="Siddhartha Goutam: Random Forest based prediction of QoS of HetNets"
+                                                        data-event-start="2025-07-17T16:35:00"
+                                                        data-event-end="2025-07-17T16:40:00"
+                                                        data-event-location="Online"
+                                                        data-event-description="Online presentation by Siddhartha Goutam on Random Forest based prediction of QoS of HetNets">
+                                                    <i class="bi bi-calendar-plus"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <p><strong>Siddhartha Goutam:</strong> "Random Forest based prediction of QoS of HetNets"</p>
+                                        <p class="small text-muted">Engineering, Innovations, Industry and Technology Session (Online)</p>
                                     </div>
                                 </div>
                             </div>
@@ -369,8 +845,8 @@
                         </h2>
                         <div id="collapseDay3" class="accordion-collapse collapse">
                             <div class="accordion-body">
-                                <p class="fw-bold">📍 Campus Restaurant, Petra Preradovića 9a, Pula</p>
-                                <p>📌 <a href="https://g.co/kgs/yBKZvAS" target="_blank">Google maps</a></p>
+                                <p class="fw-bold">Location: Campus Restaurant, Petra Preradovića 9a, Pula</p>
+                                <p><a href="https://g.co/kgs/WXB7oWG" target="_blank">Google Maps location</a></p>
                                 
                                 <div id="day3ScheduleSection" class="editable-section" data-title="Day 3 Schedule">
                                     <div class="schedule-item">
@@ -378,7 +854,7 @@
                                             <span class="fw-bold">10:00 – 12:00</span>
                                             <span class="badge bg-secondary">Breakfast</span>
                                         </div>
-                                        <p>Breakfast with Participants + Opening of the Exhibition: Science, Technology and Art</p>
+                                        <p>Breakfast with participants. Opening of the exhibition: Science, technology and art</p>
                                     </div>
                                     
                                     <div class="schedule-item">
@@ -386,16 +862,8 @@
                                             <span class="fw-bold">13:30</span>
                                             <span class="badge bg-primary">Transfer</span>
                                         </div>
-                                        <p>Transfer to Fratarski Island Student Camp</p>
-                                        <p>📍 <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">Google maps</a></p>
-                                    </div>
-                                    
-                                    <div class="schedule-item">
-                                        <div class="d-flex justify-content-between">
-                                            <span class="fw-bold">From 17:00</span>
-                                            <span class="badge bg-success">Lectures</span>
-                                        </div>
-                                        <p>Lectures and Workshops</p>
+                                        <p>Transfer to student camp on Fratarski island (lectures and workshops starting from 17:00)</p>
+                                        <p><a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">Google Maps location</a></p>
                                     </div>
                                 </div>
                             </div>
@@ -411,11 +879,11 @@
                     <strong>Official website:</strong> <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></p>
                     
                     <div class="alert alert-info">
-                        <h5><i class="bi bi-info-circle"></i> Welcome to TFPU 2025 Conference!</h5>
+                        <h5>Welcome to TFPU 2025 Conference!</h5>
                         <p>Below you'll find all key details about the venues, full event schedule, and suggestions on what to explore in and around the city.</p>
                     </div>
                     
-                    <h3>ℹ️ Useful Information for Participants During Conference</h3>
+                    <h3>Useful Information for Participants During Conference</h3>
                     <ul>
                         <li><strong>Conference schedule:</strong> <a href="https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule" target="_blank">https://tfpu.unipu.hr/tfpu/en/tfpu2025/schedule</a></li>
                         <li><strong>Name badges:</strong> Please wear your badge at all times during conference hours</li>
@@ -425,7 +893,7 @@
                         <li><strong>Wi-Fi:</strong> Free Wi-Fi available via QR barcode on conference poster</li>
                     </ul>
                     
-                    <h3>📍 Conference Venues</h3>
+                    <h3>Conference Venues</h3>
                     
                     <h4>Day 1: Campus Restaurant</h4>
                     <p><strong>Address:</strong> Petra Preradovića 9a, Pula<br>
@@ -451,12 +919,12 @@
                     <strong>Afternoon:</strong> Fratarski Island Student Camp<br>
                     <strong>Island Maps:</strong> <a href="https://www.google.com/maps?q=Fratarski+otok,+Pula" target="_blank">View Location</a></p>
                     
-                    <h3>🚗 Transportation Information</h3>
+                    <h3>Transportation Information</h3>
                     
                     <h4>Parking</h4>
                     <div class="alert alert-warning">
-                        <h5><i class="bi bi-info-circle"></i> Important Parking Information</h5>
-                        <p><strong>Conference parking is not organized.</strong> Participants will need to find parking themselves.</p>
+                        <h5>Important Parking Information</h5>
+                        <p><strong>Conference organizers do not provide dedicated parking.</strong> Participants will need to find parking themselves.</p>
                         <p>For all three days, it's recommended to park at available public parking areas as the conference location at Marka Marulića 5, Pula only offers street parking if available. Due to tourist season, expect crowds in the city, so arrive early to secure parking.</p>
                     </div>
                     
@@ -465,10 +933,10 @@
                     
                     <h4>Transportation to Fratarski Island (Day 3)</h4>
                     <div class="alert alert-info">
-                        <h6><i class="bi bi-info-circle"></i> Registration for Fratarski Island visit is required in advance</h6>
+                        <h6>Registration for Fratarski Island visit is required in advance</h6>
                         <ul>
                             <li>Boat tickets are included</li>
-                            <li>Bring personal items if planning to stay overnight</li>
+                            <li>Bring any personal items you may need if you plan to stay overnight</li>
                             <li>Additional food may be needed depending on availability</li>
                         </ul>
                     </div>
@@ -514,7 +982,7 @@
                         </table>
                     </div>
                     
-                    <p><strong>🛥️ Boat runs every hour. Total duration: 2–2.5 hours.</strong></p>
+                    <p><strong>Boat runs every hour. Total duration: 2–2.5 hours.</strong></p>
                 </div>
             </div>
 
@@ -524,13 +992,13 @@
                     <h2>What to See in Pula & Around</h2>
                     <p>Make the most of your visit to Pula! Here are the top attractions and activities to explore during your stay.</p>
                     
-                    <h3>🏛️ Historical Attractions in Pula</h3>
+                    <h3>Historical Attractions in Pula</h3>
                     
                     <div class="row">
                         <div class="col-md-6">
                             <div class="card mb-3">
                                 <div class="card-body">
-                                    <h5 class="card-title"><i class="bi bi-building"></i> Pula Arena</h5>
+                                    <h5 class="card-title">Pula Arena</h5>
                                     <p class="card-text">Roman amphitheatre from the 1st century - one of the best-preserved Roman amphitheatres in the world.</p>
                                     <p class="small text-muted">Must-see attraction, hosts concerts and events</p>
                                 </div>
@@ -539,7 +1007,7 @@
                         <div class="col-md-6">
                             <div class="card mb-3">
                                 <div class="card-body">
-                                    <h5 class="card-title"><i class="bi bi-bank"></i> Temple of Augustus & Forum</h5>
+                                    <h5 class="card-title">Temple of Augustus & Forum</h5>
                                     <p class="card-text">Ancient Roman square in the old town center with well-preserved Roman temple.</p>
                                     <p class="small text-muted">Perfect for photos and historical exploration</p>
                                 </div>
@@ -551,7 +1019,7 @@
                         <div class="col-md-6">
                             <div class="card mb-3">
                                 <div class="card-body">
-                                    <h5 class="card-title"><i class="bi bi-tunnel"></i> Zerostrasse Tunnels</h5>
+                                    <h5 class="card-title">Zerostrasse Tunnels</h5>
                                     <p class="card-text">WWI underground shelters beneath the city - a unique underground tour experience.</p>
                                     <p class="small text-muted">Cool refuge from summer heat</p>
                                 </div>
@@ -560,7 +1028,7 @@
                         <div class="col-md-6">
                             <div class="card mb-3">
                                 <div class="card-body">
-                                    <h5 class="card-title"><i class="bi bi-castle"></i> Kaštel & Historical Museum</h5>
+                                    <h5 class="card-title">Kaštel & Historical Museum</h5>
                                     <p class="card-text">Hilltop fortress with panoramic views of Pula and the Adriatic Sea.</p>
                                     <p class="small text-muted">Best views in the city, great for sunset</p>
                                 </div>
@@ -568,28 +1036,28 @@
                         </div>
                     </div>
                     
-                    <h3>🌊 Waterfront & Nature</h3>
+                    <h3>Waterfront & Nature</h3>
                     <div class="card mb-3">
                         <div class="card-body">
-                            <h5 class="card-title"><i class="bi bi-water"></i> Riva & Lungomare Promenade</h5>
+                            <h5 class="card-title">Riva & Lungomare Promenade</h5>
                             <p class="card-text">Ideal for an evening stroll by the sea. The waterfront promenade offers beautiful views, cafes, and restaurants.</p>
                             <p class="small text-muted">Perfect for networking walks and relaxation</p>
                         </div>
                     </div>
                     
-                    <h3>🎯 Conference Networking Suggestions</h3>
+                    <h3>Conference Networking Suggestions</h3>
                     <div class="alert alert-success">
-                        <h6><i class="bi bi-people"></i> Self-Organized City Tour & Networking</h6>
+                        <h6>Self-Organized City Tour & Networking</h6>
                         <p><strong>Thursday, July 17 - 18:00</strong></p>
                         <p>Join fellow conference participants for a self-organized city tour and networking session. Great opportunity to explore Pula while connecting with other attendees!</p>
                         <ul class="small">
                             <li>Meet at Coworking Pula after presentations</li>
                             <li>Suggested route: Forum → Arena → Waterfront</li>
-                            <li>Dinner recommendations will be shared</li>
+                            <li>Dinner suggestions will be provided</li>
                         </ul>
                     </div>
                     
-                    <h3>🍽️ Dining Recommendations</h3>
+                    <h3>Dining Recommendations</h3>
                     <div class="row">
                         <div class="col-md-4">
                             <h6>Traditional Istrian</h6>
@@ -617,7 +1085,7 @@
                         </div>
                     </div>
                     
-                    <h3>🏨 Accommodation Tips</h3>
+                    <h3>Accommodation Tips</h3>
                     <div class="alert alert-info">
                         <p><strong>Peak Season Notice:</strong> July is high tourist season in Pula. Book accommodation well in advance!</p>
                         <ul class="small">
@@ -627,7 +1095,7 @@
                         </ul>
                     </div>
                     
-                    <h3>🚌 Getting Around Pula</h3>
+                    <h3>Getting Around Pula</h3>
                     <ul>
                         <li><strong>Walking:</strong> City center is compact and walkable</li>
                         <li><strong>Public transport:</strong> City buses connect main areas</li>
@@ -635,7 +1103,7 @@
                         <li><strong>Bike rental:</strong> Several rental shops in the city center</li>
                     </ul>
                     
-                    <h3>📱 Useful Apps & Contacts</h3>
+                    <h3>Useful Apps & Contacts</h3>
                     <ul class="small">
                         <li><strong>Bus schedules:</strong> Pulapromet app</li>
                         <li><strong>Weather:</strong> Check local forecasts</li>
@@ -652,7 +1120,12 @@
             <!-- Notifications Tab -->
             <div class="tab-pane fade" id="notifications" role="tabpanel" aria-labelledby="notifications-tab">
                 <div class="notifications-tab-content">
-                    <h2>Conference Notifications</h2>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2>Conference Notifications</h2>
+                        <button class="btn btn-outline-danger btn-sm" id="clearAllNotificationsBtn">
+                            <i class="bi bi-trash"></i> Clear All
+                        </button>
+                    </div>
                     <p>Stay updated with important conference announcements and reminders.</p>
                     
                     <div id="notificationsTabPanel" class="notifications-panel-large">
@@ -761,6 +1234,7 @@
     <script type="module" src="../js/schedule-functionality.js"></script>
     <script type="module" src="../js/schedule-notifications.js"></script>
     <script type="module" src="../js/scheduled-notifications.js"></script>
+    <script type="module" src="../js/massage-reminders.js"></script>
     <script type="module" src="../js/offline-storage.js"></script>
     <script type="module" src="../js/admin/content-editor.js"></script>
     

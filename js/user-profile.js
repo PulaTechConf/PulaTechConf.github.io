@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('lastName').textContent = userData.lastName || 'Not provided';
                 document.getElementById('email').textContent = userData.email || 'Not provided';
                 document.getElementById('affiliation').textContent = userData.affiliation || 'Not provided';
+                document.getElementById('accommodation').textContent = userData.accommodation || 'Not provided';
                 
                 // Format and display role
                 const role = localStorage.getItem('userRole') || 'general';

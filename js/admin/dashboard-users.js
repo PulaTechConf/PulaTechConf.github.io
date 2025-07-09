@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Show loading message
-            userTableBody.innerHTML = '<tr><td colspan="5" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading users...</td></tr>';
+            userTableBody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading users...</td></tr>';
             
             // Get all users from Firestore
             const usersCollection = collection(db, "users");
             const querySnapshot = await getDocs(usersCollection);
             
             if (querySnapshot.empty) {
-                userTableBody.innerHTML = '<tr><td colspan="5" class="text-center">No users found</td></tr>';
+                userTableBody.innerHTML = '<tr><td colspan="6" class="text-center">No users found</td></tr>';
                 return;
             }
             
@@ -62,6 +62,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>${userData.firstName || ''} ${userData.lastName || ''}</td>
                     <td>${userData.email || ''}</td>
                     <td>${userData.affiliation || ''}</td>
+                    <td>
+                        <span class="badge ${userData.accommodation ? 'bg-success' : 'bg-secondary'}">${userData.accommodation || 'Not provided'}</span>
+                        <button class="btn btn-sm btn-outline-primary ms-1 edit-accommodation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-accommodation="${userData.accommodation || ''}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
                     <td><span class="badge ${getRoleBadgeClass(userData.role)}">${userData.role || 'general'}</span></td>
                     <td>
                         <div class="btn-group btn-group-sm">
@@ -77,12 +83,14 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add event listeners to role change buttons
             addRoleChangeListeners();
+            // Add event listeners to accommodation edit buttons
+            addAccommodationEditListeners();
             
             console.log("Users loaded successfully for dashboard");
         } catch (error) {
             console.error("Error loading users:", error);
             if (userTableBody) {
-                userTableBody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Error loading users</td></tr>';
+                userTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading users</td></tr>';
             }
         }
     }
@@ -96,6 +104,41 @@ document.addEventListener('DOMContentLoaded', function() {
                 return 'bg-warning text-dark';
             default:
                 return 'bg-secondary';
+        }
+    }
+    
+    // Add listeners to accommodation edit buttons
+    function addAccommodationEditListeners() {
+        document.querySelectorAll('.edit-accommodation-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.dataset.id;
+                const userName = this.dataset.name;
+                const currentAccommodation = this.dataset.currentAccommodation;
+                
+                const newAccommodation = prompt(`Edit accommodation info for ${userName}:`, currentAccommodation);
+                
+                if (newAccommodation !== null) {  // User didn't cancel
+                    updateUserAccommodation(userId, newAccommodation);
+                }
+            });
+        });
+    }
+    
+    // Update user accommodation
+    async function updateUserAccommodation(userId, accommodation) {
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                accommodation: accommodation
+            });
+            
+            // Reload users
+            loadUsers();
+            
+            console.log('User accommodation updated successfully');
+        } catch (error) {
+            console.error("Error updating user accommodation:", error);
+            alert("Error updating accommodation. Please try again.");
         }
     }
     

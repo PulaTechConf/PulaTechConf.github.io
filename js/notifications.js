@@ -117,6 +117,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 updateNotificationsTabPanel();
             });
         }
+        
+        // Handle clear all notifications button
+        const clearAllBtn = document.getElementById('clearAllNotificationsBtn');
+        if (clearAllBtn) {
+            clearAllBtn.addEventListener('click', function() {
+                if (confirm('Are you sure you want to clear all notifications? This will mark all notifications as read.')) {
+                    clearAllNotifications();
+                }
+            });
+        }
     }
     
     // Keep track of current notifications for marking as read
@@ -423,4 +433,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Keep reference to current notifications for tab panel
     let currentNotifications = [];
-}); 
+    
+    // Function to clear all notifications for the user
+    function clearAllNotifications() {
+        const readNotifications = getReadNotifications();
+        
+        // Mark all current notifications as read
+        if (currentNotificationIds.length > 0) {
+            markAllNotificationsAsRead(currentNotificationIds);
+        }
+        
+        // Update UI immediately
+        updateNotificationBadge();
+        
+        // Update notification panels to show all as read
+        if (notificationsPanel) {
+            updateNotificationsPanel(currentNotifications);
+        }
+        if (notificationsTabPanel) {
+            updateNotificationsTabPanel(currentNotifications);
+        }
+        
+        console.log('All notifications cleared for user');
+    }
+});

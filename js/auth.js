@@ -143,6 +143,7 @@ if (registerForm) {
         const lastName = document.getElementById('lastName').value;
         const affiliation = document.getElementById('affiliation').value;
         const country = document.getElementById('country').value;
+        const accommodation = document.getElementById('accommodation').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         
@@ -176,6 +177,7 @@ if (registerForm) {
                 lastName,
                 affiliation,
                 country,
+                accommodation: accommodation || '',
                 email,
                 password, // Note: In a real app, passwords should be hashed
                 role: "general", // Default role for new users

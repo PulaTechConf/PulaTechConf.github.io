@@ -19,13 +19,14 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('Received background message:', payload);
 
-  const notificationTitle = payload.notification.title || 'PulaTechConf Notification';
+  const notificationTitle = payload.notification?.title || payload.data?.title || 'PulaTechConf Notification';
   const notificationOptions = {
-    body: payload.notification.body || 'You have a new notification',
+    body: payload.notification?.body || payload.data?.body || 'You have a new notification',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
     tag: 'pulatech-notification',
     requireInteraction: true,
+    vibrate: [200, 100, 200], // For mobile devices
     actions: [
       {
         action: 'open',
@@ -38,11 +39,12 @@ messaging.onBackgroundMessage((payload) => {
     ],
     data: {
       url: payload.data?.url || '/app/home.html',
-      notificationId: payload.data?.notificationId
+      notificationId: payload.data?.notificationId,
+      click_action: payload.data?.click_action || '/app/home.html'
     }
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // Handle notification clicks

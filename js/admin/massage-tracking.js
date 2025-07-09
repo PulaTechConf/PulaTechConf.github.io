@@ -86,6 +86,7 @@ async function loadMassageBookings() {
                             <th>Participant</th>
                             <th>User ID</th>
                             <th>Booked At</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -100,6 +101,11 @@ async function loadMassageBookings() {
                         <td>${booking.userName || 'Unknown User'}</td>
                         <td><small class="text-muted">${booking.userId}</small></td>
                         <td><small>${bookedAt}</small></td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteMassageBooking('${booking.id}')">
+                                <i class="bi bi-trash"></i> Delete
+                            </button>
+                        </td>
                     </tr>
                 `;
             });
@@ -120,9 +126,9 @@ async function loadMassageBookings() {
                             <h6 class="card-title">Booking Statistics</h6>
                             <ul class="list-unstyled small">
                                 <li><strong>Total Appointments:</strong> ${bookings.length}</li>
-                                <li><strong>Available Slots:</strong> 9 (11:00-12:30, every 10min)</li>
-                                <li><strong>Remaining Slots:</strong> ${9 - bookings.length}</li>
-                                <li><strong>Utilization:</strong> ${Math.round((bookings.length / 9) * 100)}%</li>
+                                <li><strong>Available Slots:</strong> 28 (14 time slots × 2 chairs)</li>
+                                <li><strong>Remaining Slots:</strong> ${28 - bookings.length}</li>
+                                <li><strong>Utilization:</strong> ${Math.round((bookings.length / 28) * 100)}%</li>
                             </ul>
                         </div>
                     </div>
@@ -132,10 +138,11 @@ async function loadMassageBookings() {
                         <div class="card-body">
                             <h6 class="card-title">Service Details</h6>
                             <ul class="list-unstyled small">
-                                <li><strong>Duration:</strong> 5 minutes per session</li>
+                                <li><strong>Duration:</strong> 10 minutes per session</li>
                                 <li><strong>Service:</strong> Targeted physio massage</li>
                                 <li><strong>Date:</strong> July 17, 2025</li>
                                 <li><strong>Location:</strong> Coworking Pula</li>
+                                <li><strong>Chairs:</strong> 2 simultaneous appointments per slot</li>
                             </ul>
                         </div>
                     </div>
@@ -157,5 +164,32 @@ async function loadMassageBookings() {
         }
     }
 }
+
+// Function to delete a massage booking
+async function deleteMassageBooking(bookingId) {
+    if (!confirm('Are you sure you want to delete this massage booking?')) {
+        return;
+    }
+    
+    try {
+        const { deleteDoc, doc } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+        const { db } = await import("../firebase-config.js");
+        
+        await deleteDoc(doc(db, "massageBookings", bookingId));
+        
+        console.log("Massage booking deleted:", bookingId);
+        
+        // Reload the bookings
+        loadMassageBookings();
+        
+        alert('Massage booking deleted successfully');
+    } catch (error) {
+        console.error("Error deleting massage booking:", error);
+        alert(`Error deleting booking: ${error.message}`);
+    }
+}
+
+// Make delete function available globally
+window.deleteMassageBooking = deleteMassageBooking;
 
 export { loadMassageBookings };

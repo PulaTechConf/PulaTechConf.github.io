@@ -41,8 +41,21 @@ class PushNotificationManager {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+                // Register the Firebase messaging service worker
+                let registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/'
+                });
+                
+                // Wait for service worker to be ready
+                await navigator.serviceWorker.ready;
+                
                 console.log('Firebase messaging service worker registered:', registration);
+                
+                // For mobile compatibility, also set the service worker registration for messaging
+                if (messaging && 'useServiceWorker' in messaging) {
+                    messaging.useServiceWorker(registration);
+                }
+                
                 return registration;
             } catch (error) {
                 console.error('Service worker registration failed:', error);
@@ -90,10 +103,14 @@ class PushNotificationManager {
                 userId: userId,
                 updatedAt: serverTimestamp(),
                 userAgent: navigator.userAgent,
-                platform: navigator.platform
+                platform: navigator.platform,
+                isMobile: /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent),
+                notificationPermission: Notification.permission,
+                pushManagerSupported: 'PushManager' in window,
+                serviceWorkerSupported: 'serviceWorker' in navigator
             }, { merge: true });
             
-            console.log('FCM token saved to database');
+            console.log('FCM token saved to database for mobile device');
         } catch (error) {
             console.error('Error saving token to database:', error);
         }

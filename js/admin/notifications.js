@@ -8,7 +8,8 @@ import {
     query,
     orderBy,
     limit,
-    serverTimestamp
+    serverTimestamp,
+    where
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 // Function to create a new notification (for admin use)
@@ -30,6 +31,35 @@ export async function createNotification(title, message) {
         return { success: true, id: docRef.id };
     } catch (error) {
         console.error("Error creating notification:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+// Function to delete all notifications (admin only)
+export async function clearAllNotifications() {
+    try {
+        console.log("Clearing all notifications...");
+        
+        // Get all notifications
+        const notificationsRef = collection(db, "notifications");
+        const querySnapshot = await getDocs(notificationsRef);
+        
+        if (querySnapshot.empty) {
+            return { success: true, deletedCount: 0 };
+        }
+        
+        // Delete all notifications
+        const deletePromises = [];
+        querySnapshot.forEach((doc) => {
+            deletePromises.push(deleteDoc(doc.ref));
+        });
+        
+        await Promise.all(deletePromises);
+        
+        console.log(`Successfully deleted ${querySnapshot.size} notifications`);
+        return { success: true, deletedCount: querySnapshot.size };
+    } catch (error) {
+        console.error("Error clearing all notifications:", error);
         return { success: false, error: error.message };
     }
 }
@@ -62,21 +92,34 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const title = document.getElementById('notificationTitle').value.trim();
             const message = document.getElementById('notificationMessage').value.trim();
+            const target = document.getElementById('notificationTarget').value;
             
             if (!title || !message) {
                 alert('Both title and message are required');
                 return;
             }
             
-            const result = await createNotification(title, message);
+            let result;
+            if (target === 'accommodation') {
+                result = await sendNotificationToAccommodationUsers(title, message);
+                if (result.success) {
+                    alert(`Notification sent successfully to ${result.userCount} users with accommodation information`);
+                } else {
+                    alert(`Error creating notification: ${result.error}`);
+                }
+            } else {
+                result = await createNotification(title, message);
+                if (result.success) {
+                    alert('Notification created successfully');
+                } else {
+                    alert(`Error creating notification: ${result.error}`);
+                }
+            }
             
             if (result.success) {
-                alert('Notification created successfully');
                 notificationForm.reset();
                 // Reload recent notifications if element exists
                 loadRecentNotifications();
-            } else {
-                alert(`Error creating notification: ${result.error}`);
             }
         });
     }
@@ -84,6 +127,29 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load recent notifications if applicable
     if (document.getElementById('recentNotifications')) {
         loadRecentNotifications();
+    }
+    
+    // Add clear all notifications button functionality
+    const clearAllNotificationsBtn = document.getElementById('adminClearAllNotificationsBtn');
+    if (clearAllNotificationsBtn) {
+        clearAllNotificationsBtn.addEventListener('click', async function() {
+            if (!confirm('Are you sure you want to delete ALL notifications? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                const result = await clearAllNotifications();
+                if (result.success) {
+                    alert(`Successfully deleted ${result.deletedCount} notifications`);
+                    loadRecentNotifications(); // Reload the list
+                } else {
+                    alert(`Error deleting notifications: ${result.error}`);
+                }
+            } catch (error) {
+                console.error('Error clearing all notifications:', error);
+                alert(`Error clearing notifications: ${error.message}`);
+            }
+        });
     }
 });
 
@@ -218,6 +284,45 @@ async function sendNotification(e) {
     } catch (error) {
         console.error("Error sending notification:", error);
         alert(`Error sending notification: ${error.message}`);
+    }
+}
+
+// Function to send notification only to users with accommodation role
+export async function sendNotificationToAccommodationUsers(title, message) {
+    try {
+        const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+        const { db } = await import("../firebase-config.js");
+        
+        // Get users with accommodation field set
+        const usersRef = collection(db, "users");
+        const accommodationUsersQuery = query(
+            usersRef, 
+            where("accommodation", "!=", ""),
+            where("accommodation", "!=", null)
+        );
+        
+        const accommodationUsers = await getDocs(accommodationUsersQuery);
+        
+        console.log(`Found ${accommodationUsers.size} users with accommodation information`);
+        
+        // Create notification data
+        const notificationData = {
+            title,
+            message,
+            timestamp: serverTimestamp(),
+            targetAudience: 'accommodation_users',
+            createdBy: localStorage.getItem('userId') || 'admin'
+        };
+        
+        // Add notification to database
+        const notificationsRef = collection(db, "notifications");
+        const docRef = await addDoc(notificationsRef, notificationData);
+        
+        console.log("Accommodation-specific notification created with ID:", docRef.id);
+        return { success: true, id: docRef.id, userCount: accommodationUsers.size };
+    } catch (error) {
+        console.error("Error sending notification to accommodation users:", error);
+        return { success: false, error: error.message };
     }
 }
 

@@ -1,5 +1,5 @@
 // Schedule functionality including Google Calendar integration and massage booking
-import { doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { doc, setDoc, getDoc, collection, getDocs, query, where, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { db } from './firebase-config.js';
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -98,6 +98,9 @@ function initializeCalendarIntegration() {
     if (addToCalendarBtn) {
         addToCalendarBtn.addEventListener('click', addAllEventsToCalendar);
     }
+    
+    // Add individual calendar buttons to each schedule item
+    addIndividualCalendarButtons();
 }
 
 function addAllEventsToCalendar() {
@@ -245,6 +248,7 @@ function addAllEventsToCalendar() {
 // Massage booking functionality
 function initializeMassageBooking() {
     populateMassageTimeSlots();
+    updateAvailableTimeSlots(); // Check slot availability
     
     const timeSlotSelect = document.getElementById('massageTimeSlot');
     const bookBtn = document.getElementById('bookMassageBtn');
@@ -266,26 +270,32 @@ function initializeMassageBooking() {
 function populateMassageTimeSlots() {
     const timeSlotSelect = document.getElementById('massageTimeSlot');
     if (!timeSlotSelect) return;
-    
-    // Generate time slots from 11:00 to 12:30 every 10 minutes
-    const startTime = 11 * 60; // 11:00 in minutes
-    const endTime = 12 * 60 + 30; // 12:30 in minutes
-    const slotDuration = 10; // 10 minutes per slot
-    
-    for (let time = startTime; time <= endTime - 5; time += slotDuration) {
-        const hours = Math.floor(time / 60);
-        const minutes = time % 60;
-        const endHours = Math.floor((time + 5) / 60);
-        const endMinutes = (time + 5) % 60;
-        
-        const timeString = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
-        const endTimeString = `${endHours.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')}`;
-        
+
+    // Define time slots with 10-minute sessions and 5-minute breaks
+    const timeSlots = [
+        { start: '10:00', end: '10:10' },
+        { start: '10:15', end: '10:25' },
+        { start: '10:30', end: '10:40' },
+        { start: '10:45', end: '10:55' },
+        { start: '11:00', end: '11:10' },
+        { start: '11:15', end: '11:25' },
+        { start: '11:30', end: '11:40' },
+        { start: '11:45', end: '11:55' },
+        { start: '12:00', end: '12:10' },
+        { start: '12:15', end: '12:25' },
+        // Lunch break from 12:30 to 13:30
+        { start: '13:30', end: '13:40' },
+        { start: '13:45', end: '13:55' },
+        { start: '14:00', end: '14:10' },
+        { start: '14:15', end: '14:25' }
+    ];
+
+    timeSlots.forEach(slot => {
         const option = document.createElement('option');
-        option.value = timeString;
-        option.textContent = `${timeString} - ${endTimeString}`;
+        option.value = slot.start;
+        option.textContent = `${slot.start} - ${slot.end}`;
         timeSlotSelect.appendChild(option);
-    }
+    });
 }
 
 async function bookMassageAppointment() {
@@ -297,39 +307,50 @@ async function bookMassageAppointment() {
         showMassageStatus('Please select a time slot', 'danger');
         return;
     }
-    
+
     try {
-        // Check if slot is already booked
-        const bookingRef = doc(db, "massageBookings", `${timeSlot}-${userId}`);
-        const existingBooking = await getDoc(bookingRef);
+        // Check if user already has a booking
+        const userBookingsQuery = query(
+            collection(db, "massageBookings"), 
+            where("userId", "==", userId)
+        );
+        const userBookings = await getDocs(userBookingsQuery);
         
-        if (existingBooking.exists()) {
-            showMassageStatus('You already have a booking for this time slot', 'warning');
+        if (!userBookings.empty) {
+            showMassageStatus('You already have a massage appointment booked', 'warning');
             return;
         }
-        
-        // Check if slot is taken by someone else
+
+        // Check how many bookings exist for this time slot
         const slotQuery = query(collection(db, "massageBookings"), where("timeSlot", "==", timeSlot));
         const slotBookings = await getDocs(slotQuery);
         
-        if (!slotBookings.empty) {
-            showMassageStatus('This time slot is already booked by someone else', 'warning');
+        if (slotBookings.size >= 2) {
+            showMassageStatus('This time slot is fully booked (2 chairs occupied)', 'warning');
             return;
         }
+
+        // Create unique booking ID with chair number
+        const chairNumber = slotBookings.size + 1;
+        const bookingRef = doc(db, "massageBookings", `${timeSlot}-chair${chairNumber}-${userId}`);
         
         // Create booking
         await setDoc(bookingRef, {
             userId: userId,
             userName: userName,
             timeSlot: timeSlot,
+            chairNumber: chairNumber,
             date: '2025-07-17',
             service: 'physio_massage',
             bookedAt: serverTimestamp()
         });
         
-        showMassageStatus(`Appointment booked for ${timeSlot}!`, 'success');
+        showMassageStatus(`Appointment booked for ${timeSlot} (Chair ${chairNumber})!`, 'success');
         document.getElementById('bookMassageBtn').disabled = true;
         document.getElementById('massageTimeSlot').disabled = true;
+        
+        // Schedule reminder notification 10 minutes before
+        await scheduleMassageReminder(timeSlot, userId);
         
     } catch (error) {
         console.error('Error booking massage appointment:', error);
@@ -371,6 +392,38 @@ function showMassageStatus(message, type) {
             ${message}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>`;
+    }
+}
+
+// Function to schedule massage reminder notification
+async function scheduleMassageReminder(timeSlot, userId) {
+    try {
+        // Create reminder date for July 17, 2025
+        const [hours, minutes] = timeSlot.split(':').map(Number);
+        const reminderDate = new Date('2025-07-17T' + timeSlot + ':00');
+        reminderDate.setMinutes(reminderDate.getMinutes() - 10); // 10 minutes before
+        
+        const reminderData = {
+            title: "Massage Appointment Reminder",
+            message: `Your physio massage appointment is starting in 10 minutes at ${timeSlot}. Please head to the massage area at Coworking Pula.`,
+            timestamp: Timestamp.fromDate(reminderDate),
+            scheduledFor: Timestamp.fromDate(reminderDate),
+            type: 'massage_reminder',
+            userId: userId,
+            timeSlot: timeSlot,
+            createdBy: 'system',
+            createdAt: serverTimestamp()
+        };
+        
+        const { Timestamp } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+        const notificationsRef = collection(db, "massageReminders");
+        const docRef = await addDoc(notificationsRef, reminderData);
+        
+        console.log("Massage reminder scheduled with ID:", docRef.id);
+        return { success: true, id: docRef.id };
+    } catch (error) {
+        console.error("Error scheduling massage reminder:", error);
+        return { success: false, error: error.message };
     }
 }
 
@@ -497,6 +550,133 @@ function getScheduleItemByTime(event) {
     }
     
     return null;
+}
+
+// Function to update available time slots based on bookings
+async function updateAvailableTimeSlots() {
+    const timeSlotSelect = document.getElementById('massageTimeSlot');
+    if (!timeSlotSelect) return;
+
+    try {
+        // Get all current bookings
+        const bookingsQuery = query(collection(db, "massageBookings"));
+        const bookingsSnapshot = await getDocs(bookingsQuery);
+        
+        // Count bookings per time slot
+        const slotCounts = {};
+        bookingsSnapshot.forEach(doc => {
+            const data = doc.data();
+            const timeSlot = data.timeSlot;
+            slotCounts[timeSlot] = (slotCounts[timeSlot] || 0) + 1;
+        });
+        
+        // Update select options
+        Array.from(timeSlotSelect.options).forEach(option => {
+            if (option.value && slotCounts[option.value] >= 2) {
+                option.disabled = true;
+                option.textContent = option.textContent.replace(' - FULL', '') + ' - FULL';
+            }
+        });
+        
+    } catch (error) {
+        console.error('Error updating available time slots:', error);
+    }
+}
+
+// Function to add individual calendar buttons to schedule items
+function addIndividualCalendarButtons() {
+    const scheduleItems = document.querySelectorAll('.schedule-item');
+    
+    scheduleItems.forEach((item, index) => {
+        const timeElement = item.querySelector('.fw-bold');
+        const titleElement = item.querySelector('p');
+        
+        if (timeElement && titleElement) {
+            const timeText = timeElement.textContent.trim();
+            const title = titleElement.textContent.trim();
+            
+            // Skip if already has a button
+            if (item.querySelector('.add-to-calendar-btn')) return;
+            
+            // Create calendar button
+            const calendarBtn = document.createElement('button');
+            calendarBtn.className = 'btn btn-outline-primary btn-sm add-to-calendar-btn ms-2';
+            calendarBtn.innerHTML = '<i class="bi bi-calendar-plus"></i>';
+            calendarBtn.title = 'Add to Google Calendar';
+            calendarBtn.style.float = 'right';
+            
+            // Determine the date based on the accordion section
+            let eventDate = '2025-07-16'; // Default Day 1
+            const accordionItem = item.closest('.accordion-item');
+            if (accordionItem) {
+                const dayTitle = accordionItem.querySelector('.accordion-button').textContent;
+                if (dayTitle.includes('July 17')) {
+                    eventDate = '2025-07-17';
+                } else if (dayTitle.includes('July 18')) {
+                    eventDate = '2025-07-18';
+                }
+            }
+            
+            // Get location based on day
+            let location = 'Campus Restaurant, Petra Preradovića 9a, Pula';
+            if (eventDate === '2025-07-17') {
+                location = 'Coworking Pula, Marka Marulića 5, Pula';
+            } else if (eventDate === '2025-07-18') {
+                location = 'Campus Restaurant / Fratarski Island, Pula';
+            }
+            
+            calendarBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addSingleEventToCalendar(title, timeText, eventDate, location);
+            });
+            
+            // Add button to the time element
+            timeElement.style.position = 'relative';
+            timeElement.appendChild(calendarBtn);
+        }
+    });
+}
+
+// Function to add a single event to Google Calendar
+function addSingleEventToCalendar(title, timeText, date, location) {
+    try {
+        // Parse time range
+        const timeRange = timeText.split('–');
+        let startTime, endTime;
+        
+        if (timeRange.length === 2) {
+            startTime = timeRange[0].trim();
+            endTime = timeRange[1].trim();
+        } else {
+            // Single time or "From" time
+            startTime = timeText.replace('From ', '').trim();
+            endTime = startTime; // Default to same time if no end time
+            
+            // Add 1 hour for single times
+            const [hours, minutes] = startTime.split(':');
+            const endHour = (parseInt(hours) + 1).toString().padStart(2, '0');
+            endTime = `${endHour}:${minutes}`;
+        }
+        
+        const startDateTime = `${date}T${startTime}:00`;
+        const endDateTime = `${date}T${endTime}:00`;
+        
+        const event = {
+            title: `TFPU 2025 - ${title}`,
+            start: startDateTime,
+            end: endDateTime,
+            location: location,
+            description: `PulaTech Conference 2025 event. Location: ${location}`
+        };
+        
+        const googleCalendarUrl = createGoogleCalendarUrl(event);
+        window.open(googleCalendarUrl, '_blank');
+        
+    } catch (error) {
+        console.error('Error creating calendar event:', error);
+        alert('Error creating calendar event. Please try again.');
+    }
 }
 
 export { initializeExpandableSections, initializeCalendarIntegration, initializeMassageBooking, initializeScheduleTracking };
