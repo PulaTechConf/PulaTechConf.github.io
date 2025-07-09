@@ -153,7 +153,7 @@ async function showImagePreview(userData) {
             <div class="position-relative">
                 <img src="${CERTIFICATE_IMAGE_PATH}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
                 <div class="position-absolute" style="top: 45%; left: 0; right: 0; text-align: center;">
-                    <h2 style="font-family: 'Italianno', cursive; font-size: 42px; color: #333;">
+                    <h2 style="font-family: 'Italianno', cursive; font-size: 72px; color: #333;">
                         ${userData.firstName} ${userData.lastName}
                     </h2>
                 </div>
