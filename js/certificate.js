@@ -59,6 +59,35 @@ function checkFontLoaded() {
     return fontLoaded;
 }
 
+// Enhanced preloading function that handles fonts
+function preloadResources() {
+    return new Promise(async (resolve) => {
+        console.log("Preloading fonts and resources...");
+        
+        // Load Italianno font
+        const fontLoader = document.createElement('link');
+        fontLoader.rel = 'stylesheet';
+        fontLoader.href = 'https://fonts.googleapis.com/css2?family=Italianno&display=swap';
+        document.head.appendChild(fontLoader);
+        
+        // Create a function to check if font is loaded
+        const checkFontInterval = setInterval(() => {
+            if (checkFontLoaded()) {
+                console.log("Italianno font loaded successfully");
+                clearInterval(checkFontInterval);
+                resolve();
+            }
+        }, 100);
+        
+        // Fallback after 3 seconds if font doesn't load properly
+        setTimeout(() => {
+            clearInterval(checkFontInterval);
+            console.warn("Font loading timeout reached, continuing anyway");
+            resolve();
+        }, 3000);
+    });
+}
+
 async function generateCertificate(userData) {
     console.log("Starting certificate generation for:", userData);
     // Show loading state
@@ -78,26 +107,9 @@ async function generateCertificate(userData) {
         ]);
         console.log("External scripts loaded successfully");
         
-        console.log("Loading font...");
-        // Create a font loader
-        const fontLoader = document.createElement('link');
-        fontLoader.rel = 'stylesheet';
-        fontLoader.href = 'https://fonts.googleapis.com/css2?family=Italianno&display=swap';
-        document.head.appendChild(fontLoader);
+        // Preload fonts before generating certificate
+        await preloadResources();
         
-        // Wait for font to load
-        await new Promise(resolve => {
-            fontLoader.onload = () => {
-                console.log("Font loaded successfully");
-                resolve();
-            };
-            // Fallback if onload doesn't fire
-            setTimeout(() => {
-                console.log("Font load timeout reached, continuing anyway");
-                resolve();
-            }, 1000);
-        });
-
         console.log("Preloading certificate template image...");
         const certificateImagePath = '../icons/img/certifikat-01.jpg';
         const preloadedImage = await preloadImage(certificateImagePath).catch(err => {
@@ -115,19 +127,21 @@ async function generateCertificate(userData) {
         // Use inline base64 data URL for the background image to avoid path issues
         certificateCanvas.innerHTML = `
             <div class="certificate-container" style="width: 1100px; height: 850px; background-image: url('${preloadedImage.src}'); background-size: cover; position: relative;">
-                <!-- Name with Italianno font -->
-                <div style="position: absolute; top: 350px; width: 100%; text-align: center;">
-                    <h1 style="font-family: 'Italianno', cursive; font-size: 72px; color: #333; margin: 0; padding: 0;">${userData.firstName} ${userData.lastName}</h1>
+                <!-- Name with Italianno font - Improved positioning -->
+                <div style="position: absolute; top: 380px; width: 100%; text-align: center;">
+                    <h1 style="font-family: 'Italianno', cursive; font-size: 82px; color: #333; margin: 0; padding: 0; letter-spacing: 1px; text-shadow: 0px 0px 1px rgba(0,0,0,0.3);">${userData.firstName} ${userData.lastName}</h1>
                 </div>
             </div>
         `;
         
         console.log("Generating PDF from canvas...");
-        // Generate PDF from canvas
+        // Generate PDF from canvas with improved settings
         const canvas = await html2canvas(certificateCanvas.querySelector('.certificate-container'), {
             allowTaint: true,
             useCORS: true,
-            logging: true
+            logging: true,
+            scale: 2, // Increase resolution for better quality
+            backgroundColor: null // Transparent background
         });
         console.log("Canvas created successfully");
         const imgData = canvas.toDataURL('image/jpeg', 1.0);
@@ -335,134 +349,142 @@ function testCertificateGeneration() {
     
     // Test data - doesn't require Firebase
     const testUserData = {
-        firstName: "Test",
-        lastName: "User",
+        firstName: "John",
+        lastName: "Doe",
         affiliation: "Test Organization",
         email: "test@example.com"
     };
     
     // First try a simple image display
     try {
-        // Display the test certificate without PDF generation
-        certificatePreview.innerHTML = `
-            <div class="alert alert-success mb-3">
-                <i class="bi bi-check-circle me-2"></i>
-                Test step 1: Basic HTML rendering works!
-            </div>
-            <img src="../icons/img/certifikat-01.jpg" alt="Certificate Test" class="img-fluid certificate-thumbnail">
-            <div class="mt-3">
-                <p>Test user: <strong>${testUserData.firstName} ${testUserData.lastName}</strong></p>
-                <p>Font test: <span style="font-family: 'Italianno', cursive; font-size: 36px;">Test Font</span></p>
-
-                <div class="alert ${checkFontLoaded() ? 'alert-success' : 'alert-warning'} mt-3">
-                    <i class="bi ${checkFontLoaded() ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
-                    Italianno font is ${checkFontLoaded() ? 'loaded' : 'NOT loaded'}
+        // Load Italianno font first for testing
+        const fontLink = document.createElement('link');
+        fontLink.rel = 'stylesheet';
+        fontLink.href = 'https://fonts.googleapis.com/css2?family=Italianno&display=swap';
+        document.head.appendChild(fontLink);
+        
+        setTimeout(() => {
+            // Display the test certificate without PDF generation
+            certificatePreview.innerHTML = `
+                <div class="alert alert-success mb-3">
+                    <i class="bi bi-check-circle me-2"></i>
+                    Test step 1: Basic HTML rendering works!
                 </div>
-            </div>
-        `;
+                <img src="../icons/img/certifikat-01.jpg" alt="Certificate Test" class="img-fluid certificate-thumbnail">
+                <div class="mt-3">
+                    <p>Test user: <strong>${testUserData.firstName} ${testUserData.lastName}</strong></p>
+                    <p>Font test: <span style="font-family: 'Italianno', cursive; font-size: 36px;">Test Font</span></p>
 
-        // Now try to load the libraries
-        setTimeout(async () => {
-            try {
-                await loadScripts([
-                    'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-                    'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-                ]);
-                
-                certificatePreview.innerHTML += `
-                    <div class="alert alert-success mt-3">
-                        <i class="bi bi-check-circle me-2"></i>
-                        Test step 2: Libraries loaded successfully!
+                    <div class="alert ${checkFontLoaded() ? 'alert-success' : 'alert-warning'} mt-3">
+                        <i class="bi ${checkFontLoaded() ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                        Italianno font is ${checkFontLoaded() ? 'loaded' : 'NOT loaded'}
                     </div>
-                `;
-                
-                // Check if jsPDF is available
-                if (window.jspdf && window.jspdf.jsPDF) {
+                </div>
+            `;
+            
+            // Continue with the rest of the test
+            setTimeout(async () => {
+                try {
+                    await loadScripts([
+                        'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
+                        'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+                    ]);
+                    
                     certificatePreview.innerHTML += `
                         <div class="alert alert-success mt-3">
                             <i class="bi bi-check-circle me-2"></i>
-                            Test step 3: jsPDF is available!
+                            Test step 2: Libraries loaded successfully!
                         </div>
-                        <button id="completeTestBtn" class="btn btn-primary mt-3">Run Complete Test</button>
                     `;
+                    
+                    // Check if jsPDF is available
+                    if (window.jspdf && window.jspdf.jsPDF) {
+                        certificatePreview.innerHTML += `
+                            <div class="alert alert-success mt-3">
+                                <i class="bi bi-check-circle me-2"></i>
+                                Test step 3: jsPDF is available!
+                            </div>
+                            <button id="completeTestBtn" class="btn btn-primary mt-3">Run Complete Test</button>
+                        `;
 
-                    // Direct HTML2Canvas test
-                    certificatePreview.innerHTML += `
-                        <button id="testHtml2CanvasBtn" class="btn btn-info mt-2">Test HTML2Canvas Only</button>
-                    `;
-                    
-                    // Add event listener for HTML2Canvas test
-                    document.getElementById('testHtml2CanvasBtn').addEventListener('click', async () => {
-                        try {
-                            // Create a simple test element
-                            const testElement = document.createElement('div');
-                            testElement.style.width = '500px';
-                            testElement.style.height = '300px';
-                            testElement.style.backgroundColor = '#f0f0f0';
-                            testElement.style.padding = '20px';
-                            testElement.style.position = 'absolute';
-                            testElement.style.left = '-9999px';
-                            testElement.innerHTML = `
-                                <h2 style="color: blue; font-family: Arial;">HTML2Canvas Test</h2>
-                                <p>This is a test of the HTML2Canvas library.</p>
-                                <p style="font-family: 'Italianno', cursive; font-size: 36px;">Italianno Font Test</p>
-                            `;
-                            document.body.appendChild(testElement);
-                            
-                            // Convert to canvas
-                            const canvas = await html2canvas(testElement, {
-                                allowTaint: true,
-                                useCORS: true,
-                            });
-                            
-                            // Clean up
-                            document.body.removeChild(testElement);
-                            
-                            // Display the result
-                            const imgData = canvas.toDataURL('image/png');
-                            certificatePreview.innerHTML = `
-                                <div class="alert alert-success mb-3">
-                                    <i class="bi bi-check-circle me-2"></i>
-                                    HTML2Canvas test successful!
-                                </div>
-                                <img src="${imgData}" alt="HTML2Canvas Test" class="img-fluid certificate-thumbnail">
-                                <button id="backToTestBtn" class="btn btn-secondary mt-3">Back to Tests</button>
-                            `;
-                            
-                            // Add back button
-                            document.getElementById('backToTestBtn').addEventListener('click', testCertificateGeneration);
-                            
-                        } catch (error) {
-                            certificatePreview.innerHTML += `
-                                <div class="alert alert-danger mt-3">
-                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                    HTML2Canvas test failed: ${error.message}
-                                </div>
-                            `;
-                        }
-                    });
-                    
-                    // Add event listener for complete test
-                    document.getElementById('completeTestBtn').addEventListener('click', () => {
-                        downloadCertificate(testUserData);
-                    });
-                } else {
+                        // Direct HTML2Canvas test
+                        certificatePreview.innerHTML += `
+                            <button id="testHtml2CanvasBtn" class="btn btn-info mt-2">Test HTML2Canvas Only</button>
+                        `;
+                        
+                        // Add event listener for HTML2Canvas test
+                        document.getElementById('testHtml2CanvasBtn').addEventListener('click', async () => {
+                            try {
+                                // Create a simple test element
+                                const testElement = document.createElement('div');
+                                testElement.style.width = '500px';
+                                testElement.style.height = '300px';
+                                testElement.style.backgroundColor = '#f0f0f0';
+                                testElement.style.padding = '20px';
+                                testElement.style.position = 'absolute';
+                                testElement.style.left = '-9999px';
+                                testElement.innerHTML = `
+                                    <h2 style="color: blue; font-family: Arial;">HTML2Canvas Test</h2>
+                                    <p>This is a test of the HTML2Canvas library.</p>
+                                    <p style="font-family: 'Italianno', cursive; font-size: 36px;">Italianno Font Test</p>
+                                `;
+                                document.body.appendChild(testElement);
+                                
+                                // Convert to canvas
+                                const canvas = await html2canvas(testElement, {
+                                    allowTaint: true,
+                                    useCORS: true,
+                                });
+                                
+                                // Clean up
+                                document.body.removeChild(testElement);
+                                
+                                // Display the result
+                                const imgData = canvas.toDataURL('image/png');
+                                certificatePreview.innerHTML = `
+                                    <div class="alert alert-success mb-3">
+                                        <i class="bi bi-check-circle me-2"></i>
+                                        HTML2Canvas test successful!
+                                    </div>
+                                    <img src="${imgData}" alt="HTML2Canvas Test" class="img-fluid certificate-thumbnail">
+                                    <button id="backToTestBtn" class="btn btn-secondary mt-3">Back to Tests</button>
+                                `;
+                                
+                                // Add back button
+                                document.getElementById('backToTestBtn').addEventListener('click', testCertificateGeneration);
+                                
+                            } catch (error) {
+                                certificatePreview.innerHTML += `
+                                    <div class="alert alert-danger mt-3">
+                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                        HTML2Canvas test failed: ${error.message}
+                                    </div>
+                                `;
+                            }
+                        });
+                        
+                        // Add event listener for complete test
+                        document.getElementById('completeTestBtn').addEventListener('click', () => {
+                            downloadCertificate(testUserData);
+                        });
+                    } else {
+                        certificatePreview.innerHTML += `
+                            <div class="alert alert-danger mt-3">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                Test step 3 failed: jsPDF is not available
+                            </div>
+                        `;
+                    }
+                } catch (error) {
                     certificatePreview.innerHTML += `
                         <div class="alert alert-danger mt-3">
                             <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            Test step 3 failed: jsPDF is not available
+                            Test step 2 failed: Could not load libraries: ${error.message}
                         </div>
                     `;
                 }
-            } catch (error) {
-                certificatePreview.innerHTML += `
-                    <div class="alert alert-danger mt-3">
-                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                        Test step 2 failed: Could not load libraries: ${error.message}
-                    </div>
-                `;
-            }
-        }, 1000);
+            }, 500);
+        }, 500); // Give font a moment to load
     } catch (error) {
         certificatePreview.innerHTML = `
             <div class="alert alert-danger">
@@ -475,7 +497,7 @@ function testCertificateGeneration() {
 
 // Add this after your DOM loaded event listener
 document.addEventListener('DOMContentLoaded', () => {
-    // Add event listener for the test button
+    // Add event listener for the test certificate button
     const testCertificateBtn = document.getElementById('testCertificateBtn');
     if (testCertificateBtn) {
         testCertificateBtn.addEventListener('click', testCertificateGeneration);
