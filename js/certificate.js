@@ -10,6 +10,9 @@ const db = getFirestore(app);
 const downloadCertificateBtn = document.getElementById('downloadCertificateBtn');
 const certificatePreview = document.getElementById('certificatePreview');
 
+// Certificate PDF template path
+const CERTIFICATE_TEMPLATE_PATH = '../icons/img/certificat.pdf';
+
 // Certificate generation function
 
 function preloadImage(src) {
@@ -88,6 +91,7 @@ function preloadResources() {
     });
 }
 
+// Enhanced certificate generation using PDF template
 async function generateCertificate(userData) {
     console.log("Starting certificate generation for:", userData);
     // Show loading state
@@ -100,76 +104,86 @@ async function generateCertificate(userData) {
 
     try {
         console.log("Loading external scripts...");
-        // Load HTML2Canvas and jsPDF dynamically
+        // Load PDFLib and other necessary libraries
         await loadScripts([
-            'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
+            'https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js',
+            'https://unpkg.com/@pdf-lib/fontkit@1.1.1/dist/fontkit.umd.min.js'
         ]);
         console.log("External scripts loaded successfully");
         
         // Preload fonts before generating certificate
         await preloadResources();
         
-        console.log("Preloading certificate template image...");
-        const certificateImagePath = '../icons/img/certifikat-01.jpg';
-        const preloadedImage = await preloadImage(certificateImagePath).catch(err => {
-            throw new Error(`Certificate template image could not be loaded. Please check the path: ${certificateImagePath}. Error: ${err.message}`);
+        console.log("Loading PDF template...");
+        // Fetch the PDF template
+        const templateResponse = await fetch(CERTIFICATE_TEMPLATE_PATH);
+        if (!templateResponse.ok) {
+            throw new Error(`Failed to load PDF template: ${templateResponse.status} ${templateResponse.statusText}`);
+        }
+        
+        const templateArrayBuffer = await templateResponse.arrayBuffer();
+        console.log("PDF template loaded successfully");
+        
+        // Load PDF document with PDF-Lib
+        const { PDFDocument, rgb, StandardFonts } = PDFLib;
+        const pdfDoc = await PDFDocument.load(templateArrayBuffer);
+        
+        // Register fontkit
+        pdfDoc.registerFontkit(fontkit);
+        
+        // Load custom font for the name
+        console.log("Loading Italianno font for PDF...");
+        const fontResponse = await fetch('https://cdn.jsdelivr.net/npm/@fontsource/italianno@5.0.17/files/italianno-latin-400-normal.woff');
+        const fontBytes = await fontResponse.arrayBuffer();
+        const italiannoFont = await pdfDoc.embedFont(fontBytes);
+        
+        // Get the first page of the PDF
+        const page = pdfDoc.getPages()[0];
+        const { width, height } = page.getSize();
+        
+        // Add recipient name to certificate
+        const fontSize = 64;
+        const text = `${userData.firstName} ${userData.lastName}`;
+        
+        // Calculate text width to center it
+        const textWidth = italiannoFont.widthOfTextAtSize(text, fontSize);
+        const textX = (width - textWidth) / 2;
+        
+        // Position for the name (adjust Y position based on your template)
+        const textY = height / 2 + 30; // Adjust this based on your PDF template design
+        
+        // Add text to the page
+        page.drawText(text, {
+            x: textX,
+            y: textY,
+            size: fontSize,
+            font: italiannoFont,
+            color: rgb(0.1, 0.1, 0.1), // Dark gray color
         });
-        console.log("Certificate template image preloaded successfully");
         
-        // Create certificate canvas element
-        const certificateCanvas = document.createElement('div');
-        certificateCanvas.style.position = 'absolute';
-        certificateCanvas.style.left = '-9999px';
-        certificateCanvas.style.top = '-9999px';
-        document.body.appendChild(certificateCanvas);
+        // Save the modified PDF
+        const pdfBytes = await pdfDoc.save();
         
-        // Use inline base64 data URL for the background image to avoid path issues
-        certificateCanvas.innerHTML = `
-            <div class="certificate-container" style="width: 1100px; height: 850px; background-image: url('${preloadedImage.src}'); background-size: cover; position: relative;">
-                <!-- Name with Italianno font - Improved positioning -->
-                <div style="position: absolute; top: 380px; width: 100%; text-align: center;">
-                    <h1 style="font-family: 'Italianno', cursive; font-size: 82px; color: #333; margin: 0; padding: 0; letter-spacing: 1px; text-shadow: 0px 0px 1px rgba(0,0,0,0.3);">${userData.firstName} ${userData.lastName}</h1>
-                </div>
-            </div>
-        `;
+        // Convert to base64 for preview
+        const base64Data = await arrayBufferToBase64(pdfBytes);
+        const pdfUrl = `data:application/pdf;base64,${base64Data}`;
         
-        console.log("Generating PDF from canvas...");
-        // Generate PDF from canvas with improved settings
-        const canvas = await html2canvas(certificateCanvas.querySelector('.certificate-container'), {
-            allowTaint: true,
-            useCORS: true,
-            logging: true,
-            scale: 2, // Increase resolution for better quality
-            backgroundColor: null // Transparent background
-        });
-        console.log("Canvas created successfully");
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
-        console.log("Image data URL created");
-        
-        console.log("Creating PDF...");
-        // Create PDF with proper dimensions for certificate
-        const { jsPDF } = window.jspdf;
-        console.log("jsPDF accessed:", !!jsPDF);
-        const pdf = new jsPDF('landscape', 'pt', 'a4');
-        const pageWidth = pdf.internal.pageSize.getWidth();
-        const pageHeight = pdf.internal.pageSize.getHeight();
-        
-        // Add image to fill the page
-        pdf.addImage(imgData, 'JPEG', 0, 0, pageWidth, pageHeight);
-        console.log("PDF created successfully");
-        
-        // Generate preview with responsive class
+        // Generate preview
         certificatePreview.innerHTML = `
-            <img src="${imgData}" alt="Certificate Preview" class="img-fluid certificate-thumbnail">
+            <object data="${pdfUrl}" type="application/pdf" class="certificate-pdf-preview">
+                <div class="alert alert-warning">
+                    <p>Your browser doesn't support PDF previews. 
+                    <a href="${pdfUrl}" target="_blank">Open PDF</a></p>
+                </div>
+            </object>
             <p class="text-muted mt-2 small">Preview of your personalized certificate</p>
         `;
         
-        // Clean up canvas
-        document.body.removeChild(certificateCanvas);
-        
-        // Return the PDF for download
-        return pdf;
+        // Return the PDF bytes for download
+        return {
+            bytes: pdfBytes,
+            filename: `PulaTechConf2025_Certificate_${userData.lastName}_${userData.firstName}.pdf`
+        };
         
     } catch (error) {
         console.error("Detailed error in certificate generation:", error);
@@ -182,6 +196,17 @@ async function generateCertificate(userData) {
         `;
         return null;
     }
+}
+
+// Helper function to convert ArrayBuffer to base64
+function arrayBufferToBase64(buffer) {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    const len = bytes.byteLength;
+    for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
 }
 
 // Helper function to load external scripts
@@ -222,7 +247,6 @@ function loadScripts(urls) {
 }
 
 // Download certificate as PDF
-
 async function downloadCertificate(userData) {
     // Show loading indicator on button
     const originalBtnContent = downloadCertificateBtn.innerHTML;
@@ -231,33 +255,30 @@ async function downloadCertificate(userData) {
     
     try {
         console.log("Starting certificate download process...");
-        const pdf = await generateCertificate(userData);
-        if (pdf) {
+        const result = await generateCertificate(userData);
+        if (result && result.bytes) {
             console.log("PDF generated, attempting to save...");
             
             try {
-                // Try the normal save method first
-                pdf.save(`PulaTechConf2025_Certificate_${userData.lastName}_${userData.firstName}.pdf`);
+                // Create a blob from the PDF bytes
+                const blob = new Blob([result.bytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+                
+                // Create a link and trigger download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = result.filename;
+                document.body.appendChild(link);
+                link.click();
+                
+                // Clean up
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                
                 console.log("PDF saved successfully");
             } catch (saveError) {
-                console.error("Error with pdf.save():", saveError);
-                
-                // Fallback: create a blob and use a download link
-                try {
-                    const blob = pdf.output('blob');
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `PulaTechConf2025_Certificate_${userData.lastName}_${userData.firstName}.pdf`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-                    console.log("PDF saved using fallback method");
-                } catch (fallbackError) {
-                    console.error("Fallback save method failed:", fallbackError);
-                    throw new Error("Unable to download PDF. Please try again.");
-                }
+                console.error("Error saving PDF:", saveError);
+                throw new Error("Unable to download PDF. Please try again.");
             }
         } else {
             throw new Error("Failed to generate certificate PDF");
@@ -355,136 +376,39 @@ function testCertificateGeneration() {
         email: "test@example.com"
     };
     
-    // First try a simple image display
+    // First check if we can load the PDF template
     try {
-        // Load Italianno font first for testing
-        const fontLink = document.createElement('link');
-        fontLink.rel = 'stylesheet';
-        fontLink.href = 'https://fonts.googleapis.com/css2?family=Italianno&display=swap';
-        document.head.appendChild(fontLink);
-        
-        setTimeout(() => {
-            // Display the test certificate without PDF generation
-            certificatePreview.innerHTML = `
-                <div class="alert alert-success mb-3">
-                    <i class="bi bi-check-circle me-2"></i>
-                    Test step 1: Basic HTML rendering works!
-                </div>
-                <img src="../icons/img/certifikat-01.jpg" alt="Certificate Test" class="img-fluid certificate-thumbnail">
-                <div class="mt-3">
-                    <p>Test user: <strong>${testUserData.firstName} ${testUserData.lastName}</strong></p>
-                    <p>Font test: <span style="font-family: 'Italianno', cursive; font-size: 36px;">Test Font</span></p>
-
-                    <div class="alert ${checkFontLoaded() ? 'alert-success' : 'alert-warning'} mt-3">
-                        <i class="bi ${checkFontLoaded() ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
-                        Italianno font is ${checkFontLoaded() ? 'loaded' : 'NOT loaded'}
-                    </div>
-                </div>
-            `;
-            
-            // Continue with the rest of the test
-            setTimeout(async () => {
-                try {
-                    await loadScripts([
-                        'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
-                        'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'
-                    ]);
-                    
-                    certificatePreview.innerHTML += `
-                        <div class="alert alert-success mt-3">
-                            <i class="bi bi-check-circle me-2"></i>
-                            Test step 2: Libraries loaded successfully!
-                        </div>
-                    `;
-                    
-                    // Check if jsPDF is available
-                    if (window.jspdf && window.jspdf.jsPDF) {
-                        certificatePreview.innerHTML += `
-                            <div class="alert alert-success mt-3">
-                                <i class="bi bi-check-circle me-2"></i>
-                                Test step 3: jsPDF is available!
-                            </div>
-                            <button id="completeTestBtn" class="btn btn-primary mt-3">Run Complete Test</button>
-                        `;
-
-                        // Direct HTML2Canvas test
-                        certificatePreview.innerHTML += `
-                            <button id="testHtml2CanvasBtn" class="btn btn-info mt-2">Test HTML2Canvas Only</button>
-                        `;
-                        
-                        // Add event listener for HTML2Canvas test
-                        document.getElementById('testHtml2CanvasBtn').addEventListener('click', async () => {
-                            try {
-                                // Create a simple test element
-                                const testElement = document.createElement('div');
-                                testElement.style.width = '500px';
-                                testElement.style.height = '300px';
-                                testElement.style.backgroundColor = '#f0f0f0';
-                                testElement.style.padding = '20px';
-                                testElement.style.position = 'absolute';
-                                testElement.style.left = '-9999px';
-                                testElement.innerHTML = `
-                                    <h2 style="color: blue; font-family: Arial;">HTML2Canvas Test</h2>
-                                    <p>This is a test of the HTML2Canvas library.</p>
-                                    <p style="font-family: 'Italianno', cursive; font-size: 36px;">Italianno Font Test</p>
-                                `;
-                                document.body.appendChild(testElement);
-                                
-                                // Convert to canvas
-                                const canvas = await html2canvas(testElement, {
-                                    allowTaint: true,
-                                    useCORS: true,
-                                });
-                                
-                                // Clean up
-                                document.body.removeChild(testElement);
-                                
-                                // Display the result
-                                const imgData = canvas.toDataURL('image/png');
-                                certificatePreview.innerHTML = `
-                                    <div class="alert alert-success mb-3">
-                                        <i class="bi bi-check-circle me-2"></i>
-                                        HTML2Canvas test successful!
-                                    </div>
-                                    <img src="${imgData}" alt="HTML2Canvas Test" class="img-fluid certificate-thumbnail">
-                                    <button id="backToTestBtn" class="btn btn-secondary mt-3">Back to Tests</button>
-                                `;
-                                
-                                // Add back button
-                                document.getElementById('backToTestBtn').addEventListener('click', testCertificateGeneration);
-                                
-                            } catch (error) {
-                                certificatePreview.innerHTML += `
-                                    <div class="alert alert-danger mt-3">
-                                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                        HTML2Canvas test failed: ${error.message}
-                                    </div>
-                                `;
-                            }
-                        });
-                        
-                        // Add event listener for complete test
-                        document.getElementById('completeTestBtn').addEventListener('click', () => {
-                            downloadCertificate(testUserData);
-                        });
-                    } else {
-                        certificatePreview.innerHTML += `
-                            <div class="alert alert-danger mt-3">
-                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                                Test step 3 failed: jsPDF is not available
-                            </div>
-                        `;
-                    }
-                } catch (error) {
-                    certificatePreview.innerHTML += `
-                        <div class="alert alert-danger mt-3">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                            Test step 2 failed: Could not load libraries: ${error.message}
-                        </div>
-                    `;
+        // First verify we can access the PDF template
+        fetch(CERTIFICATE_TEMPLATE_PATH)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`PDF template not found: ${response.status} ${response.statusText}`);
                 }
-            }, 500);
-        }, 500); // Give font a moment to load
+                
+                certificatePreview.innerHTML = `
+                    <div class="alert alert-success mb-3">
+                        <i class="bi bi-check-circle me-2"></i>
+                        Test step 1: PDF template found!
+                    </div>
+                    <button id="generateTestBtn" class="btn btn-primary mt-2">Generate Test Certificate</button>
+                `;
+                
+                // Add event listener for the test generation button
+                document.getElementById('generateTestBtn').addEventListener('click', () => {
+                    downloadCertificate(testUserData);
+                });
+            })
+            .catch(error => {
+                certificatePreview.innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        Test failed: ${error.message}
+                    </div>
+                    <div class="mt-3">
+                        <p>Make sure you have a PDF template at: <code>${CERTIFICATE_TEMPLATE_PATH}</code></p>
+                    </div>
+                `;
+            });
     } catch (error) {
         certificatePreview.innerHTML = `
             <div class="alert alert-danger">
