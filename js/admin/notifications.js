@@ -293,17 +293,20 @@ export async function sendNotificationToAccommodationUsers(title, message) {
         const { collection, query, where, getDocs } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
         const { db } = await import("../firebase-config.js");
         
-        // Get users with accommodation field set
+        // Get all users first, then filter client-side for accommodation
         const usersRef = collection(db, "users");
-        const accommodationUsersQuery = query(
-            usersRef, 
-            where("accommodation", "!=", ""),
-            where("accommodation", "!=", null)
-        );
+        const allUsersSnapshot = await getDocs(usersRef);
         
-        const accommodationUsers = await getDocs(accommodationUsersQuery);
+        // Filter users with accommodation information client-side
+        let accommodationUsersCount = 0;
+        allUsersSnapshot.forEach((doc) => {
+            const userData = doc.data();
+            if (userData.accommodation && userData.accommodation.trim() !== "") {
+                accommodationUsersCount++;
+            }
+        });
         
-        console.log(`Found ${accommodationUsers.size} users with accommodation information`);
+        console.log(`Found ${accommodationUsersCount} users with accommodation information`);
         
         // Create notification data
         const notificationData = {
@@ -319,7 +322,7 @@ export async function sendNotificationToAccommodationUsers(title, message) {
         const docRef = await addDoc(notificationsRef, notificationData);
         
         console.log("Accommodation-specific notification created with ID:", docRef.id);
-        return { success: true, id: docRef.id, userCount: accommodationUsers.size };
+        return { success: true, id: docRef.id, userCount: accommodationUsersCount };
     } catch (error) {
         console.error("Error sending notification to accommodation users:", error);
         return { success: false, error: error.message };

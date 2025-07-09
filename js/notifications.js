@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', () => {
         );
         
         // Listen for notifications in real time
-        onSnapshot(q, (snapshot) => {
+        onSnapshot(q, async (snapshot) => {
             console.log(`Received ${snapshot.size} notifications`);
             let notifications = [];
             
@@ -173,14 +173,43 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const readNotifications = getReadNotifications();
             
-            // Process all notifications
+            // Get current user's accommodation status
+            const currentUserId = localStorage.getItem('userId');
+            let userHasAccommodation = false;
+            
+            if (currentUserId) {
+                try {
+                    const { doc, getDoc } = await import("https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js");
+                    const userDoc = await getDoc(doc(db, "users", currentUserId));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        userHasAccommodation = userData.accommodation && userData.accommodation.trim() !== '';
+                        console.log('User accommodation status:', userHasAccommodation);
+                    }
+                } catch (error) {
+                    console.error("Error checking user accommodation status:", error);
+                }
+            }
+            
+            // Process all notifications and filter based on target audience
             snapshot.forEach(doc => {
                 const data = doc.data();
+                
+                // Check if notification should be shown to this user
+                const targetAudience = data.targetAudience;
+                
+                // If notification is targeted to accommodation users only, check if user qualifies
+                if (targetAudience === 'accommodation_users' && !userHasAccommodation) {
+                    console.log(`Skipping accommodation-only notification "${data.title}" - user has no accommodation info`);
+                    return; // Skip this notification
+                }
+                
                 notifications.push({
                     id: doc.id,
                     title: data.title || 'Notification',
                     message: data.message || '',
                     timestamp: data.timestamp,
+                    targetAudience: targetAudience,
                     isRead: readNotifications.includes(doc.id)
                 });
             });
