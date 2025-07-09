@@ -91,7 +91,13 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
             
             const title = document.getElementById('notificationTitle').value.trim();
-            const message = document.getElementById('notificationMessage').value.trim();
+            // Get content from TinyMCE editor instead of textarea directly
+            let message;
+            if (window.tinymce && tinymce.get('notificationMessage')) {
+                message = tinymce.get('notificationMessage').getContent().trim();
+            } else {
+                message = document.getElementById('notificationMessage').value.trim();
+            }
             const target = document.getElementById('notificationTarget').value;
             
             if (!title || !message) {
@@ -118,6 +124,10 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (result.success) {
                 notificationForm.reset();
+                // Clear TinyMCE editor content
+                if (window.tinymce && tinymce.get('notificationMessage')) {
+                    tinymce.get('notificationMessage').setContent('');
+                }
                 // Reload recent notifications if element exists
                 loadRecentNotifications();
             }
@@ -198,10 +208,11 @@ async function loadRecentNotifications() {
                 }
             }
             
-            // Truncate message for preview
-            const messagePreview = notification.message.length > 100 
-                ? notification.message.substring(0, 100) + '...' 
-                : notification.message;
+            // Truncate message for preview (strip HTML for preview)
+            const messageText = notification.message.replace(/<[^>]*>/g, ''); // Strip HTML tags for preview
+            const messagePreview = messageText.length > 100 
+                ? messageText.substring(0, 100) + '...' 
+                : messageText;
             
             notificationsHtml += `
                 <div class="list-group-item notification-item" data-id="${notificationId}">
@@ -220,7 +231,7 @@ async function loadRecentNotifications() {
                     <div class="notification-full-content d-none mt-2" id="content-${notificationId}">
                         <div class="alert alert-light">
                             <strong>Full Message:</strong><br>
-                            ${notification.message.replace(/\n/g, '<br>')}
+                            <div style="margin-top: 8px;">${notification.message}</div>
                         </div>
                         <small class="text-muted">
                             <i class="bi bi-person"></i> Created by: ${notification.createdBy || 'Unknown'}
