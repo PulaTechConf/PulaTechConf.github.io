@@ -89,7 +89,7 @@ function checkFontLoaded() {
     // Create an element with the font
     const fontTest = document.createElement('span');
     fontTest.style.fontFamily = "'Italianno', cursive";
-    fontTest.style.fontSize = "600px";
+    fontTest.style.fontSize = "550px";
     fontTest.style.visibility = "hidden";
     fontTest.textContent = "Font Test";
     document.body.appendChild(fontTest);
@@ -201,8 +201,8 @@ async function generateCertificate(userData) {
         // Draw the certificate image on the canvas
         ctx.drawImage(img, 0, 0);
         
-        // Add the name text with appropriate font size (600px)
-        ctx.font = "600px Italianno, cursive";
+        // Add the name text with appropriate font size (550px)
+        ctx.font = "550px Italianno, cursive";
         ctx.fillStyle = "#333333";
         ctx.textAlign = "center";
         
