@@ -143,7 +143,6 @@ if (registerForm) {
         const lastName = document.getElementById('lastName').value;
         const affiliation = document.getElementById('affiliation').value;
         const country = document.getElementById('country').value;
-        const accommodation = document.getElementById('accommodation').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
         
