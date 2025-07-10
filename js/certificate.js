@@ -225,28 +225,42 @@ async function generateCertificate(userData) {
         ctx.drawImage(img, 0, 0);
         
         // Add the name text - use information from font loading result
-        let fontFamily, fontSize;
+        let fontFamily, baseFontSize;
         
         if (fontLoadResult) {
             fontFamily = "'Italianno', cursive";
-            fontSize = "400px";
+            baseFontSize = 400;
             console.log("Using Italianno font for certificate");
         } else {
             // Fallback font options
             fontFamily = "serif";
-            fontSize = "120px";
+            baseFontSize = 120;
             console.log("Using fallback font for certificate");
         }
         
-        ctx.font = `${fontSize} ${fontFamily}`;
+        // Position the text in the center-ish of the certificate
+        const text = `${userData.firstName} ${userData.lastName}`;
+        
+        // Simple font size adjustment based on name length
+        const nameLength = text.length;
+        let fontSize = baseFontSize;
+        
+        // Adjust font size if name is too long
+        if (nameLength > 15) {
+            const reductionFactor = Math.min(1.0, 15 / nameLength);
+            fontSize = Math.floor(baseFontSize * reductionFactor);
+            console.log(`Adjusted font size to ${fontSize}px due to long name (${nameLength} characters)`);
+        }
+        
+        ctx.font = `${fontSize}px ${fontFamily}`;
         ctx.fillStyle = "#333333";
         ctx.textAlign = "center";
         
-        console.log(`Using font: ${fontFamily} at size ${fontSize}`);
+        console.log(`Using font: ${fontFamily} at size ${fontSize}px`);
         
-        // Position the text in the center-ish of the certificate
-        const text = `${userData.firstName} ${userData.lastName}`;
-        ctx.fillText(text, canvas.width / 2, canvas.height / 2);
+        // Add margin from top/bottom (20% of canvas height)
+        const maxWidth = canvas.width * 0.8; // 80% of canvas width as max width
+        ctx.fillText(text, canvas.width / 2, canvas.height / 2, maxWidth);
         
         // Get the image data from canvas
         const imageData = canvas.toDataURL('image/jpeg', 0.95);
