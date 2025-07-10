@@ -176,7 +176,7 @@ if (registerForm) {
                 lastName,
                 affiliation,
                 country,
-                accommodation: accommodation || '',
+                accommodation: '', // Default empty accommodation, can be set from admin page
                 email,
                 password, // Note: In a real app, passwords should be hashed
                 role: "general", // Default role for new users
