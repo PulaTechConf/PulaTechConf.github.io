@@ -62,16 +62,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td>${userData.firstName || ''} ${userData.lastName || ''}</td>
                     <td>${userData.email || ''}</td>
                     <td>
-                        ${userData.affiliation || ''}
-                        <button class="btn btn-sm btn-outline-primary ms-1 edit-affiliation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-affiliation="${userData.affiliation || ''}">
+                        <button class="btn btn-sm btn-outline-primary me-1 edit-affiliation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-affiliation="${userData.affiliation || ''}">
                             <i class="bi bi-pencil"></i>
                         </button>
+                        ${userData.affiliation || ''}
                     </td>
                     <td>
-                        <span class="badge ${userData.accommodation ? 'bg-success' : 'bg-secondary'}">${userData.accommodation || 'Not provided'}</span>
-                        <button class="btn btn-sm btn-outline-primary ms-1 edit-accommodation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-accommodation="${userData.accommodation || ''}">
+                        <button class="btn btn-sm btn-outline-primary me-1 edit-accommodation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-accommodation="${userData.accommodation || ''}">
                             <i class="bi bi-pencil"></i>
                         </button>
+                        <span class="badge ${userData.accommodation ? 'bg-success' : 'bg-secondary'}">${userData.accommodation || 'Not provided'}</span>
                     </td>
                     <td><span class="badge ${getRoleBadgeClass(userData.role)}">${userData.role || 'general'}</span></td>
                     <td>

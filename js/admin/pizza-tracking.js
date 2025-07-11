@@ -34,11 +34,9 @@ async function loadPizzaSummaries() {
     try {
         const pizzaTypes = {
             'margherita': 'Margherita',
-            'pepperoni': 'Pepperoni',
             'vegetarian': 'Vegetarian',
-            'quattro-formaggi': 'Quattro Formaggi',
             'prosciutto': 'Prosciutto',
-            'gluten-free': 'Gluten Free'
+            'gluten-free-margherita': 'Gluten Free Margherita'
         };
         
         // Only process Day 2 (July 17)
@@ -117,11 +115,9 @@ async function loadUserPizzaSelections() {
         // Pizza display names
         const pizzaDisplayNames = {
             'margherita': '🍅 Margherita',
-            'pepperoni': '🍕 Pepperoni',
             'vegetarian': '🥬 Vegetarian',
-            'quattro-formaggi': '🧀 Quattro Formaggi',
             'prosciutto': '🥓 Prosciutto',
-            'gluten-free': '🌾 Gluten Free'
+            'gluten-free-margherita': '🌾 Gluten Free Margherita'
         };
         
         // Build the table - only show Day 2 selections
