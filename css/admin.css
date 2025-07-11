@@ -483,15 +483,50 @@ h4 {
 .user-table {
     max-width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS devices */
 }
 
 .user-table table {
     min-width: 700px; /* Ensure minimum width forces horizontal scroll */
+    table-layout: fixed; /* More predictable column widths */
+}
+
+/* Set explicit widths for columns to prevent uneven spacing */
+.user-table th:nth-child(1),
+.user-table td:nth-child(1) {
+    width: 20%; /* Name column */
+}
+
+.user-table th:nth-child(2),
+.user-table td:nth-child(2) {
+    width: 20%; /* Email column */
+}
+
+.user-table th:nth-child(3),
+.user-table td:nth-child(3) {
+    width: 20%; /* Affiliation column */
+}
+
+.user-table th:nth-child(4),
+.user-table td:nth-child(4) {
+    width: 15%; /* Accommodation column */
+}
+
+.user-table th:nth-child(5),
+.user-table td:nth-child(5) {
+    width: 10%; /* Current Role column */
+}
+
+.user-table th:nth-child(6),
+.user-table td:nth-child(6) {
+    width: 15%; /* Actions column */
 }
 
 .user-table th,
 .user-table td {
     white-space: nowrap; /* Prevent text wrapping in cells */
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* For small buttons in action column */
@@ -523,6 +558,57 @@ h4 {
 .table-responsive::before,
 .table-responsive::after {
     display: none; /* Remove fade indicators that might interfere with scrolling */
+}
+
+/* Fix button spacing in user table to prevent overlap */
+.user-table .btn {
+    box-shadow: none !important; /* Remove shadow for less space */
+}
+
+/* Global rules for all devices to ensure elements stay horizontal */
+.user-table td > * {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.user-table button.btn {
+    float: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-table .edit-name-btn,
+.user-table .edit-affiliation-btn,
+.user-table .edit-accommodation-btn {
+    margin-right: 10px !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+}
+
+/* Add extra space between button and text/badge */
+.user-table .badge {
+    margin-left: 10px !important;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* Override table cell padding for user table */
+.table.user-table td,
+.user-table .table td {
+    padding-left: 15px !important;
+    padding-right: 15px !important;
+}
+
+/* Ensure table cells maintain horizontal layout */
+.user-table tr {
+    display: table-row !important;
+}
+
+.user-table tr > td {
+    display: table-cell !important;
 }
 
 /* Mobile responsive styling */
@@ -641,127 +727,6 @@ h4 {
         padding: 0.375rem 0.75rem;
         font-size: 0.8rem;
     }
-    
-    /* Navbar brand vertical alignment */
-    .navbar-brand {
-        display: flex;
-        align-items: center;
-    }
-
-    .nav-item {
-        margin: 2px 0;
-    }
-    
-    .nav-link.me-3 {
-        margin-right: 0 !important; /* Remove uneven margin */
-    }
-
-    /* Mobile layout adjustments */
-    .d-md-none.d-flex.align-items-center {
-        height: 40px;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: 10px; /* Add consistent spacing between elements */
-    }
-}
-
-@media (max-width: 575.98px) {
-    .container {
-        padding-left: 0.75rem;
-        padding-right: 0.75rem;
-    }
-    
-    h1 {
-        font-size: 1.4rem;
-        margin-bottom: 1rem;
-    }
-    
-    h1::after {
-        width: 40px;
-        height: 3px;
-    }
-    
-    h2 {
-        font-size: 1.3rem;
-    }
-    
-    h3 {
-        font-size: 1.2rem;
-    }
-    
-    h4 {
-        font-size: 1.1rem;
-    }
-    
-    .nav-tabs {
-        overflow-x: auto;
-        flex-wrap: nowrap;
-        padding-bottom: 5px;
-        scrollbar-width: none; /* Firefox */
-    }
-    
-    .nav-tabs::-webkit-scrollbar {
-        display: none; /* Chrome, Safari, Edge */
-    }
-    
-    .nav-tabs .nav-item {
-        flex: 0 0 auto;
-    }
-    
-    .card {
-        border-radius: 10px;
-    }
-    
-    .card-header {
-        padding: 0.75rem;
-    }
-    
-    .card-body {
-        padding: 0.875rem;
-    }
-    
-    .table th, 
-    .table td {
-        padding: 0.625rem 0.5rem;
-        font-size: 0.85rem;
-    }
-    
-    .form-label {
-        font-size: 0.8rem;
-    }
-    
-    .form-select, 
-    .form-control {
-        font-size: 0.9rem;
-        padding: 0.5rem 0.75rem;
-    }
-    
-    .badge {
-        padding: 0.35em 0.65em;
-        font-size: 0.75rem;
-    }
-    
-    .modal-content {
-        border-radius: 12px;
-    }
-    
-    .modal-header {
-        padding: 0.75rem;
-    }
-    
-    .modal-body {
-        padding: 0.875rem;
-    }
-    
-    .modal-footer {
-        padding: 0.75rem;
-    }
-    
-    .list-group-item {
-        padding: 0.75rem;
-        font-size: 0.9rem;
-    }
 }
 
 /* Very small screens */
@@ -815,10 +780,106 @@ h4 {
         font-size: 0.75rem;
         padding: 0.25rem 0.5rem;
     }
+}
+
+@media (max-width: 767.98px) {
+    /* Make buttons more compact on mobile */
+    .user-table .btn-sm {
+        width: 28px !important; /* Even smaller fixed width */
+        height: 28px !important; /* Fixed height for square buttons */
+        padding: 0.1rem 0 !important; /* Minimal padding */
+        min-width: 28px !important;
+        border-radius: 4px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
     
-    .form-select, 
-    .form-control {
-        font-size: 0.85rem;
-        padding: 0.375rem 0.625rem;
+    /* Add more space between items in cells */
+    .user-table td {
+        padding: 10px 8px 10px 15px !important;
+        display: table-cell !important; /* Force table cell display */
+        white-space: nowrap !important;
+        vertical-align: middle !important;
+    }
+    
+    /* Remove extra width from buttons */
+    .user-table .edit-name-btn,
+    .user-table .edit-affiliation-btn,
+    .user-table .edit-accommodation-btn {
+        padding: 0 !important;
+        margin-right: 8px !important;
+        line-height: 1 !important;
+        border-width: 1px !important;
+    }
+    
+    /* Keep the icon centered with minimal side padding */
+    .user-table .btn i {
+        margin: 0 !important;
+        font-size: 0.8rem !important;
+    }
+    
+    /* Make change role button more compact */
+    .user-table .change-role-btn {
+        padding: 0.15rem 0.4rem !important;
+        font-size: 0.75rem !important;
+        line-height: 1.2 !important;
+    }
+    
+    /* Ensure horizontal layout with proper spacing */
+    .user-table tr {
+        display: table-row !important;
+    }
+    
+    /* Additional spacing for badges */
+    .user-table .badge {
+        margin-left: 8px !important;
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    /* Spacing for cell content */
+    .user-table td > span:not(.badge),
+    .user-table td > div {
+        margin-left: 8px !important;
+    }
+    
+    /* Allow long text to be truncated with ellipsis */
+    .user-table td {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+@media (max-width: 575.98px) {
+    /* Optimize for smallest screens */
+    .user-table td {
+        padding: 8px 5px 8px 10px !important; /* Tighter horizontal padding */
+    }
+    
+    /* Make buttons even more compact */
+    .user-table .btn-sm {
+        width: 24px !important;
+        height: 24px !important;
+        min-width: 24px !important;
+    }
+    
+    /* Reduce spacing between button and text */
+    .user-table .edit-name-btn,
+    .user-table .edit-affiliation-btn,
+    .user-table .edit-accommodation-btn {
+        margin-right: 6px !important;
+    }
+    
+    /* Make text smaller but still readable */
+    .user-table td {
+        font-size: 0.85rem !important;
+    }
+    
+    /* Even more compact role button */
+    .user-table .change-role-btn {
+        padding: 0.1rem 0.3rem !important;
+        font-size: 0.7rem !important;
     }
 }
