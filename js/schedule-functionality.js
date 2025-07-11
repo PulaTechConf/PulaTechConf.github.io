@@ -40,100 +40,154 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Initialize expandable sections
 function initializeExpandableSections() {
+    console.log('Initializing expandable sections...');
+    
     // Coffee breaks
-    document.querySelectorAll('.coffee-expandable').forEach(coffeeSection => {
+    const coffeeExpandables = document.querySelectorAll('.coffee-expandable');
+    console.log('Found coffee expandables:', coffeeExpandables.length);
+    
+    coffeeExpandables.forEach(coffeeSection => {
         const title = coffeeSection.querySelector('.coffee-title');
         const details = coffeeSection.querySelector('.coffee-details');
-        const icon = title.querySelector('i');
+        const icon = title ? title.querySelector('i') : null;
         
-        title.addEventListener('click', () => {
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            } else {
-                details.style.display = 'none';
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            }
-        });
+        if (title && details && icon) {
+            title.style.cursor = 'pointer';
+            title.addEventListener('click', () => {
+                console.log('Coffee expandable clicked');
+                if (details.style.display === 'none' || details.style.display === '') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            console.log('Coffee expandable initialized');
+        } else {
+            console.log('Coffee expandable elements not found:', { title, details, icon });
+        }
     });
     
     // Massage service
-    document.querySelectorAll('.massage-expandable').forEach(massageSection => {
+    const massageExpandables = document.querySelectorAll('.massage-expandable');
+    console.log('Found massage expandables:', massageExpandables.length);
+    
+    massageExpandables.forEach(massageSection => {
         const title = massageSection.querySelector('.massage-title');
         const details = massageSection.querySelector('.massage-details');
-        const icon = title.querySelector('i');
+        const icon = title ? title.querySelector('i') : null;
         
-        title.addEventListener('click', () => {
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            } else {
-                details.style.display = 'none';
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            }
-        });
+        if (title && details && icon) {
+            title.style.cursor = 'pointer';
+            title.addEventListener('click', () => {
+                console.log('Massage expandable clicked');
+                if (details.style.display === 'none' || details.style.display === '') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            console.log('Massage expandable initialized');
+        } else {
+            console.log('Massage expandable elements not found:', { title, details, icon });
+        }
     });
     
     // Round table discussion
-    document.querySelectorAll('.roundtable-expandable').forEach(roundtableSection => {
+    const roundtableExpandables = document.querySelectorAll('.roundtable-expandable');
+    console.log('Found roundtable expandables:', roundtableExpandables.length);
+    
+    roundtableExpandables.forEach(roundtableSection => {
         const title = roundtableSection.querySelector('.roundtable-title');
         const details = roundtableSection.querySelector('.roundtable-details');
-        const icon = title.querySelector('i');
+        const icon = title ? title.querySelector('i') : null;
         
-        title.addEventListener('click', () => {
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            } else {
-                details.style.display = 'none';
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            }
-        });
+        if (title && details && icon) {
+            title.style.cursor = 'pointer';
+            title.addEventListener('click', () => {
+                console.log('Roundtable expandable clicked');
+                if (details.style.display === 'none' || details.style.display === '') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            console.log('Roundtable expandable initialized');
+        } else {
+            console.log('Roundtable expandable elements not found:', { title, details, icon });
+        }
     });
     
     // Lecture sections
-    document.querySelectorAll('.lecture-expandable').forEach(lectureSection => {
+    const lectureExpandables = document.querySelectorAll('.lecture-expandable');
+    console.log('Found lecture expandables:', lectureExpandables.length);
+    
+    lectureExpandables.forEach(lectureSection => {
         const title = lectureSection.querySelector('.lecture-title');
         const details = lectureSection.querySelector('.lecture-details');
-        const icon = title.querySelector('i');
+        const icon = title ? title.querySelector('i') : null;
         
-        title.addEventListener('click', () => {
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            } else {
-                details.style.display = 'none';
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            }
-        });
+        if (title && details && icon) {
+            title.style.cursor = 'pointer';
+            title.addEventListener('click', () => {
+                console.log('Lecture expandable clicked');
+                if (details.style.display === 'none' || details.style.display === '') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            console.log('Lecture expandable initialized');
+        } else {
+            console.log('Lecture expandable elements not found:', { title, details, icon });
+        }
     });
     
     // Online presentations expandable sections
-    document.querySelectorAll('.online-expandable').forEach(onlineSection => {
+    const onlineExpandables = document.querySelectorAll('.online-expandable');
+    console.log('Found online expandables:', onlineExpandables.length);
+    
+    onlineExpandables.forEach(onlineSection => {
         const title = onlineSection.querySelector('.online-title');
         const details = onlineSection.querySelector('.online-details');
-        const icon = title.querySelector('i');
+        const icon = title ? title.querySelector('i') : null;
         
-        title.addEventListener('click', () => {
-            if (details.style.display === 'none') {
-                details.style.display = 'block';
-                icon.classList.remove('bi-chevron-down');
-                icon.classList.add('bi-chevron-up');
-            } else {
-                details.style.display = 'none';
-                icon.classList.remove('bi-chevron-up');
-                icon.classList.add('bi-chevron-down');
-            }
-        });
+        if (title && details && icon) {
+            title.style.cursor = 'pointer';
+            title.addEventListener('click', () => {
+                console.log('Online expandable clicked');
+                if (details.style.display === 'none' || details.style.display === '') {
+                    details.style.display = 'block';
+                    icon.classList.remove('bi-chevron-down');
+                    icon.classList.add('bi-chevron-up');
+                } else {
+                    details.style.display = 'none';
+                    icon.classList.remove('bi-chevron-up');
+                    icon.classList.add('bi-chevron-down');
+                }
+            });
+            console.log('Online expandable initialized');
+        } else {
+            console.log('Online expandable elements not found:', { title, details, icon });
+        }
     });
+    
+    console.log('All expandable sections initialization completed');
 }
 
 // Google Calendar integration
