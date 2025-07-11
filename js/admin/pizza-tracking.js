@@ -34,9 +34,11 @@ async function loadPizzaSummaries() {
     try {
         const pizzaTypes = {
             'margherita': 'Margherita',
+            'gluten-free-margherita': 'Margherita (gluten free)',
             'vegetarian': 'Vegetarian',
-            'prosciutto': 'Prosciutto',
-            'gluten-free-margherita': 'Gluten Free Margherita'
+            'tuna': 'Tuna',
+            'mushroom': 'Mushroom',
+            'capricciosa': 'Capricciosa'
         };
         
         // Only process Day 2 (July 17)
@@ -115,9 +117,11 @@ async function loadUserPizzaSelections() {
         // Pizza display names
         const pizzaDisplayNames = {
             'margherita': '🍅 Margherita',
+            'gluten-free-margherita': '🌾 Margherita (gluten free)',
             'vegetarian': '🥬 Vegetarian',
-            'prosciutto': '🥓 Prosciutto',
-            'gluten-free-margherita': '🌾 Gluten Free Margherita'
+            'tuna': '🐟 Tuna',
+            'mushroom': '🍄 Mushroom',
+            'capricciosa': '� Capricciosa'
         };
         
         // Build the table - only show Day 2 selections

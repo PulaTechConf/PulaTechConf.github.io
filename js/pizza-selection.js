@@ -252,9 +252,11 @@ function showStatus(message, type) {
 function getPizzaName(pizzaType) {
     const names = {
         'margherita': '🍅 Margherita',
+        'gluten-free-margherita': '🌾 Margherita (gluten free)',
         'vegetarian': '🥬 Vegetarian',
-        'prosciutto': '🥓 Prosciutto',
-        'gluten-free-margherita': '🌾 Gluten Free Margherita'
+        'tuna': '🐟 Tuna',
+        'mushroom': '🍄 Mushroom',
+        'capricciosa': '� Capricciosa'
     };
     return names[pizzaType] || pizzaType;
 }
