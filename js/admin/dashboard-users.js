@@ -59,12 +59,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create table row
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1 edit-name-btn" data-id="${doc.id}" data-first-name="${userData.firstName || ''}" data-last-name="${userData.lastName || ''}" data-name="${userData.firstName} ${userData.lastName}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        ${userData.firstName || ''} ${userData.lastName || ''}
-                    </td>
+                    <td>${userData.firstName || ''} ${userData.lastName || ''}</td>
                     <td>${userData.email || ''}</td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary me-1 edit-affiliation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-affiliation="${userData.affiliation || ''}">
@@ -97,8 +92,6 @@ document.addEventListener('DOMContentLoaded', function() {
             addAccommodationEditListeners();
             // Add event listeners to affiliation edit buttons
             addAffiliationEditListeners();
-            // Add event listeners to name edit buttons
-            addNameEditListeners();
             
             console.log("Users loaded successfully for dashboard");
         } catch (error) {
@@ -245,94 +238,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert("Error updating user role. Please try again.");
             }
         });
-    }
-    
-    // Add listeners to name edit buttons
-    function addNameEditListeners() {
-        document.querySelectorAll('.edit-name-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.id;
-                const firstName = this.dataset.firstName;
-                const lastName = this.dataset.lastName;
-                
-                // Create a custom modal prompt for first name and last name
-                const modalHtml = `
-                    <div class="modal fade" id="editNameModal" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Edit User Name</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="editNameForm">
-                                        <div class="mb-3">
-                                            <label for="firstName" class="form-label">First Name</label>
-                                            <input type="text" class="form-control" id="firstName" value="${firstName}">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="lastName" class="form-label">Last Name</label>
-                                            <input type="text" class="form-control" id="lastName" value="${lastName}">
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" id="saveNameBtn">Save Changes</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Remove any existing modal with the same ID
-                const existingModal = document.getElementById('editNameModal');
-                if (existingModal) {
-                    existingModal.remove();
-                }
-                
-                // Add modal to the page
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-                
-                // Get the modal element
-                const modalElement = document.getElementById('editNameModal');
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(modalElement);
-                modal.show();
-                
-                // Add event listener for the save button
-                document.getElementById('saveNameBtn').addEventListener('click', function() {
-                    const newFirstName = document.getElementById('firstName').value.trim();
-                    const newLastName = document.getElementById('lastName').value.trim();
-                    
-                    if (newFirstName !== "" || newLastName !== "") {
-                        updateUserName(userId, newFirstName, newLastName);
-                        modal.hide();
-                    } else {
-                        alert("Please enter at least one name field.");
-                    }
-                });
-            });
-        });
-    }
-    
-    // Update user name
-    async function updateUserName(userId, firstName, lastName) {
-        try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-                firstName: firstName,
-                lastName: lastName
-            });
-            
-            // Reload users
-            loadUsers();
-            
-            console.log('User name updated successfully');
-        } catch (error) {
-            console.error("Error updating user name:", error);
-            alert("Error updating name. Please try again.");
-        }
     }
 });
