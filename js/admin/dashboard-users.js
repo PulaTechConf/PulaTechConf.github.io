@@ -61,7 +61,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 row.innerHTML = `
                     <td>${userData.firstName || ''} ${userData.lastName || ''}</td>
                     <td>${userData.email || ''}</td>
-                    <td>${userData.affiliation || ''}</td>
+                    <td>
+                        ${userData.affiliation || ''}
+                        <button class="btn btn-sm btn-outline-primary ms-1 edit-affiliation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-affiliation="${userData.affiliation || ''}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </td>
                     <td>
                         <span class="badge ${userData.accommodation ? 'bg-success' : 'bg-secondary'}">${userData.accommodation || 'Not provided'}</span>
                         <button class="btn btn-sm btn-outline-primary ms-1 edit-accommodation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-accommodation="${userData.accommodation || ''}">
@@ -85,6 +90,8 @@ document.addEventListener('DOMContentLoaded', function() {
             addRoleChangeListeners();
             // Add event listeners to accommodation edit buttons
             addAccommodationEditListeners();
+            // Add event listeners to affiliation edit buttons
+            addAffiliationEditListeners();
             
             console.log("Users loaded successfully for dashboard");
         } catch (error) {
@@ -139,6 +146,41 @@ document.addEventListener('DOMContentLoaded', function() {
         } catch (error) {
             console.error("Error updating user accommodation:", error);
             alert("Error updating accommodation. Please try again.");
+        }
+    }
+    
+    // Add listeners to affiliation edit buttons
+    function addAffiliationEditListeners() {
+        document.querySelectorAll('.edit-affiliation-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.dataset.id;
+                const userName = this.dataset.name;
+                const currentAffiliation = this.dataset.currentAffiliation;
+                
+                const newAffiliation = prompt(`Edit affiliation for ${userName}:`, currentAffiliation);
+                
+                if (newAffiliation !== null) {  // User didn't cancel
+                    updateUserAffiliation(userId, newAffiliation);
+                }
+            });
+        });
+    }
+    
+    // Update user affiliation
+    async function updateUserAffiliation(userId, affiliation) {
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                affiliation: affiliation
+            });
+            
+            // Reload users
+            loadUsers();
+            
+            console.log('User affiliation updated successfully');
+        } catch (error) {
+            console.error("Error updating user affiliation:", error);
+            alert("Error updating affiliation. Please try again.");
         }
     }
     
