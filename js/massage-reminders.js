@@ -21,13 +21,16 @@ class MassageReminderService {
         // Listen for massage reminder notifications
         this.setupMassageReminderListener();
         
-        // Check for upcoming massage appointments every minute
-        setInterval(() => {
-            this.checkUpcomingMassageAppointments();
-        }, 60000); // 1 minute
+        // Automatic massage reminder checking disabled
+        console.log('Automatic massage reminders are disabled');
         
-        // Also check immediately
-        this.checkUpcomingMassageAppointments();
+        // Check for upcoming massage appointments every minute - disabled
+        // setInterval(() => {
+        //     this.checkUpcomingMassageAppointments();
+        // }, 60000); // 1 minute
+        
+        // Also check immediately - disabled
+        // this.checkUpcomingMassageAppointments();
     }
 
     setupMassageReminderListener() {

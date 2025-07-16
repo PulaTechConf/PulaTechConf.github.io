@@ -496,8 +496,11 @@ async function bookMassageAppointment() {
         document.getElementById('bookMassageBtn').disabled = true;
         document.getElementById('massageTimeSlot').disabled = true;
         
-        // Schedule reminder notification 10 minutes before
-        await scheduleMassageReminder(timeSlot, userId);
+        // Massage reminder scheduling disabled
+        console.log('Massage reminder scheduling is disabled');
+        
+        // Schedule reminder notification 10 minutes before - disabled
+        // await scheduleMassageReminder(timeSlot, userId);
         
     } catch (error) {
         console.error('Error booking massage appointment:', error);
@@ -542,7 +545,8 @@ function showMassageStatus(message, type) {
     }
 }
 
-// Function to schedule massage reminder notification
+// Function to schedule massage reminder notification - DISABLED
+/*
 async function scheduleMassageReminder(timeSlot, userId) {
     try {
         // Create reminder date for July 17, 2025
@@ -573,13 +577,17 @@ async function scheduleMassageReminder(timeSlot, userId) {
         return { success: false, error: error.message };
     }
 }
+*/
 
 // Real-time schedule tracking
 function initializeScheduleTracking() {
     updateScheduleProgress();
     
-    // Update every minute
-    setInterval(updateScheduleProgress, 60000);
+    // Automatic schedule progress updates disabled
+    console.log('Automatic schedule updates are disabled');
+    
+    // Update every minute - disabled
+    // setInterval(updateScheduleProgress, 60000);
     
     // Scroll to current event on page load
     setTimeout(() => {

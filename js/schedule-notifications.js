@@ -123,13 +123,16 @@ class ScheduleNotifications {    constructor() {
     }
 
     setupNotificationScheduling() {
-        // Check for upcoming events every minute
-        setInterval(() => {
-            this.checkUpcomingEvents();
-        }, 60000); // 1 minute
+        // Automatic notification scheduling disabled
+        console.log('Automatic notifications are disabled');
+        
+        // Commenting out automatic checks
+        // setInterval(() => {
+        //     this.checkUpcomingEvents();
+        // }, 60000); // 1 minute
 
-        // Also check immediately
-        this.checkUpcomingEvents();
+        // Also check immediately - disabled
+        // this.checkUpcomingEvents();
     }    async checkUpcomingEvents() {
         const now = new Date();
         const userId = localStorage.getItem('userId');
