@@ -39,14 +39,14 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             // Show loading message
-            userTableBody.innerHTML = '<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading users...</td></tr>';
+            userTableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading users...</td></tr>';
             
             // Get all users from Firestore
             const usersCollection = collection(db, "users");
             const querySnapshot = await getDocs(usersCollection);
             
             if (querySnapshot.empty) {
-                userTableBody.innerHTML = '<tr><td colspan="6" class="text-center">No users found</td></tr>';
+                userTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
                 return;
             }
             
@@ -59,6 +59,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Create table row
                 const row = document.createElement('tr');
                 row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="form-check-input showed-up-checkbox" data-user-id="${doc.id}" ${userData.showedUp ? 'checked' : ''}>
+                    </td>
                     <td>
                         <button class="btn btn-sm btn-outline-primary me-1 edit-name-btn" data-id="${doc.id}" data-first-name="${userData.firstName || ''}" data-last-name="${userData.lastName || ''}" data-name="${userData.firstName} ${userData.lastName}">
                             <i class="bi bi-pencil"></i>
@@ -99,12 +102,14 @@ document.addEventListener('DOMContentLoaded', function() {
             addAffiliationEditListeners();
             // Add event listeners to name edit buttons
             addNameEditListeners();
+            // Add event listeners to showed up checkboxes
+            addShowedUpListeners();
             
             console.log("Users loaded successfully for dashboard");
         } catch (error) {
             console.error("Error loading users:", error);
             if (userTableBody) {
-                userTableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Error loading users</td></tr>';
+                userTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading users</td></tr>';
             }
         }
     }
@@ -247,6 +252,37 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
+    // Add listeners to showed up checkboxes
+    function addShowedUpListeners() {
+        document.querySelectorAll('.showed-up-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const userId = this.dataset.userId;
+                const showedUp = this.checked;
+                
+                updateUserShowedUp(userId, showedUp);
+            });
+        });
+    }
+    
+    // Update user showed up status
+    async function updateUserShowedUp(userId, showedUp) {
+        try {
+            const userRef = doc(db, "users", userId);
+            await updateDoc(userRef, {
+                showedUp: showedUp
+            });
+            
+            console.log(`User showed up status updated to ${showedUp}`);
+        } catch (error) {
+            console.error("Error updating user showed up status:", error);
+            // Revert checkbox state on error
+            const checkbox = document.querySelector(`[data-user-id="${userId}"]`);
+            if (checkbox) {
+                checkbox.checked = !showedUp;
+            }
+            alert("Error updating showed up status. Please try again.");        }
+    }
+
     // Add listeners to name edit buttons
     function addNameEditListeners() {
         document.querySelectorAll('.edit-name-btn').forEach(btn => {
