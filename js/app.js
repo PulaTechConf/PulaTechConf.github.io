@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn("Logout button not found in the page");
     }
     
-    // Schedule notification reminders
-    setupScheduleReminders();
+    // Schedule notification reminders - DISABLED
+    // setupScheduleReminders();
 });
 
 // Separate function for logout to make it easier to debug
