@@ -6,369 +6,645 @@ import {
     updateDoc
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', function() {
-    console.log("Dashboard users.js loaded");
+// STATE MANAGEMENT (global)
+
+let allUsers = [];
+let filteredUsers = [];
+let currentPage = 1;
+let perPage = 10;
+
+// HELPER FUNCTIONS (global)
+
+function getRoleBadgeClass(role) {
+    switch(role) {
+        case 'admin': return 'bg-danger';
+        case 'organizer': return 'bg-warning text-dark';
+        default: return 'bg-secondary';
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// FILTER LOGIC (global)
+
+function applyFilters() {
+    const searchTerm = (document.getElementById('userSearchInput')?.value || '').toLowerCase().trim();
+    const roleFilter = document.getElementById('userRoleFilter')?.value || '';
+    const showedUpFilter = document.getElementById('userShowedUpFilter')?.value || '';
+    const accommodationFilter = document.getElementById('userAccommodationFilter')?.value || '';
     
-    // Check if user is admin
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
-        console.log("Non-admin access attempt to dashboard users");
+    filteredUsers = allUsers.filter(user => {
+        const matchesSearch = !searchTerm || 
+            (user.firstName || '').toLowerCase().includes(searchTerm) ||
+            (user.lastName || '').toLowerCase().includes(searchTerm) ||
+            (user.email || '').toLowerCase().includes(searchTerm) ||
+            (user.affiliation || '').toLowerCase().includes(searchTerm) ||
+            (user.accommodation || '').toLowerCase().includes(searchTerm);
+        
+        const matchesRole = !roleFilter || user.role === roleFilter;
+        const matchesShowedUp = !showedUpFilter || String(user.showedUp) === showedUpFilter;
+        const matchesAccommodation = !accommodationFilter || 
+            (accommodationFilter === 'provided' && user.accommodation) ||
+            (accommodationFilter === 'not-provided' && !user.accommodation);
+        
+        return matchesSearch && matchesRole && matchesShowedUp && matchesAccommodation;
+    });
+    
+    currentPage = 1;
+    renderPaginatedUsers();
+}
+
+// RENDER FUNCTIONS (global)
+
+function renderPaginatedUsers() {
+    const start = (currentPage - 1) * perPage;
+    const end = start + perPage;
+    const pageData = filteredUsers.slice(start, end);
+    
+    const noResults = document.getElementById('noUsersFound');
+    const mobileContainer = document.getElementById('mobileUserCards');
+    
+    if (filteredUsers.length === 0) {
+        noResults?.classList.remove('d-none');
+        document.getElementById('userTableBody').innerHTML = '';
+        if (mobileContainer) mobileContainer.innerHTML = '';
+    } else {
+        noResults?.classList.add('d-none');
+        renderDesktopTable(pageData);
+        renderMobileCards(pageData);
+    }
+    
+    renderPagination();
+}
+
+function renderDesktopTable(data) {
+    const tbody = document.getElementById('userTableBody');
+    if (!tbody) return;
+    
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users to display</td></tr>';
         return;
     }
     
-    // Get refresh button
-    const refreshUserListBtn = document.getElementById('refreshUserList');
+    tbody.innerHTML = data.map(user => `
+        <tr>
+            <td class="text-center">
+                <input type="checkbox" 
+                       class="form-check-input showed-up-checkbox" 
+                       data-user-id="${user.id}" 
+                       ${user.showedUp ? 'checked' : ''}>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1 edit-name-btn" 
+                        data-id="${user.id}" 
+                        data-first-name="${escapeHtml(user.firstName)}" 
+                        data-last-name="${escapeHtml(user.lastName)}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                ${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}
+            </td>
+            <td>${escapeHtml(user.email)}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1 edit-affiliation-btn" 
+                        data-id="${user.id}" 
+                        data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                        data-current-affiliation="${escapeHtml(user.affiliation)}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                ${escapeHtml(user.affiliation) || '<span class="text-muted">-</span>'}
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary me-1 edit-accommodation-btn" 
+                        data-id="${user.id}" 
+                        data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                        data-current-accommodation="${escapeHtml(user.accommodation)}">
+                    <i class="bi bi-pencil"></i>
+                </button>
+                <span class="badge ${user.accommodation ? 'bg-success' : 'bg-secondary'}">
+                    ${user.accommodation ? escapeHtml(user.accommodation) : 'Not provided'}
+                </span>
+            </td>
+            <td>
+                <span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary change-role-btn" 
+                        data-id="${user.id}" 
+                        data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                        data-current-role="${user.role || 'general'}">
+                    <i class="bi bi-person-gear"></i><span class="btn-text ms-1">Role</span>
+                </button>
+            </td>
+        </tr>
+    `).join('');
     
-    // Add event listener
-    if (refreshUserListBtn) {
-        refreshUserListBtn.addEventListener('click', loadUsers);
+    addTableEventListeners();
+}
+
+function renderMobileCards(data) {
+    const container = document.getElementById('mobileUserCards');
+    if (!container) return;
+    
+    if (data.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted p-4">No users to display</div>';
+        return;
     }
     
-    // Load users on page load
-    loadUsers();
+    container.innerHTML = data.map(user => `
+        <div class="mobile-user-card" data-user-id="${user.id}">
+            <div class="card-header-row" onclick="toggleUserCard('${user.id}')">
+                <button class="expand-btn" id="expandBtn-${user.id}" type="button">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+                <div class="card-preview">
+                    <div class="name">${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}</div>
+                    <div class="subtitle">${escapeHtml(user.email)}</div>
+                </div>
+                <div class="card-badge">
+                    <span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span>
+                </div>
+            </div>
+            
+            <div class="card-details" id="details-${user.id}">
+                <div class="detail-row">
+                    <span class="detail-label">Showed Up</span>
+                    <span class="detail-value">
+                        <input type="checkbox" 
+                               class="form-check-input showed-up-checkbox" 
+                               data-user-id="${user.id}" 
+                               ${user.showedUp ? 'checked' : ''}>
+                        <span class="ms-2">${user.showedUp ? 'Yes' : 'No'}</span>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Name</span>
+                    <span class="detail-value">
+                        ${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}
+                        <button class="btn btn-sm btn-link p-0 ms-2 edit-name-btn" 
+                                data-id="${user.id}" 
+                                data-first-name="${escapeHtml(user.firstName)}" 
+                                data-last-name="${escapeHtml(user.lastName)}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Email</span>
+                    <span class="detail-value">${escapeHtml(user.email)}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Affiliation</span>
+                    <span class="detail-value">
+                        ${escapeHtml(user.affiliation) || '<span class="text-muted">Not provided</span>'}
+                        <button class="btn btn-sm btn-link p-0 ms-2 edit-affiliation-btn" 
+                                data-id="${user.id}" 
+                                data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                                data-current-affiliation="${escapeHtml(user.affiliation)}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Accommodation</span>
+                    <span class="detail-value">
+                        <span class="badge ${user.accommodation ? 'bg-success' : 'bg-secondary'}">
+                            ${user.accommodation ? escapeHtml(user.accommodation) : 'Not provided'}
+                        </span>
+                        <button class="btn btn-sm btn-link p-0 ms-2 edit-accommodation-btn" 
+                                data-id="${user.id}" 
+                                data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                                data-current-accommodation="${escapeHtml(user.accommodation)}">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Role</span>
+                    <span class="detail-value">
+                        <span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span>
+                        <button class="btn btn-sm btn-outline-primary ms-2 change-role-btn" 
+                                data-id="${user.id}" 
+                                data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                                data-current-role="${user.role || 'general'}">
+                            <i class="bi bi-person-gear"></i> Change
+                        </button>
+                    </span>
+                </div>
+            </div>
+        </div>
+    `).join('');
     
-    // Function to load all users for dashboard
-    async function loadUsers() {
-        console.log("Loading users for dashboard...");
+    addMobileEventListeners();
+}
+
+function renderPagination() {
+    const totalPages = Math.ceil(filteredUsers.length / perPage);
+    const container = document.getElementById('userPaginationControls');
+    const countEl = document.getElementById('userTotalCount');
+    
+    if (countEl) {
+        countEl.textContent = filteredUsers.length;
+    }
+    
+    if (!container) return;
+    
+    if (totalPages <= 1) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    let html = `
+        <button class="btn btn-sm btn-outline-primary" 
+                onclick="goToUserPage(${currentPage - 1})" 
+                ${currentPage === 1 ? 'disabled' : ''}>
+            <i class="bi bi-chevron-left"></i>
+        </button>
+    `;
+    
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `
+                <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}" 
+                        onclick="goToUserPage(${i})">
+                    ${i}
+                </button>
+            `;
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += `<span class="px-2 text-muted">...</span>`;
+        }
+    }
+    
+    html += `
+        <button class="btn btn-sm btn-outline-primary" 
+                onclick="goToUserPage(${currentPage + 1})" 
+                ${currentPage === totalPages ? 'disabled' : ''}>
+            <i class="bi bi-chevron-right"></i>
+        </button>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// GLOBAL FUNCTIONS (for onclick handlers in HTML)
+
+window.goToUserPage = function(page) {
+    const totalPages = Math.ceil(filteredUsers.length / perPage);
+    if (page < 1 || page > totalPages) return;
+    currentPage = page;
+    renderPaginatedUsers();
+};
+
+window.toggleUserCard = function(id) {
+    const details = document.getElementById(`details-${id}`);
+    const btn = document.getElementById(`expandBtn-${id}`);
+    
+    // Close all other cards (accordion behavior)
+    document.querySelectorAll('.card-details.show').forEach(el => {
+        if (el.id !== `details-${id}`) {
+            el.classList.remove('show');
+            const otherId = el.id.replace('details-', '');
+            const otherBtn = document.getElementById(`expandBtn-${otherId}`);
+            if (otherBtn) otherBtn.classList.remove('expanded');
+        }
+    });
+    
+    // Toggle current card
+    if (details) details.classList.toggle('show');
+    if (btn) btn.classList.toggle('expanded');
+};
+
+// UPDATE FUNCTIONS (global)
+
+async function updateShowedUp(userId, showedUp) {
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, { showedUp: showedUp });
         
-        const userTableBody = document.getElementById('userTableBody');
-        if (!userTableBody) {
-            console.error("userTableBody element not found");
+        const user = allUsers.find(u => u.id === userId);
+        if (user) user.showedUp = showedUp;
+        
+        console.log(`User ${userId} showed up: ${showedUp}`);
+    } catch (error) {
+        console.error("Error updating showed up:", error);
+        alert("Error updating status. Please try again.");
+        document.querySelectorAll(`.showed-up-checkbox[data-user-id="${userId}"]`).forEach(cb => {
+            cb.checked = !showedUp;
+        });
+    }
+}
+
+async function updateUserField(userId, field, value) {
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, { [field]: value });
+        
+        const user = allUsers.find(u => u.id === userId);
+        if (user) user[field] = value;
+        
+        applyFilters();
+        console.log(`User ${userId} ${field} updated`);
+    } catch (error) {
+        console.error(`Error updating ${field}:`, error);
+        alert(`Error updating ${field}. Please try again.`);
+    }
+}
+
+// EVENT LISTENER FUNCTIONS (global)
+
+function addTableEventListeners() {
+    document.querySelectorAll('.user-table .showed-up-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            updateShowedUp(this.dataset.userId, this.checked);
+        });
+    });
+    
+    document.querySelectorAll('.user-table .edit-name-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openNameEditModal(this.dataset.id, this.dataset.firstName, this.dataset.lastName);
+        });
+    });
+    
+    document.querySelectorAll('.user-table .edit-affiliation-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const newValue = prompt(`Edit affiliation for ${this.dataset.name}:`, this.dataset.currentAffiliation || '');
+            if (newValue !== null) {
+                updateUserField(this.dataset.id, 'affiliation', newValue);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.user-table .edit-accommodation-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const newValue = prompt(`Edit accommodation for ${this.dataset.name}:`, this.dataset.currentAccommodation || '');
+            if (newValue !== null) {
+                updateUserField(this.dataset.id, 'accommodation', newValue);
+            }
+        });
+    });
+    
+    document.querySelectorAll('.user-table .change-role-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openRoleChangeModal(this.dataset.id, this.dataset.name, this.dataset.currentRole);
+        });
+    });
+}
+
+function addMobileEventListeners() {
+    document.querySelectorAll('#mobileUserCards .showed-up-checkbox').forEach(cb => {
+        cb.addEventListener('change', function(e) {
+            e.stopPropagation();
+            updateShowedUp(this.dataset.userId, this.checked);
+        });
+    });
+    
+    document.querySelectorAll('#mobileUserCards .edit-name-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openNameEditModal(this.dataset.id, this.dataset.firstName, this.dataset.lastName);
+        });
+    });
+    
+    document.querySelectorAll('#mobileUserCards .edit-affiliation-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const newValue = prompt(`Edit affiliation:`, this.dataset.currentAffiliation || '');
+            if (newValue !== null) {
+                updateUserField(this.dataset.id, 'affiliation', newValue);
+            }
+        });
+    });
+    
+    document.querySelectorAll('#mobileUserCards .edit-accommodation-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const newValue = prompt(`Edit accommodation:`, this.dataset.currentAccommodation || '');
+            if (newValue !== null) {
+                updateUserField(this.dataset.id, 'accommodation', newValue);
+            }
+        });
+    });
+    
+    document.querySelectorAll('#mobileUserCards .change-role-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            openRoleChangeModal(this.dataset.id, this.dataset.name, this.dataset.currentRole);
+        });
+    });
+}
+
+// MODAL FUNCTIONS (global)
+
+function openNameEditModal(userId, firstName, lastName) {
+    const existingModal = document.getElementById('editNameModal');
+    if (existingModal) existingModal.remove();
+    
+    const modalHtml = `
+        <div class="modal fade" id="editNameModal" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Edit User Name</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="editFirstName" value="${firstName || ''}">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="editLastName" value="${lastName || ''}">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary" id="saveNameBtn">Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    const modalEl = document.getElementById('editNameModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+    
+    document.getElementById('saveNameBtn').addEventListener('click', async function() {
+        const newFirstName = document.getElementById('editFirstName').value.trim();
+        const newLastName = document.getElementById('editLastName').value.trim();
+        
+        if (newFirstName || newLastName) {
+            try {
+                const userRef = doc(db, "users", userId);
+                await updateDoc(userRef, {
+                    firstName: newFirstName,
+                    lastName: newLastName
+                });
+                
+                const user = allUsers.find(u => u.id === userId);
+                if (user) {
+                    user.firstName = newFirstName;
+                    user.lastName = newLastName;
+                }
+                
+                modal.hide();
+                applyFilters();
+            } catch (error) {
+                console.error("Error updating name:", error);
+                alert("Error updating name. Please try again.");
+            }
+        } else {
+            alert("Please enter at least one name.");
+        }
+    });
+    
+    modalEl.addEventListener('hidden.bs.modal', function() {
+        modalEl.remove();
+    });
+}
+
+function openRoleChangeModal(userId, userName, currentRole) {
+    document.getElementById('selectedUserName').textContent = userName;
+    document.getElementById('roleSelect').value = currentRole;
+    document.getElementById('changeRoleModal').dataset.userId = userId;
+    
+    const modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
+    modal.show();
+}
+
+async function handleRoleChangeConfirm() {
+    const modal = document.getElementById('changeRoleModal');
+    const userId = modal.dataset.userId;
+    const newRole = document.getElementById('roleSelect').value;
+    
+    if (!userId || !newRole) return;
+    
+    try {
+        const userRef = doc(db, "users", userId);
+        await updateDoc(userRef, { role: newRole });
+        
+        const user = allUsers.find(u => u.id === userId);
+        if (user) user.role = newRole;
+        
+        bootstrap.Modal.getInstance(modal).hide();
+        applyFilters();
+    } catch (error) {
+        console.error("Error updating role:", error);
+        alert("Error updating role. Please try again.");
+    }
+}
+
+// LOAD USERS FROM FIREBASE (global)
+
+async function loadUsers() {
+    console.log("Loading users from Firebase...");
+    
+    const userTableBody = document.getElementById('userTableBody');
+    const mobileCards = document.getElementById('mobileUserCards');
+    
+    if (userTableBody) {
+        userTableBody.innerHTML = `
+            <tr><td colspan="7" class="text-center">
+                <div class="spinner-border spinner-border-sm me-2"></div>
+                Loading users...
+            </td></tr>`;
+    }
+    if (mobileCards) {
+        mobileCards.innerHTML = `
+            <div class="text-center p-4">
+                <div class="spinner-border spinner-border-sm me-2"></div>
+                Loading users...
+            </div>`;
+    }
+    
+    try {
+        const usersCollection = collection(db, "users");
+        const querySnapshot = await getDocs(usersCollection);
+        
+        if (querySnapshot.empty) {
+            allUsers = [];
+            filteredUsers = [];
+            renderPaginatedUsers();
             return;
         }
         
-        try {
-            // Show loading message
-            userTableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading users...</td></tr>';
-            
-            // Get all users from Firestore
-            const usersCollection = collection(db, "users");
-            const querySnapshot = await getDocs(usersCollection);
-            
-            if (querySnapshot.empty) {
-                userTableBody.innerHTML = '<tr><td colspan="7" class="text-center">No users found</td></tr>';
-                return;
-            }
-            
-            // Build the table
-            userTableBody.innerHTML = '';
-            
-            querySnapshot.forEach((doc) => {
-                const userData = doc.data();
-                
-                // Create table row
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>
-                        <input type="checkbox" class="form-check-input showed-up-checkbox" data-user-id="${doc.id}" ${userData.showedUp ? 'checked' : ''}>
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1 edit-name-btn" data-id="${doc.id}" data-first-name="${userData.firstName || ''}" data-last-name="${userData.lastName || ''}" data-name="${userData.firstName} ${userData.lastName}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        ${userData.firstName || ''} ${userData.lastName || ''}
-                    </td>
-                    <td>${userData.email || ''}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1 edit-affiliation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-affiliation="${userData.affiliation || ''}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        ${userData.affiliation || ''}
-                    </td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1 edit-accommodation-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-accommodation="${userData.accommodation || ''}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
-                        <span class="badge ${userData.accommodation ? 'bg-success' : 'bg-secondary'}">${userData.accommodation || 'Not provided'}</span>
-                    </td>
-                    <td><span class="badge ${getRoleBadgeClass(userData.role)}">${userData.role || 'general'}</span></td>
-                    <td>
-                        <div class="btn-group btn-group-sm">
-                            <button class="btn btn-outline-primary change-role-btn" data-id="${doc.id}" data-name="${userData.firstName} ${userData.lastName}" data-current-role="${userData.role || 'general'}">
-                                <i class="bi bi-person-gear"></i> Change Role
-                            </button>
-                        </div>
-                    </td>
-                `;
-                
-                userTableBody.appendChild(row);
+        allUsers = [];
+        querySnapshot.forEach((docSnapshot) => {
+            allUsers.push({
+                id: docSnapshot.id,
+                ...docSnapshot.data()
             });
-            
-            // Add event listeners to role change buttons
-            addRoleChangeListeners();
-            // Add event listeners to accommodation edit buttons
-            addAccommodationEditListeners();
-            // Add event listeners to affiliation edit buttons
-            addAffiliationEditListeners();
-            // Add event listeners to name edit buttons
-            addNameEditListeners();
-            // Add event listeners to showed up checkboxes
-            addShowedUpListeners();
-            
-            console.log("Users loaded successfully for dashboard");
-        } catch (error) {
-            console.error("Error loading users:", error);
-            if (userTableBody) {
-                userTableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading users</td></tr>';
-            }
+        });
+        
+        allUsers.sort((a, b) => {
+            const nameA = `${a.firstName || ''} ${a.lastName || ''}`.toLowerCase();
+            const nameB = `${b.firstName || ''} ${b.lastName || ''}`.toLowerCase();
+            return nameA.localeCompare(nameB);
+        });
+        
+        console.log(`Loaded ${allUsers.length} users from Firebase`);
+        applyFilters();
+        
+    } catch (error) {
+        console.error("Error loading users:", error);
+        if (userTableBody) {
+            userTableBody.innerHTML = `
+                <tr><td colspan="7" class="text-center text-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading users: ${error.message}
+                </td></tr>`;
         }
     }
-    
-    // Helper function to get badge class based on role
-    function getRoleBadgeClass(role) {
-        switch(role) {
-            case 'admin':
-                return 'bg-danger';
-            case 'organizer':
-                return 'bg-warning text-dark';
-            default:
-                return 'bg-secondary';
-        }
-    }
-    
-    // Add listeners to accommodation edit buttons
-    function addAccommodationEditListeners() {
-        document.querySelectorAll('.edit-accommodation-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.id;
-                const userName = this.dataset.name;
-                const currentAccommodation = this.dataset.currentAccommodation;
-                
-                const newAccommodation = prompt(`Edit accommodation info for ${userName}:`, currentAccommodation);
-                
-                if (newAccommodation !== null) {  // User didn't cancel
-                    updateUserAccommodation(userId, newAccommodation);
-                }
-            });
-        });
-    }
-    
-    // Update user accommodation
-    async function updateUserAccommodation(userId, accommodation) {
-        try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-                accommodation: accommodation
-            });
-            
-            // Reload users
-            loadUsers();
-            
-            console.log('User accommodation updated successfully');
-        } catch (error) {
-            console.error("Error updating user accommodation:", error);
-            alert("Error updating accommodation. Please try again.");
-        }
-    }
-    
-    // Add listeners to affiliation edit buttons
-    function addAffiliationEditListeners() {
-        document.querySelectorAll('.edit-affiliation-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.id;
-                const userName = this.dataset.name;
-                const currentAffiliation = this.dataset.currentAffiliation;
-                
-                const newAffiliation = prompt(`Edit affiliation for ${userName}:`, currentAffiliation);
-                
-                if (newAffiliation !== null) {  // User didn't cancel
-                    updateUserAffiliation(userId, newAffiliation);
-                }
-            });
-        });
-    }
-    
-    // Update user affiliation
-    async function updateUserAffiliation(userId, affiliation) {
-        try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-                affiliation: affiliation
-            });
-            
-            // Reload users
-            loadUsers();
-            
-            console.log('User affiliation updated successfully');
-        } catch (error) {
-            console.error("Error updating user affiliation:", error);
-            alert("Error updating affiliation. Please try again.");
-        }
-    }
-    
-    // Add listeners to role change buttons
-    function addRoleChangeListeners() {
-        document.querySelectorAll('.change-role-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.id;
-                const userName = this.dataset.name;
-                const currentRole = this.dataset.currentRole;
-                
-                // Set modal data
-                document.getElementById('selectedUserName').textContent = userName;
-                document.getElementById('roleSelect').value = currentRole;
-                
-                // Store user ID for the modal
-                document.getElementById('changeRoleModal').dataset.userId = userId;
-                
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
-                modal.show();
-            });
-        });
-    }
-    
-    // Handle role change confirmation
-    const confirmRoleChangeBtn = document.getElementById('confirmRoleChange');
-    if (confirmRoleChangeBtn) {
-        confirmRoleChangeBtn.addEventListener('click', async function() {
-            const modal = document.getElementById('changeRoleModal');
-            const userId = modal.dataset.userId;
-            const newRole = document.getElementById('roleSelect').value;
-            
-            if (!userId || !newRole) return;
-            
-            try {
-                // Update user role in Firestore
-                const userRef = doc(db, "users", userId);
-                await updateDoc(userRef, {
-                    role: newRole
-                });
-                
-                // Close modal
-                const modalInstance = bootstrap.Modal.getInstance(modal);
-                modalInstance.hide();
-                
-                // Reload users
-                loadUsers();
-                
-                // Show success message
-                console.log(`User role updated to ${newRole}`);
-                
-            } catch (error) {
-                console.error("Error updating user role:", error);
-                alert("Error updating user role. Please try again.");
-            }
-        });
-    }
-    
-    // Add listeners to showed up checkboxes
-    function addShowedUpListeners() {
-        document.querySelectorAll('.showed-up-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', function() {
-                const userId = this.dataset.userId;
-                const showedUp = this.checked;
-                
-                updateUserShowedUp(userId, showedUp);
-            });
-        });
-    }
-    
-    // Update user showed up status
-    async function updateUserShowedUp(userId, showedUp) {
-        try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-                showedUp: showedUp
-            });
-            
-            console.log(`User showed up status updated to ${showedUp}`);
-        } catch (error) {
-            console.error("Error updating user showed up status:", error);
-            // Revert checkbox state on error
-            const checkbox = document.querySelector(`[data-user-id="${userId}"]`);
-            if (checkbox) {
-                checkbox.checked = !showedUp;
-            }
-            alert("Error updating showed up status. Please try again.");        }
-    }
+}
 
-    // Add listeners to name edit buttons
-    function addNameEditListeners() {
-        document.querySelectorAll('.edit-name-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const userId = this.dataset.id;
-                const firstName = this.dataset.firstName;
-                const lastName = this.dataset.lastName;
-                
-                // Create a custom modal prompt for first name and last name
-                const modalHtml = `
-                    <div class="modal fade" id="editNameModal" tabindex="-1">
-                        <div class="modal-dialog">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title">Edit User Name</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
-                                <div class="modal-body">
-                                    <form id="editNameForm">
-                                        <div class="mb-3">
-                                            <label for="firstName" class="form-label">First Name</label>
-                                            <input type="text" class="form-control" id="firstName" value="${firstName}">
-                                        </div>
-                                        <div class="mb-3">
-                                            <label for="lastName" class="form-label">Last Name</label>
-                                            <input type="text" class="form-control" id="lastName" value="${lastName}">
-                                        </div>
-                                    </form>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="button" class="btn btn-primary" id="saveNameBtn">Save Changes</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Remove any existing modal with the same ID
-                const existingModal = document.getElementById('editNameModal');
-                if (existingModal) {
-                    existingModal.remove();
-                }
-                
-                // Add modal to the page
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-                
-                // Get the modal element
-                const modalElement = document.getElementById('editNameModal');
-                
-                // Show the modal
-                const modal = new bootstrap.Modal(modalElement);
-                modal.show();
-                
-                // Add event listener for the save button
-                document.getElementById('saveNameBtn').addEventListener('click', function() {
-                    const newFirstName = document.getElementById('firstName').value.trim();
-                    const newLastName = document.getElementById('lastName').value.trim();
-                    
-                    if (newFirstName !== "" || newLastName !== "") {
-                        updateUserName(userId, newFirstName, newLastName);
-                        modal.hide();
-                    } else {
-                        alert("Please enter at least one name field.");
-                    }
-                });
-            });
-        });
+// DEBOUNCE HELPER
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// DOM CONTENT LOADED
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log("Dashboard users.js loaded");
+    
+    const userRole = localStorage.getItem('userRole');
+    if (userRole !== 'admin') {
+        console.log("Non-admin access attempt");
+        return;
     }
     
-    // Update user name
-    async function updateUserName(userId, firstName, lastName) {
-        try {
-            const userRef = doc(db, "users", userId);
-            await updateDoc(userRef, {
-                firstName: firstName,
-                lastName: lastName
-            });
-            
-            // Reload users
-            loadUsers();
-            
-            console.log('User name updated successfully');
-        } catch (error) {
-            console.error("Error updating user name:", error);
-            alert("Error updating name. Please try again.");
-        }
-    }
+    // Event listeners
+    document.getElementById('refreshUserList')?.addEventListener('click', loadUsers);
+    document.getElementById('userSearchInput')?.addEventListener('input', debounce(applyFilters, 300));
+    document.getElementById('userRoleFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('userShowedUpFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('userAccommodationFilter')?.addEventListener('change', applyFilters);
+    document.getElementById('userPerPageSelect')?.addEventListener('change', function() {
+        perPage = parseInt(this.value);
+        currentPage = 1;
+        renderPaginatedUsers();
+    });
+    document.getElementById('confirmRoleChange')?.addEventListener('click', handleRoleChangeConfirm);
+    
+    // Initial load
+    loadUsers();
 });
