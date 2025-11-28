@@ -6,73 +6,169 @@ import {
     getDocs
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Check if user has admin rights
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
-        console.log("Not an admin, pizza tracking features disabled");
+// STATE
+
+let allPizzaSelections = [];
+let filteredPizzaSelections = [];
+
+// PIZZA DISPLAY NAMES
+
+const pizzaTypes = {
+    'margherita': 'Margherita',
+    'gluten-free-margherita': 'Margherita (gluten free)',
+    'vegetarian': 'Vegetarian',
+    'tuna': 'Tuna',
+    'mushroom': 'Mushroom',
+    'capricciosa': 'Capricciosa'
+};
+
+const pizzaEmojis = {
+    'margherita': '🍅',
+    'gluten-free-margherita': '🌾',
+    'vegetarian': '🥬',
+    'tuna': '🐟',
+    'mushroom': '🍄',
+    'capricciosa': '🍕'
+};
+
+// HELPER FUNCTIONS
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+function getPizzaDisplay(pizzaId) {
+    if (!pizzaId) return { name: 'Not selected', emoji: '❌', class: 'bg-secondary' };
+    const emoji = pizzaEmojis[pizzaId] || '🍕';
+    const name = pizzaTypes[pizzaId] || pizzaId;
+    return { name, emoji, class: 'bg-success' };
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// FILTER LOGIC
+
+function applyPizzaFilters() {
+    const searchTerm = (document.getElementById('pizzaSearchInput')?.value || '').toLowerCase().trim();
+    
+    filteredPizzaSelections = allPizzaSelections.filter(selection => {
+        if (!searchTerm) return true;
+        return (selection.userName || '').toLowerCase().includes(searchTerm);
+    });
+    
+    renderPizzaSelections();
+}
+
+// RENDER FUNCTIONS
+
+function renderPizzaSelections() {
+    const noResults = document.getElementById('noPizzaSelectionsFound');
+    
+    if (filteredPizzaSelections.length === 0) {
+        noResults?.classList.remove('d-none');
+        document.getElementById('userPizzasTableBody').innerHTML = '';
+        document.getElementById('mobilePizzaCards').innerHTML = '';
+    } else {
+        noResults?.classList.add('d-none');
+        renderPizzaDesktopTable(filteredPizzaSelections);
+        renderPizzaMobileCards(filteredPizzaSelections);
+    }
+}
+
+function renderPizzaDesktopTable(data) {
+    const tbody = document.getElementById('userPizzasTableBody');
+    if (!tbody) return;
+    
+    if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No selections</td></tr>';
         return;
     }
     
-    console.log("Pizza tracking admin module loaded");
-    
-    // Get refresh buttons
-    const refreshPizzaSummaryBtn = document.getElementById('refreshPizzaSummary');
-    const refreshUserPizzasBtn = document.getElementById('refreshUserPizzas');
-    
-    // Add event listeners
-    refreshPizzaSummaryBtn?.addEventListener('click', loadPizzaSummaries);
-    refreshUserPizzasBtn?.addEventListener('click', loadUserPizzaSelections);
-    
-    // Load data on page load
-    loadPizzaSummaries();
-    loadUserPizzaSelections();
-});
+    tbody.innerHTML = data.map(selection => {
+        const pizza = getPizzaDisplay(selection.day2);
+        return `
+            <tr>
+                <td>${escapeHtml(selection.userName)}</td>
+                <td>
+                    <span class="badge ${pizza.class}">
+                        ${pizza.emoji} ${escapeHtml(pizza.name)}
+                    </span>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
 
-// Load pizza counts by day and type
+function renderPizzaMobileCards(data) {
+    const container = document.getElementById('mobilePizzaCards');
+    if (!container) return;
+    
+    if (data.length === 0) {
+        container.innerHTML = '<div class="text-center text-muted p-4">No selections</div>';
+        return;
+    }
+    
+    container.innerHTML = data.map(selection => {
+        const pizza = getPizzaDisplay(selection.day2);
+        return `
+            <div class="mobile-pizza-card">
+                <div class="pizza-card-content">
+                    <div class="pizza-user-info">
+                        <div class="pizza-user-name">${escapeHtml(selection.userName)}</div>
+                    </div>
+                    <div class="pizza-selection">
+                        <span class="badge ${pizza.class}">
+                            ${pizza.emoji} ${escapeHtml(pizza.name)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// LOAD FUNCTIONS
+
 async function loadPizzaSummaries() {
     try {
-        const pizzaTypes = {
-            'margherita': 'Margherita',
-            'gluten-free-margherita': 'Margherita (gluten free)',
-            'vegetarian': 'Vegetarian',
-            'tuna': 'Tuna',
-            'mushroom': 'Mushroom',
-            'capricciosa': 'Capricciosa'
-        };
-        
-        // Only process Day 2 (July 17)
         const summaryElem = document.getElementById('day2Summary');
         if (!summaryElem) return;
         
-        // Show loading state
         summaryElem.innerHTML = '<tr><td colspan="2" class="text-center">Loading...</td></tr>';
         
-        // Get pizza summary for Day 2
         const summaryRef = doc(db, "pizzaSummary", "day2");
         const summarySnap = await getDoc(summaryRef);
         
         if (summarySnap.exists()) {
             const data = summarySnap.data();
-            
-            // Build the summary table
             let tableHtml = '';
             let totalCount = 0;
             
-            // Add each pizza type to the table
             Object.keys(pizzaTypes).forEach(pizzaId => {
                 const count = data[pizzaId] || 0;
                 totalCount += count;
+                const emoji = pizzaEmojis[pizzaId] || '🍕';
                 
                 tableHtml += `
                     <tr>
-                        <td>${pizzaTypes[pizzaId]}</td>
-                        <td>${count}</td>
+                        <td>${emoji} ${pizzaTypes[pizzaId]}</td>
+                        <td><strong>${count}</strong></td>
                     </tr>
                 `;
             });
             
-            // Add total row
             tableHtml += `
                 <tr class="table-active">
                     <td><strong>Total</strong></td>
@@ -87,52 +183,39 @@ async function loadPizzaSummaries() {
         
     } catch (error) {
         console.error("Error loading pizza summaries:", error);
-        
-        // Show error in summary table
         const summaryElem = document.getElementById('day2Summary');
         if (summaryElem) {
-            summaryElem.innerHTML = `<tr><td colspan="2" class="text-center text-danger">Error loading data</td></tr>`;
+            summaryElem.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Error loading data</td></tr>';
         }
     }
 }
 
-// Load all user pizza selections
 async function loadUserPizzaSelections() {
     try {
         const tableBody = document.getElementById('userPizzasTableBody');
-        if (!tableBody) return;
+        const mobileCards = document.getElementById('mobilePizzaCards');
         
-        // Show loading state
-        tableBody.innerHTML = '<tr><td colspan="2" class="text-center">Loading user selections...</td></tr>';
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="2" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</td></tr>';
+        }
+        if (mobileCards) {
+            mobileCards.innerHTML = '<div class="text-center p-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</div>';
+        }
         
-        // Get all pizza selections
         const selectionsRef = collection(db, "pizzaSelections");
         const selectionsSnap = await getDocs(selectionsRef);
         
         if (selectionsSnap.empty) {
-            tableBody.innerHTML = '<tr><td colspan="2" class="text-center">No pizza selections found</td></tr>';
+            allPizzaSelections = [];
+            filteredPizzaSelections = [];
+            renderPizzaSelections();
             return;
         }
         
-        // Pizza display names
-        const pizzaDisplayNames = {
-            'margherita': '🍅 Margherita',
-            'gluten-free-margherita': '🌾 Margherita (gluten free)',
-            'vegetarian': '🥬 Vegetarian',
-            'tuna': '🐟 Tuna',
-            'mushroom': '🍄 Mushroom',
-            'capricciosa': '� Capricciosa'
-        };
-        
-        // Build the table - only show Day 2 selections
-        let tableHtml = '';
-          selectionsSnap.forEach(selectionDoc => {
-            const userId = selectionDoc.id;
+        allPizzaSelections = [];
+        selectionsSnap.forEach(selectionDoc => {
             const data = selectionDoc.data();
             
-            console.log('Processing selection for user:', userId, 'Data:', data);
-            
-            // Use stored name if available, otherwise use fallback
             let userName = 'Unknown User';
             if (data.fullName && data.fullName.trim()) {
                 userName = data.fullName;
@@ -140,26 +223,45 @@ async function loadUserPizzaSelections() {
                 userName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
             }
             
-            console.log('Final userName for display:', userName);
-            
-            // Get display name for Day 2 only
-            const day2Selection = data.day2 ? (pizzaDisplayNames[data.day2] || data.day2) : 'Not selected';
-            
-            tableHtml += `
-                <tr>
-                    <td>${userName}</td>
-                    <td>${day2Selection}</td>
-                </tr>
-            `;
+            allPizzaSelections.push({
+                id: selectionDoc.id,
+                userName: userName,
+                day2: data.day2 || null
+            });
         });
         
-        tableBody.innerHTML = tableHtml;
+        // Sort by name
+        allPizzaSelections.sort((a, b) => a.userName.localeCompare(b.userName));
+        
+        console.log(`Loaded ${allPizzaSelections.length} pizza selections`);
+        applyPizzaFilters();
         
     } catch (error) {
         console.error("Error loading user pizza selections:", error);
         const tableBody = document.getElementById('userPizzasTableBody');
         if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Error loading user selections</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="2" class="text-center text-danger">Error loading selections</td></tr>';
         }
     }
 }
+
+// INIT
+
+document.addEventListener('DOMContentLoaded', function() {
+    const userRole = localStorage.getItem('userRole');
+    if (userRole !== 'admin') {
+        console.log("Not an admin, pizza tracking features disabled");
+        return;
+    }
+    
+    console.log("Pizza tracking admin module loaded");
+    
+    // Event listeners
+    document.getElementById('refreshPizzaSummary')?.addEventListener('click', loadPizzaSummaries);
+    document.getElementById('refreshUserPizzas')?.addEventListener('click', loadUserPizzaSelections);
+    document.getElementById('pizzaSearchInput')?.addEventListener('input', debounce(applyPizzaFilters, 300));
+    
+    // Initial load
+    loadPizzaSummaries();
+    loadUserPizzaSelections();
+});

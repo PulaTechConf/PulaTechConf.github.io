@@ -6,14 +6,14 @@ import {
     updateDoc
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
-// STATE MANAGEMENT (global)
+// STATE
 
 let allUsers = [];
 let filteredUsers = [];
 let currentPage = 1;
 let perPage = 10;
 
-// HELPER FUNCTIONS (global)
+// HELPERS
 
 function getRoleBadgeClass(role) {
     switch(role) {
@@ -33,7 +33,15 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
-// FILTER LOGIC (global)
+function debounce(func, wait) {
+    let timeout;
+    return function(...args) {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+// FILTERS
 
 function applyFilters() {
     const searchTerm = (document.getElementById('userSearchInput')?.value || '').toLowerCase().trim();
@@ -62,7 +70,7 @@ function applyFilters() {
     renderPaginatedUsers();
 }
 
-// RENDER FUNCTIONS (global)
+// RENDER
 
 function renderPaginatedUsers() {
     const start = (currentPage - 1) * perPage;
@@ -70,12 +78,11 @@ function renderPaginatedUsers() {
     const pageData = filteredUsers.slice(start, end);
     
     const noResults = document.getElementById('noUsersFound');
-    const mobileContainer = document.getElementById('mobileUserCards');
     
     if (filteredUsers.length === 0) {
         noResults?.classList.remove('d-none');
         document.getElementById('userTableBody').innerHTML = '';
-        if (mobileContainer) mobileContainer.innerHTML = '';
+        document.getElementById('mobileUserCards').innerHTML = '';
     } else {
         noResults?.classList.add('d-none');
         renderDesktopTable(pageData);
@@ -90,17 +97,15 @@ function renderDesktopTable(data) {
     if (!tbody) return;
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users to display</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users</td></tr>';
         return;
     }
     
     tbody.innerHTML = data.map(user => `
         <tr>
             <td class="text-center">
-                <input type="checkbox" 
-                       class="form-check-input showed-up-checkbox" 
-                       data-user-id="${user.id}" 
-                       ${user.showedUp ? 'checked' : ''}>
+                <input type="checkbox" class="form-check-input showed-up-checkbox" 
+                       data-user-id="${user.id}" ${user.showedUp ? 'checked' : ''}>
             </td>
             <td>
                 <button class="btn btn-sm btn-outline-primary me-1 edit-name-btn" 
@@ -114,8 +119,7 @@ function renderDesktopTable(data) {
             <td>${escapeHtml(user.email)}</td>
             <td>
                 <button class="btn btn-sm btn-outline-primary me-1 edit-affiliation-btn" 
-                        data-id="${user.id}" 
-                        data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                        data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
                         data-current-affiliation="${escapeHtml(user.affiliation)}">
                     <i class="bi bi-pencil"></i>
                 </button>
@@ -123,8 +127,7 @@ function renderDesktopTable(data) {
             </td>
             <td>
                 <button class="btn btn-sm btn-outline-primary me-1 edit-accommodation-btn" 
-                        data-id="${user.id}" 
-                        data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                        data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
                         data-current-accommodation="${escapeHtml(user.accommodation)}">
                     <i class="bi bi-pencil"></i>
                 </button>
@@ -132,13 +135,10 @@ function renderDesktopTable(data) {
                     ${user.accommodation ? escapeHtml(user.accommodation) : 'Not provided'}
                 </span>
             </td>
-            <td>
-                <span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span>
-            </td>
+            <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span></td>
             <td>
                 <button class="btn btn-sm btn-outline-primary change-role-btn" 
-                        data-id="${user.id}" 
-                        data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                        data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
                         data-current-role="${user.role || 'general'}">
                     <i class="bi bi-person-gear"></i><span class="btn-text ms-1">Role</span>
                 </button>
@@ -154,7 +154,7 @@ function renderMobileCards(data) {
     if (!container) return;
     
     if (data.length === 0) {
-        container.innerHTML = '<div class="text-center text-muted p-4">No users to display</div>';
+        container.innerHTML = '<div class="text-center text-muted p-4">No users</div>';
         return;
     }
     
@@ -172,28 +172,13 @@ function renderMobileCards(data) {
                     <span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span>
                 </div>
             </div>
-            
             <div class="card-details" id="details-${user.id}">
                 <div class="detail-row">
                     <span class="detail-label">Showed Up</span>
                     <span class="detail-value">
-                        <input type="checkbox" 
-                               class="form-check-input showed-up-checkbox" 
-                               data-user-id="${user.id}" 
-                               ${user.showedUp ? 'checked' : ''}>
+                        <input type="checkbox" class="form-check-input showed-up-checkbox" 
+                               data-user-id="${user.id}" ${user.showedUp ? 'checked' : ''}>
                         <span class="ms-2">${user.showedUp ? 'Yes' : 'No'}</span>
-                    </span>
-                </div>
-                <div class="detail-row">
-                    <span class="detail-label">Name</span>
-                    <span class="detail-value">
-                        ${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}
-                        <button class="btn btn-sm btn-link p-0 ms-2 edit-name-btn" 
-                                data-id="${user.id}" 
-                                data-first-name="${escapeHtml(user.firstName)}" 
-                                data-last-name="${escapeHtml(user.lastName)}">
-                            <i class="bi bi-pencil"></i>
-                        </button>
                     </span>
                 </div>
                 <div class="detail-row">
@@ -205,8 +190,7 @@ function renderMobileCards(data) {
                     <span class="detail-value">
                         ${escapeHtml(user.affiliation) || '<span class="text-muted">Not provided</span>'}
                         <button class="btn btn-sm btn-link p-0 ms-2 edit-affiliation-btn" 
-                                data-id="${user.id}" 
-                                data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                                data-id="${user.id}" data-name="${escapeHtml(user.firstName)}" 
                                 data-current-affiliation="${escapeHtml(user.affiliation)}">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -219,8 +203,7 @@ function renderMobileCards(data) {
                             ${user.accommodation ? escapeHtml(user.accommodation) : 'Not provided'}
                         </span>
                         <button class="btn btn-sm btn-link p-0 ms-2 edit-accommodation-btn" 
-                                data-id="${user.id}" 
-                                data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                                data-id="${user.id}" data-name="${escapeHtml(user.firstName)}" 
                                 data-current-accommodation="${escapeHtml(user.accommodation)}">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -231,8 +214,7 @@ function renderMobileCards(data) {
                     <span class="detail-value">
                         <span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span>
                         <button class="btn btn-sm btn-outline-primary ms-2 change-role-btn" 
-                                data-id="${user.id}" 
-                                data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                                data-id="${user.id}" data-name="${escapeHtml(user.firstName)}" 
                                 data-current-role="${user.role || 'general'}">
                             <i class="bi bi-person-gear"></i> Change
                         </button>
@@ -250,50 +232,25 @@ function renderPagination() {
     const container = document.getElementById('userPaginationControls');
     const countEl = document.getElementById('userTotalCount');
     
-    if (countEl) {
-        countEl.textContent = filteredUsers.length;
-    }
-    
+    if (countEl) countEl.textContent = filteredUsers.length;
     if (!container) return;
+    if (totalPages <= 1) { container.innerHTML = ''; return; }
     
-    if (totalPages <= 1) {
-        container.innerHTML = '';
-        return;
-    }
-    
-    let html = `
-        <button class="btn btn-sm btn-outline-primary" 
-                onclick="goToUserPage(${currentPage - 1})" 
-                ${currentPage === 1 ? 'disabled' : ''}>
-            <i class="bi bi-chevron-left"></i>
-        </button>
-    `;
+    let html = `<button class="btn btn-sm btn-outline-primary" onclick="goToUserPage(${currentPage - 1})" ${currentPage === 1 ? 'disabled' : ''}><i class="bi bi-chevron-left"></i></button>`;
     
     for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-            html += `
-                <button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}" 
-                        onclick="goToUserPage(${i})">
-                    ${i}
-                </button>
-            `;
+            html += `<button class="btn btn-sm ${i === currentPage ? 'btn-primary' : 'btn-outline-primary'}" onclick="goToUserPage(${i})">${i}</button>`;
         } else if (i === currentPage - 2 || i === currentPage + 2) {
             html += `<span class="px-2 text-muted">...</span>`;
         }
     }
     
-    html += `
-        <button class="btn btn-sm btn-outline-primary" 
-                onclick="goToUserPage(${currentPage + 1})" 
-                ${currentPage === totalPages ? 'disabled' : ''}>
-            <i class="bi bi-chevron-right"></i>
-        </button>
-    `;
-    
+    html += `<button class="btn btn-sm btn-outline-primary" onclick="goToUserPage(${currentPage + 1})" ${currentPage === totalPages ? 'disabled' : ''}><i class="bi bi-chevron-right"></i></button>`;
     container.innerHTML = html;
 }
 
-// GLOBAL FUNCTIONS (for onclick handlers in HTML)
+// GLOBAL FUNCTIONS
 
 window.goToUserPage = function(page) {
     const totalPages = Math.ceil(filteredUsers.length / perPage);
@@ -306,64 +263,49 @@ window.toggleUserCard = function(id) {
     const details = document.getElementById(`details-${id}`);
     const btn = document.getElementById(`expandBtn-${id}`);
     
-    // Close all other cards (accordion behavior)
     document.querySelectorAll('.card-details.show').forEach(el => {
         if (el.id !== `details-${id}`) {
             el.classList.remove('show');
             const otherId = el.id.replace('details-', '');
-            const otherBtn = document.getElementById(`expandBtn-${otherId}`);
-            if (otherBtn) otherBtn.classList.remove('expanded');
+            document.getElementById(`expandBtn-${otherId}`)?.classList.remove('expanded');
         }
     });
     
-    // Toggle current card
-    if (details) details.classList.toggle('show');
-    if (btn) btn.classList.toggle('expanded');
+    details?.classList.toggle('show');
+    btn?.classList.toggle('expanded');
 };
 
-// UPDATE FUNCTIONS (global)
+// UPDATE FUNCTIONS
 
 async function updateShowedUp(userId, showedUp) {
     try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, { showedUp: showedUp });
-        
+        await updateDoc(doc(db, "users", userId), { showedUp });
         const user = allUsers.find(u => u.id === userId);
         if (user) user.showedUp = showedUp;
-        
-        console.log(`User ${userId} showed up: ${showedUp}`);
     } catch (error) {
-        console.error("Error updating showed up:", error);
-        alert("Error updating status. Please try again.");
-        document.querySelectorAll(`.showed-up-checkbox[data-user-id="${userId}"]`).forEach(cb => {
-            cb.checked = !showedUp;
-        });
+        console.error("Error:", error);
+        alert("Error updating status");
+        document.querySelectorAll(`.showed-up-checkbox[data-user-id="${userId}"]`).forEach(cb => cb.checked = !showedUp);
     }
 }
 
 async function updateUserField(userId, field, value) {
     try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, { [field]: value });
-        
+        await updateDoc(doc(db, "users", userId), { [field]: value });
         const user = allUsers.find(u => u.id === userId);
         if (user) user[field] = value;
-        
         applyFilters();
-        console.log(`User ${userId} ${field} updated`);
     } catch (error) {
-        console.error(`Error updating ${field}:`, error);
-        alert(`Error updating ${field}. Please try again.`);
+        console.error("Error:", error);
+        alert(`Error updating ${field}`);
     }
 }
 
-// EVENT LISTENER FUNCTIONS (global)
+// EVENT LISTENERS
 
 function addTableEventListeners() {
     document.querySelectorAll('.user-table .showed-up-checkbox').forEach(cb => {
-        cb.addEventListener('change', function() {
-            updateShowedUp(this.dataset.userId, this.checked);
-        });
+        cb.addEventListener('change', function() { updateShowedUp(this.dataset.userId, this.checked); });
     });
     
     document.querySelectorAll('.user-table .edit-name-btn').forEach(btn => {
@@ -377,9 +319,7 @@ function addTableEventListeners() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const newValue = prompt(`Edit affiliation for ${this.dataset.name}:`, this.dataset.currentAffiliation || '');
-            if (newValue !== null) {
-                updateUserField(this.dataset.id, 'affiliation', newValue);
-            }
+            if (newValue !== null) updateUserField(this.dataset.id, 'affiliation', newValue);
         });
     });
     
@@ -387,9 +327,7 @@ function addTableEventListeners() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const newValue = prompt(`Edit accommodation for ${this.dataset.name}:`, this.dataset.currentAccommodation || '');
-            if (newValue !== null) {
-                updateUserField(this.dataset.id, 'accommodation', newValue);
-            }
+            if (newValue !== null) updateUserField(this.dataset.id, 'accommodation', newValue);
         });
     });
     
@@ -409,20 +347,11 @@ function addMobileEventListeners() {
         });
     });
     
-    document.querySelectorAll('#mobileUserCards .edit-name-btn').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            openNameEditModal(this.dataset.id, this.dataset.firstName, this.dataset.lastName);
-        });
-    });
-    
     document.querySelectorAll('#mobileUserCards .edit-affiliation-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const newValue = prompt(`Edit affiliation:`, this.dataset.currentAffiliation || '');
-            if (newValue !== null) {
-                updateUserField(this.dataset.id, 'affiliation', newValue);
-            }
+            if (newValue !== null) updateUserField(this.dataset.id, 'affiliation', newValue);
         });
     });
     
@@ -430,9 +359,7 @@ function addMobileEventListeners() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             const newValue = prompt(`Edit accommodation:`, this.dataset.currentAccommodation || '');
-            if (newValue !== null) {
-                updateUserField(this.dataset.id, 'accommodation', newValue);
-            }
+            if (newValue !== null) updateUserField(this.dataset.id, 'accommodation', newValue);
         });
     });
     
@@ -444,11 +371,10 @@ function addMobileEventListeners() {
     });
 }
 
-// MODAL FUNCTIONS (global)
+// MODALS
 
 function openNameEditModal(userId, firstName, lastName) {
-    const existingModal = document.getElementById('editNameModal');
-    if (existingModal) existingModal.remove();
+    document.getElementById('editNameModal')?.remove();
     
     const modalHtml = `
         <div class="modal fade" id="editNameModal" tabindex="-1">
@@ -470,60 +396,41 @@ function openNameEditModal(userId, firstName, lastName) {
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-primary" id="saveNameBtn">Save Changes</button>
+                        <button type="button" class="btn btn-primary" id="saveNameBtn">Save</button>
                     </div>
                 </div>
             </div>
-        </div>
-    `;
+        </div>`;
     
     document.body.insertAdjacentHTML('beforeend', modalHtml);
-    
     const modalEl = document.getElementById('editNameModal');
     const modal = new bootstrap.Modal(modalEl);
     modal.show();
     
     document.getElementById('saveNameBtn').addEventListener('click', async function() {
-        const newFirstName = document.getElementById('editFirstName').value.trim();
-        const newLastName = document.getElementById('editLastName').value.trim();
-        
-        if (newFirstName || newLastName) {
+        const newFirst = document.getElementById('editFirstName').value.trim();
+        const newLast = document.getElementById('editLastName').value.trim();
+        if (newFirst || newLast) {
             try {
-                const userRef = doc(db, "users", userId);
-                await updateDoc(userRef, {
-                    firstName: newFirstName,
-                    lastName: newLastName
-                });
-                
+                await updateDoc(doc(db, "users", userId), { firstName: newFirst, lastName: newLast });
                 const user = allUsers.find(u => u.id === userId);
-                if (user) {
-                    user.firstName = newFirstName;
-                    user.lastName = newLastName;
-                }
-                
+                if (user) { user.firstName = newFirst; user.lastName = newLast; }
                 modal.hide();
                 applyFilters();
             } catch (error) {
-                console.error("Error updating name:", error);
-                alert("Error updating name. Please try again.");
+                alert("Error updating name");
             }
-        } else {
-            alert("Please enter at least one name.");
         }
     });
     
-    modalEl.addEventListener('hidden.bs.modal', function() {
-        modalEl.remove();
-    });
+    modalEl.addEventListener('hidden.bs.modal', () => modalEl.remove());
 }
 
 function openRoleChangeModal(userId, userName, currentRole) {
     document.getElementById('selectedUserName').textContent = userName;
     document.getElementById('roleSelect').value = currentRole;
     document.getElementById('changeRoleModal').dataset.userId = userId;
-    
-    const modal = new bootstrap.Modal(document.getElementById('changeRoleModal'));
-    modal.show();
+    new bootstrap.Modal(document.getElementById('changeRoleModal')).show();
 }
 
 async function handleRoleChangeConfirm() {
@@ -534,60 +441,31 @@ async function handleRoleChangeConfirm() {
     if (!userId || !newRole) return;
     
     try {
-        const userRef = doc(db, "users", userId);
-        await updateDoc(userRef, { role: newRole });
-        
+        await updateDoc(doc(db, "users", userId), { role: newRole });
         const user = allUsers.find(u => u.id === userId);
         if (user) user.role = newRole;
-        
         bootstrap.Modal.getInstance(modal).hide();
         applyFilters();
     } catch (error) {
-        console.error("Error updating role:", error);
-        alert("Error updating role. Please try again.");
+        alert("Error updating role");
     }
 }
 
-// LOAD USERS FROM FIREBASE (global)
+// LOAD DATA
 
 async function loadUsers() {
-    console.log("Loading users from Firebase...");
-    
-    const userTableBody = document.getElementById('userTableBody');
+    const tableBody = document.getElementById('userTableBody');
     const mobileCards = document.getElementById('mobileUserCards');
     
-    if (userTableBody) {
-        userTableBody.innerHTML = `
-            <tr><td colspan="7" class="text-center">
-                <div class="spinner-border spinner-border-sm me-2"></div>
-                Loading users...
-            </td></tr>`;
-    }
-    if (mobileCards) {
-        mobileCards.innerHTML = `
-            <div class="text-center p-4">
-                <div class="spinner-border spinner-border-sm me-2"></div>
-                Loading users...
-            </div>`;
-    }
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</td></tr>';
+    if (mobileCards) mobileCards.innerHTML = '<div class="text-center p-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</div>';
     
     try {
-        const usersCollection = collection(db, "users");
-        const querySnapshot = await getDocs(usersCollection);
-        
-        if (querySnapshot.empty) {
-            allUsers = [];
-            filteredUsers = [];
-            renderPaginatedUsers();
-            return;
-        }
+        const querySnapshot = await getDocs(collection(db, "users"));
         
         allUsers = [];
-        querySnapshot.forEach((docSnapshot) => {
-            allUsers.push({
-                id: docSnapshot.id,
-                ...docSnapshot.data()
-            });
+        querySnapshot.forEach(doc => {
+            allUsers.push({ id: doc.id, ...doc.data() });
         });
         
         allUsers.sort((a, b) => {
@@ -596,43 +474,23 @@ async function loadUsers() {
             return nameA.localeCompare(nameB);
         });
         
-        console.log(`Loaded ${allUsers.length} users from Firebase`);
+        console.log(`Loaded ${allUsers.length} users`);
         applyFilters();
         
     } catch (error) {
-        console.error("Error loading users:", error);
-        if (userTableBody) {
-            userTableBody.innerHTML = `
-                <tr><td colspan="7" class="text-center text-danger">
-                    <i class="bi bi-exclamation-triangle me-2"></i>
-                    Error loading users: ${error.message}
-                </td></tr>`;
-        }
+        console.error("Error:", error);
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${error.message}</td></tr>`;
     }
 }
 
-// DEBOUNCE HELPER
-
-function debounce(func, wait) {
-    let timeout;
-    return function(...args) {
-        clearTimeout(timeout);
-        timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-}
-
-// DOM CONTENT LOADED
+// INIT
 
 document.addEventListener('DOMContentLoaded', function() {
+    const userRole = localStorage.getItem('userRole');
+    if (userRole !== 'admin') return;
+    
     console.log("Dashboard users.js loaded");
     
-    const userRole = localStorage.getItem('userRole');
-    if (userRole !== 'admin') {
-        console.log("Non-admin access attempt");
-        return;
-    }
-    
-    // Event listeners
     document.getElementById('refreshUserList')?.addEventListener('click', loadUsers);
     document.getElementById('userSearchInput')?.addEventListener('input', debounce(applyFilters, 300));
     document.getElementById('userRoleFilter')?.addEventListener('change', applyFilters);
@@ -645,6 +503,5 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     document.getElementById('confirmRoleChange')?.addEventListener('click', handleRoleChangeConfirm);
     
-    // Initial load
     loadUsers();
 });
