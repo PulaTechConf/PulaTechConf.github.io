@@ -22,27 +22,6 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="../css/home.css">
-    <!-- Custom style modifications -->
-    <style>
-        /* Replace calendar icon with text in all calendar buttons */
-        .add-to-calendar-btn .bi-calendar-plus {
-            display: none;
-        }
-        .add-to-calendar-btn:before {
-            content: "Add to Google Calendar";
-            font-size: 0.75rem;
-        }
-        .add-to-calendar-btn {
-            padding: 0.25rem 0.5rem;
-            font-size: 0.75rem;
-        }
-        /* Add more margin at the top on mobile for calendar buttons */
-        @media (max-width: 768px) {
-            .schedule-item .d-flex {
-                margin-top: 8px;
-            }
-        }
-    </style>
     <!-- Add auth check script before any other scripts -->
     <script type="module" src="../js/auth-check.js"></script>
 </head>
