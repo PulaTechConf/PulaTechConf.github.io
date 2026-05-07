@@ -53,6 +53,15 @@ function cleanupOldReadNotifications(currentNotificationIds) {
     }
 }
 
+function escapeHtml(value) {
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Notifications.js loaded");
     
@@ -217,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     message: data.message || '',
                     timestamp: data.timestamp,
                     targetAudience: targetAudience,
+                    url: data.url || '',
                     isRead: readNotifications.includes(doc.id)
                 });
             });
@@ -301,28 +311,38 @@ document.addEventListener('DOMContentLoaded', () => {
             // Style based on read status
             const headerBgColor = notification.isRead ? '#f8f9fa' : '#fff';
             const unreadIndicator = notification.isRead ? '' : '<span style="color: #007bff; font-weight: bold; margin-left: 5px;">•</span>';
+            const linkIcon = notification.url ? '<i class="bi bi-link-45deg ms-2" style="color: #007bff;"></i>' : '';
+            const cursorStyle = notification.url ? 'cursor: pointer;' : 'cursor: pointer;';
             
             const notificationItem = document.createElement('div');
             notificationItem.className = 'notification-expandable';
+            notificationItem.style.cursor = notification.url ? 'pointer' : 'default';
             notificationItem.innerHTML = `
                 <div class="notification-header" style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background-color: ${headerBgColor}; color: #333;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <strong style="color: #333;">${notification.title}${unreadIndicator}</strong>
+                        <strong style="color: #333;">${notification.title}${unreadIndicator}${linkIcon}</strong>
                         <small class="text-muted" style="color: #666;">${formattedDate}</small>
                     </div>
                     <i class="bi bi-chevron-down mt-1" style="color: #333;"></i>
                 </div>
                 <div class="notification-details" style="display: none; padding: 10px; background-color: #f8f9fa; border-bottom: 1px solid #eee; color: #555;">
-                    <p class="mb-0" style="color: #555;">${notification.message}</p>
+                    <p class="mb-2" style="color: #555; word-break: break-word;">${notification.message}</p>
+                    ${notification.url ? `<a href="${escapeHtml(notification.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary" style="width: 100%;">Open Link <i class="bi bi-box-arrow-up-right ms-1"></i></a>` : ''}
                 </div>
             `;
             
             // Add click handler for expanding
             const header = notificationItem.querySelector('.notification-header');
             const details = notificationItem.querySelector('.notification-details');
-            const icon = notificationItem.querySelector('i');
+            const icon = notificationItem.querySelector('i.bi-chevron-down');
+            const linkButton = notificationItem.querySelector('a[target="_blank"]');
             
             header.addEventListener('click', function(e) {
+                // Don't expand if clicking the link button
+                if (linkButton && e.target.closest('a')) {
+                    return;
+                }
+                
                 e.stopPropagation();
                 
                 // Mark this notification as read when expanded
@@ -406,6 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const headerBgColor = notification.isRead ? '#f8f9fa' : '#fff';
             const unreadIndicator = notification.isRead ? '' : '<span style="color: #007bff; font-weight: bold; margin-left: 8px;">•</span>';
             const borderColor = notification.isRead ? '#e9ecef' : '#007bff';
+            const linkIcon = notification.url ? '<i class="bi bi-link-45deg ms-2" style="color: #007bff;"></i>' : '';
             
             const notificationCard = document.createElement('div');
             notificationCard.className = 'card mb-3';
@@ -413,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             notificationCard.innerHTML = `
                 <div class="card-header notification-tab-header" style="cursor: pointer; background-color: ${headerBgColor};">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">${notification.title}${unreadIndicator}</h6>
+                        <h6 class="mb-0">${notification.title}${unreadIndicator}${linkIcon}</h6>
                         <div class="d-flex align-items-center">
                             <small class="text-muted me-2">${formattedDate}</small>
                             <i class="bi bi-chevron-down"></i>
@@ -421,14 +442,15 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="card-body notification-tab-details" style="display: none;">
-                    <p class="card-text">${notification.message}</p>
+                    <p class="card-text" style="word-break: break-word;">${notification.message}</p>
+                    ${notification.url ? `<a href="${escapeHtml(notification.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary mt-2">Open Link <i class="bi bi-box-arrow-up-right ms-1"></i></a>` : ''}
                 </div>
             `;
             
             // Add click handler for expanding
             const header = notificationCard.querySelector('.notification-tab-header');
             const details = notificationCard.querySelector('.notification-tab-details');
-            const icon = notificationCard.querySelector('i');
+            const icon = notificationCard.querySelector('i.bi-chevron-down');
             
             header.addEventListener('click', function(e) {
                 e.stopPropagation();

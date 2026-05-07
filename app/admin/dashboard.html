@@ -376,6 +376,11 @@
                         <textarea class="form-control" id="notificationMessage" rows="6" required></textarea>
                     </div>
                     <div class="mb-3">
+                        <label for="notificationUrl" class="form-label">Link URL (Optional)</label>
+                        <input type="url" class="form-control" id="notificationUrl" placeholder="https://example.com">
+                        <small class="form-text text-muted">If provided, users can click the notification to open this link.</small>
+                    </div>
+                    <div class="mb-3">
                         <label for="notificationTarget" class="form-label">Target Audience</label>
                         <select class="form-select" id="notificationTarget">
                             <option value="all">All Users</option>

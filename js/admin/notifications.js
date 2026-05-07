@@ -13,7 +13,7 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 // Function to create a new notification (for admin use)
-export async function createNotification(title, message, targetAudience = 'all', recipients = []) {
+export async function createNotification(title, message, targetAudience = 'all', recipients = [], url = '') {
     try {
         console.log("Creating notification:", title, targetAudience);
         
@@ -24,6 +24,10 @@ export async function createNotification(title, message, targetAudience = 'all',
             createdBy: localStorage.getItem('userId') || 'system',
             targetAudience
         };
+
+        if (url) {
+            notificationData.url = url;
+        }
         
         if (Array.isArray(recipients) && recipients.length > 0) {
             notificationData.recipients = recipients;
@@ -218,6 +222,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 message = document.getElementById('notificationMessage').value.trim();
             }
             const target = document.getElementById('notificationTarget').value;
+            const url = document.getElementById('notificationUrl')?.value.trim() || '';
             
             if (!title || !message) {
                 alert('Both title and message are required');
@@ -231,21 +236,21 @@ document.addEventListener('DOMContentLoaded', function() {
                     alert('Please select at least one recipient when using Selected Users Only.');
                     return;
                 }
-                result = await createNotification(title, message, target, recipientIds);
+                result = await createNotification(title, message, target, recipientIds, url);
                 if (result.success) {
                     alert(`Notification sent successfully to ${recipientIds.length} selected users.`);
                 } else {
                     alert(`Error creating notification: ${result.error}`);
                 }
             } else if (target === 'accommodation_users') {
-                result = await createNotification(title, message, target);
+                result = await createNotification(title, message, target, [], url);
                 if (result.success) {
                     alert('Notification created successfully for users with accommodation.');
                 } else {
                     alert(`Error creating notification: ${result.error}`);
                 }
             } else {
-                result = await createNotification(title, message, 'all');
+                result = await createNotification(title, message, 'all', [], url);
                 if (result.success) {
                     alert('Notification created successfully for all users.');
                 } else {
