@@ -5,7 +5,10 @@ import {
     collection,
     getDocs,
     query,
-    where
+    where,
+    updateDoc,
+    serverTimestamp,
+    increment
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -16,6 +19,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Load pizza selection
     loadPizzaSelection();
+
+    // Set up pizza edit form buttons
+    const saveBtn = document.getElementById('profilePizzaSaveBtn');
+    const cancelBtn = document.getElementById('profilePizzaCancelBtn');
+
+    if (saveBtn) {
+        saveBtn.addEventListener('click', savePizzaChange);
+    }
+
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hidePizzaEditForm);
+    }
     
     // Add logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
@@ -101,7 +116,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const reservedAt = pizzaData.reservedAt ? new Date(pizzaData.reservedAt.seconds * 1000).toLocaleString() : 'Unknown';
             const isPickedUp = !!pizzaData.pickedUp;
             const pickupStatus = isPickedUp ? 'Picked up' : 'Ready for pickup';
-            const pickupCode = pizzaData.pickupCode || 'Not available';
+            let pickupCode = pizzaData.pickupCode || '';
+
+            // If pickup code is missing, generate one and save it
+            if (!pickupCode) {
+                pickupCode = generatePickupCode();
+                try {
+                    await updateDoc(pizzaRef, { pickupCode });
+                    console.log('Generated and saved missing pickup code:', pickupCode);
+                } catch (error) {
+                    console.warn('Could not save pickup code:', error);
+                }
+            }
+
             const pickedUpAt = pizzaData.pickedUpAt ? new Date(pizzaData.pickedUpAt.seconds * 1000).toLocaleString() : null;
             const pickedUpByAdmin = pizzaData.pickedUpByAdmin || null;
 
@@ -115,6 +142,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     ${pickedUpAt ? `<p class="mb-0 text-success"><strong>Picked up at:</strong> ${pickedUpAt}${pickedUpByAdmin ? ` by ${escapeHtml(pickedUpByAdmin)}` : ''}</p>` : ''}
                 </div>
             `;
+
+            // Show edit button and set up edit form
+            const editBtn = document.getElementById('profilePizzaEditBtn');
+            if (editBtn) {
+                editBtn.style.display = 'inline-block';
+                editBtn.addEventListener('click', function() {
+                    showPizzaEditForm(pizzaData.day2);
+                });
+            }
         } catch (error) {
             console.error("Error loading pizza selection:", error);
             pizzaContainer.innerHTML = `
@@ -155,5 +191,107 @@ document.addEventListener('DOMContentLoaded', function() {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
+    }
+
+    function generatePickupCode() {
+        const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+        let code = 'PZ-';
+        for (let i = 0; i < 6; i++) {
+            code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+    }
+
+    function showPizzaEditForm(currentPizza) {
+        const form = document.getElementById('pizzaEditForm');
+        const summary = document.getElementById('pizzaSelectionSummary');
+        const editBtn = document.getElementById('profilePizzaEditBtn');
+        const dropdown = document.getElementById('profilePizzaChoice');
+
+        if (form && dropdown) {
+            form.classList.remove('d-none');
+            summary.style.display = 'none';
+            editBtn.style.display = 'none';
+            dropdown.value = currentPizza || '';
+            dropdown.focus();
+        }
+    }
+
+    function hidePizzaEditForm() {
+        const form = document.getElementById('pizzaEditForm');
+        const summary = document.getElementById('pizzaSelectionSummary');
+        const editBtn = document.getElementById('profilePizzaEditBtn');
+        const statusDiv = document.getElementById('profilePizzaStatus');
+
+        if (form) {
+            form.classList.add('d-none');
+            summary.style.display = 'block';
+            editBtn.style.display = 'inline-block';
+            statusDiv.innerHTML = '';
+        }
+    }
+
+    async function savePizzaChange() {
+        const userId = localStorage.getItem('userId');
+        const statusDiv = document.getElementById('profilePizzaStatus');
+        const dropdown = document.getElementById('profilePizzaChoice');
+
+        if (!userId || !dropdown) return;
+
+        const newPizzaType = dropdown.value.trim();
+        if (!newPizzaType) {
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="alert alert-warning alert-sm py-2 mb-0">Please select a pizza.</div>';
+            }
+            return;
+        }
+
+        try {
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="text-muted small">Saving...</div>';
+            }
+
+            const pizzaRef = doc(db, "pizzaSelections", userId);
+            const pizzaSnap = await getDoc(pizzaRef);
+
+            if (!pizzaSnap.exists()) {
+                if (statusDiv) {
+                    statusDiv.innerHTML = '<div class="alert alert-danger alert-sm py-2 mb-0">No reservation found. Please try again.</div>';
+                }
+                return;
+            }
+
+            const currentPizza = pizzaSnap.data().day2;
+
+            // If changing to a different pizza, update counts
+            if (currentPizza && currentPizza !== newPizzaType) {
+                const summaryRef = doc(db, "pizzaSummary", "day2");
+                await updateDoc(summaryRef, {
+                    [currentPizza]: increment(-1),
+                    [newPizzaType]: increment(1),
+                    lastUpdated: serverTimestamp()
+                });
+            }
+
+            // Update the user's selection
+            await updateDoc(pizzaRef, {
+                day2: newPizzaType,
+                day2_timestamp: new Date()
+            });
+
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="alert alert-success alert-sm py-2 mb-0">Pizza selection updated!</div>';
+            }
+
+            // Reload the profile to show updated info
+            setTimeout(() => {
+                loadPizzaSelection();
+            }, 500);
+        } catch (error) {
+            console.error("Error updating pizza selection:", error);
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="alert alert-danger alert-sm py-2 mb-0">Error saving selection: ${error.message}</div>`;
+            }
+        }
     }
 });

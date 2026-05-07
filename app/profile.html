@@ -181,6 +181,28 @@
                                 <p class="mb-0 mt-2">Loading...</p>
                             </div>
                         </div>
+                        <div id="pizzaEditForm" class="d-none mt-3">
+                            <label for="profilePizzaChoice" class="form-label">Change Pizza Selection</label>
+                            <div class="input-group">
+                                <select class="form-select" id="profilePizzaChoice">
+                                    <option value="">Select your pizza...</option>
+                                    <option value="margherita">🍅 Margherita</option>
+                                    <option value="gluten-free-margherita">🌾 Margherita (Gluten Free)</option>
+                                    <option value="vegetarian">🥬 Vegetarian</option>
+                                    <option value="tuna">🐟 Tuna</option>
+                                    <option value="mushroom">🍄 Mushroom</option>
+                                    <option value="capricciosa">🍕 Capricciosa</option>
+                                </select>
+                                <button class="btn btn-primary" type="button" id="profilePizzaSaveBtn">Save</button>
+                                <button class="btn btn-outline-secondary" type="button" id="profilePizzaCancelBtn">Cancel</button>
+                            </div>
+                            <div id="profilePizzaStatus" class="mt-2"></div>
+                        </div>
+                        <div class="mt-3" id="pizzaEditButtonContainer">
+                            <button class="btn btn-sm btn-outline-primary" id="profilePizzaEditBtn" style="display:none;">
+                                <i class="bi bi-pencil me-1"></i> Change Selection
+                            </button>
+                        </div>
                     </div>
                 </div>
 
