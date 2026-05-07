@@ -96,12 +96,15 @@ function renderPizzaDesktopTable(data) {
     if (!tbody) return;
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="2" class="text-center text-muted">No selections</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No selections</td></tr>';
         return;
     }
     
     tbody.innerHTML = data.map(selection => {
         const pizza = getPizzaDisplay(selection.day2);
+        const pickedUpBadge = selection.pickedUp 
+            ? '<span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Picked up</span>' 
+            : '<span class="badge bg-warning"><i class="bi bi-clock me-1"></i>Pending</span>';
         return `
             <tr>
                 <td>${escapeHtml(selection.userName)}</td>
@@ -110,6 +113,8 @@ function renderPizzaDesktopTable(data) {
                         ${pizza.emoji} ${escapeHtml(pizza.name)}
                     </span>
                 </td>
+                <td><code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${escapeHtml(selection.pickupCode)}</code></td>
+                <td>${pickedUpBadge}</td>
             </tr>
         `;
     }).join('');
@@ -126,8 +131,11 @@ function renderPizzaMobileCards(data) {
     
     container.innerHTML = data.map(selection => {
         const pizza = getPizzaDisplay(selection.day2);
+        const pickedUpBadge = selection.pickedUp 
+            ? '<span class="badge bg-success w-100 mt-2"><i class="bi bi-check-circle me-1"></i>Picked up</span>' 
+            : '<span class="badge bg-warning w-100 mt-2"><i class="bi bi-clock me-1"></i>Pending</span>';
         return `
-            <div class="mobile-pizza-card">
+            <div class="mobile-pizza-card" style="border: 1px solid #ddd; padding: 12px; margin-bottom: 12px; border-radius: 6px;">
                 <div class="pizza-card-content">
                     <div class="pizza-user-info">
                         <div class="pizza-user-name">${escapeHtml(selection.userName)}</div>
@@ -137,6 +145,10 @@ function renderPizzaMobileCards(data) {
                             ${pizza.emoji} ${escapeHtml(pizza.name)}
                         </span>
                     </div>
+                    <div style="margin-top: 8px; font-size: 0.85rem;">
+                        <small class="text-muted">Code: </small><code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${escapeHtml(selection.pickupCode)}</code>
+                    </div>
+                    ${pickedUpBadge}
                 </div>
             </div>
         `;
@@ -230,7 +242,9 @@ async function loadUserPizzaSelections() {
             allPizzaSelections.push({
                 id: selectionDoc.id,
                 userName: userName,
-                day2: data.day2 || null
+                day2: data.day2 || null,
+                pickupCode: data.pickupCode || '',
+                pickedUp: data.pickedUp || false
             });
         });
         
