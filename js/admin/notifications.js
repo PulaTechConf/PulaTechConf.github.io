@@ -13,16 +13,22 @@ import {
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 // Function to create a new notification (for admin use)
-export async function createNotification(title, message) {
+export async function createNotification(title, message, targetAudience = 'all', recipients = []) {
     try {
-        console.log("Creating notification:", title);
+        console.log("Creating notification:", title, targetAudience);
         
         const notificationData = {
             title,
             message,
             timestamp: serverTimestamp(),
-            createdBy: localStorage.getItem('userId') || 'system'
+            createdBy: localStorage.getItem('userId') || 'system',
+            targetAudience
         };
+        
+        if (Array.isArray(recipients) && recipients.length > 0) {
+            notificationData.recipients = recipients;
+            notificationData.recipientCount = recipients.length;
+        }
         
         const notificationsRef = collection(db, "notifications");
         const docRef = await addDoc(notificationsRef, notificationData);
@@ -80,6 +86,106 @@ export async function deleteNotification(notificationId) {
     }
 }
 
+async function loadNotificationUsers() {
+    const userListContainer = document.getElementById('selectedUserList');
+    if (!userListContainer) return;
+
+    try {
+        userListContainer.innerHTML = '<div class="text-muted small">Loading users...</div>';
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(usersRef);
+
+        const users = [];
+        usersSnapshot.forEach(userDoc => {
+            const user = userDoc.data();
+            users.push({
+                id: userDoc.id,
+                name: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Unnamed',
+                email: user.email || ''
+            });
+        });
+
+        users.sort((a, b) => a.name.localeCompare(b.name));
+        renderNotificationUserList(users);
+    } catch (error) {
+        console.error('Error loading notification users:', error);
+        const userListContainer = document.getElementById('selectedUserList');
+        if (userListContainer) {
+            userListContainer.innerHTML = '<div class="text-danger small">Unable to load users. Please refresh.</div>';
+        }
+    }
+}
+
+function renderNotificationUserList(users) {
+    const userListContainer = document.getElementById('selectedUserList');
+    if (!userListContainer) return;
+
+    if (!Array.isArray(users) || users.length === 0) {
+        userListContainer.innerHTML = '<div class="text-muted small">No users found.</div>';
+        return;
+    }
+
+    userListContainer.innerHTML = users.map(user => `
+        <label class="form-check form-check-inline d-flex align-items-center w-100 mb-1">
+            <input class="form-check-input me-2 notification-recipient-checkbox" type="checkbox" value="${user.id}">
+            <span class="form-check-label flex-grow-1">${escapeHtml(user.name)} <small class="text-muted">${escapeHtml(user.email)}</small></span>
+        </label>
+    `).join('');
+
+    const searchInput = document.getElementById('selectedUserSearch');
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.oninput = filterNotificationUsers;
+    }
+
+    const checkboxes = Array.from(document.querySelectorAll('.notification-recipient-checkbox'));
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedUserCount);
+    });
+
+    updateSelectedUserCount();
+}
+
+function filterNotificationUsers() {
+    const searchInput = document.getElementById('selectedUserSearch');
+    const filterText = searchInput ? searchInput.value.toLowerCase().trim() : '';
+    const checkboxes = Array.from(document.querySelectorAll('.notification-recipient-checkbox'));
+    checkboxes.forEach(checkbox => {
+        const label = checkbox.closest('label');
+        if (!label) return;
+        const text = label.textContent.toLowerCase();
+        label.style.display = text.includes(filterText) ? 'flex' : 'none';
+    });
+}
+
+function getSelectedUserIds() {
+    return Array.from(document.querySelectorAll('.notification-recipient-checkbox:checked')).map(input => input.value);
+}
+
+function updateSelectedUserCount() {
+    const count = getSelectedUserIds().length;
+    const countText = document.getElementById('selectedUserCountText');
+    if (countText) {
+        countText.textContent = count > 0 ? `${count} user${count === 1 ? '' : 's'} selected.` : 'No users selected.';
+    }
+}
+
+function toggleSelectedUserList(show) {
+    const container = document.getElementById('selectedUserListContainer');
+    if (!container) return;
+    container.classList.toggle('d-none', !show);
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // Example usage (for testing)
 document.addEventListener('DOMContentLoaded', function() {
     // Admin-only functionality
@@ -87,6 +193,19 @@ document.addEventListener('DOMContentLoaded', function() {
       // If on admin page, set up notification creation form
     const notificationForm = document.getElementById('sendNotificationForm');
     if (notificationForm) {
+        const notificationTarget = document.getElementById('notificationTarget');
+        const selectedUserSearch = document.getElementById('selectedUserSearch');
+
+        if (notificationTarget) {
+            notificationTarget.addEventListener('change', function() {
+                const selected = this.value === 'selected_users';
+                toggleSelectedUserList(selected);
+                if (selected) {
+                    loadNotificationUsers();
+                }
+            });
+        }
+
         notificationForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -106,17 +225,29 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             let result;
-            if (target === 'accommodation') {
-                result = await sendNotificationToAccommodationUsers(title, message);
+            if (target === 'selected_users') {
+                const recipientIds = getSelectedUserIds();
+                if (!recipientIds.length) {
+                    alert('Please select at least one recipient when using Selected Users Only.');
+                    return;
+                }
+                result = await createNotification(title, message, target, recipientIds);
                 if (result.success) {
-                    alert(`Notification sent successfully to ${result.userCount} users with accommodation information`);
+                    alert(`Notification sent successfully to ${recipientIds.length} selected users.`);
+                } else {
+                    alert(`Error creating notification: ${result.error}`);
+                }
+            } else if (target === 'accommodation_users') {
+                result = await createNotification(title, message, target);
+                if (result.success) {
+                    alert('Notification created successfully for users with accommodation.');
                 } else {
                     alert(`Error creating notification: ${result.error}`);
                 }
             } else {
-                result = await createNotification(title, message);
+                result = await createNotification(title, message, 'all');
                 if (result.success) {
-                    alert('Notification created successfully');
+                    alert('Notification created successfully for all users.');
                 } else {
                     alert(`Error creating notification: ${result.error}`);
                 }
@@ -124,6 +255,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (result.success) {
                 notificationForm.reset();
+                toggleSelectedUserList(false);
                 // Clear TinyMCE editor content
                 if (window.tinymce && tinymce.get('notificationMessage')) {
                     tinymce.get('notificationMessage').setContent('');

@@ -196,12 +196,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = doc.data();
                 
                 // Check if notification should be shown to this user
-                const targetAudience = data.targetAudience;
+                const targetAudience = data.targetAudience || 'all';
                 
-                // If notification is targeted to accommodation users only, check if user qualifies
                 if (targetAudience === 'accommodation_users' && !userHasAccommodation) {
                     console.log(`Skipping accommodation-only notification "${data.title}" - user has no accommodation info`);
                     return; // Skip this notification
+                }
+
+                if (targetAudience === 'selected_users') {
+                    const recipientIds = Array.isArray(data.recipients) ? data.recipients : [];
+                    if (!currentUserId || !recipientIds.includes(currentUserId)) {
+                        console.log(`Skipping selected-users notification "${data.title}" - user is not in recipient list`);
+                        return;
+                    }
                 }
                 
                 notifications.push({

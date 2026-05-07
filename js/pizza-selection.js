@@ -110,8 +110,11 @@ async function savePizzaChoice(pizzaType) {
         const userSelectionSnap = await getDoc(userSelectionRef);
         
         let currentSelection = null;
+        let existingPickupCode = '';
         if (userSelectionSnap.exists()) {
-            currentSelection = userSelectionSnap.data().day2;
+            const userData = userSelectionSnap.data();
+            currentSelection = userData.day2;
+            existingPickupCode = userData.pickupCode || '';
             console.log('Current selection:', currentSelection);
         }
         
@@ -125,10 +128,17 @@ async function savePizzaChoice(pizzaType) {
             console.log('Decremented old selection:', currentSelection);
         }
         
+        const newPickupCode = existingPickupCode || generatePickupCode();
+
         // Prepare data to save
         const dataToSave = {
             day2: pizzaType,
             day2_timestamp: serverTimestamp(),
+            reservedAt: serverTimestamp(),
+            pickupCode: newPickupCode,
+            pickedUp: false,
+            pickedUpAt: null,
+            pickedUpByAdmin: '',
             userId: userId,
             firstName: firstName,
             lastName: lastName,
@@ -137,7 +147,7 @@ async function savePizzaChoice(pizzaType) {
         
         console.log('Data being saved:', dataToSave);
         
-        // Save user's new pizza selection with name
+        // Save user's new pizza selection with name and pickup code
         await setDoc(userSelectionRef, dataToSave, { merge: true });
 
         // Only increment the count if it's a new selection or different from current
@@ -189,7 +199,12 @@ async function clearPizzaChoice() {
         // Clear selection
         await updateDoc(userSelectionRef, {
             day2: "",
-            day2_timestamp: serverTimestamp()
+            day2_timestamp: serverTimestamp(),
+            reservedAt: null,
+            pickupCode: "",
+            pickedUp: false,
+            pickedUpAt: null,
+            pickedUpByAdmin: ""
         });
 
         // Clear the dropdown
@@ -259,6 +274,15 @@ function getPizzaName(pizzaType) {
         'capricciosa': '� Capricciosa'
     };
     return names[pizzaType] || pizzaType;
+}
+
+function generatePickupCode() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+    let code = 'PZ-';
+    for (let i = 0; i < 6; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return code;
 }
 
 // Global function to reinitialize pizza selection after content updates

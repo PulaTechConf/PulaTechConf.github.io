@@ -3,7 +3,11 @@ import {
     collection, 
     doc,
     getDoc,
-    getDocs
+    getDocs,
+    query,
+    where,
+    updateDoc,
+    serverTimestamp
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 
 // STATE
@@ -245,6 +249,106 @@ async function loadUserPizzaSelections() {
     }
 }
 
+async function checkPizzaPickupCode() {
+    const resultContainer = document.getElementById('pizzaPickupResult');
+    const codeInput = document.getElementById('pizzaPickupCodeInput');
+    if (!codeInput || !resultContainer) return;
+
+    const code = codeInput.value.trim().toUpperCase();
+    if (!code) {
+        resultContainer.innerHTML = '<div class="alert alert-warning">Please enter a pickup code.</div>';
+        return;
+    }
+
+    try {
+        resultContainer.innerHTML = '<div class="text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Checking code...</div>';
+        const selectionsRef = collection(db, 'pizzaSelections');
+        const codeQuery = query(selectionsRef, where('pickupCode', '==', code));
+        const querySnapshot = await getDocs(codeQuery);
+
+        if (querySnapshot.empty) {
+            resultContainer.innerHTML = '<div class="alert alert-danger">Invalid pickup code. Please try again.</div>';
+            return;
+        }
+
+        const pizzaDoc = querySnapshot.docs[0];
+        const pizzaData = pizzaDoc.data();
+        const pizzaNames = {
+            'margherita': 'Margherita',
+            'gluten-free-margherita': 'Margherita (Gluten Free)',
+            'vegetarian': 'Vegetarian',
+            'tuna': 'Tuna',
+            'mushroom': 'Mushroom',
+            'capricciosa': 'Capricciosa'
+        };
+        const pizzaType = pizzaData.day2 || 'Unknown';
+        const userName = pizzaData.fullName || `${pizzaData.firstName || ''} ${pizzaData.lastName || ''}`.trim() || 'Unknown attendee';
+        const userEmail = pizzaData.email || pizzaData.userEmail || '';
+
+        if (pizzaData.pickedUp) {
+            const pickedUpAt = pizzaData.pickedUpAt ? new Date(pizzaData.pickedUpAt.seconds * 1000).toLocaleString() : 'Unknown time';
+            resultContainer.innerHTML = `
+                <div class="alert alert-warning">
+                    <h6 class="mb-2">Already picked up</h6>
+                    <p class="mb-1"><strong>${escapeHtml(userName)}</strong>${userEmail ? ` <small class="text-muted">(${escapeHtml(userEmail)})</small>` : ''}</p>
+                    <p class="mb-1"><strong>Pizza:</strong> ${escapeHtml(pizzaNames[pizzaType] || pizzaType)}</p>
+                    <p class="mb-0"><strong>Picked up at:</strong> ${pickedUpAt}</p>
+                </div>
+            `;
+            return;
+        }
+
+        resultContainer.innerHTML = `
+            <div class="alert alert-info">
+                <h6 class="mb-2">Valid pickup code</h6>
+                <p class="mb-1"><strong>${escapeHtml(userName)}</strong>${userEmail ? ` <small class="text-muted">(${escapeHtml(userEmail)})</small>` : ''}</p>
+                <p class="mb-1"><strong>Pizza:</strong> ${escapeHtml(pizzaNames[pizzaType] || pizzaType)}</p>
+                <button class="btn btn-success mt-2" id="confirmPickupBtn">Mark as Picked Up</button>
+            </div>
+        `;
+
+        const confirmButton = document.getElementById('confirmPickupBtn');
+        if (confirmButton) {
+            confirmButton.addEventListener('click', async function() {
+                await confirmPizzaPickup(pizzaDoc.id, pizzaData);
+            });
+        }
+    } catch (error) {
+        console.error('Error checking pickup code:', error);
+        resultContainer.innerHTML = `<div class="alert alert-danger">Error checking pickup code: ${escapeHtml(error.message)}</div>`;
+    }
+}
+
+async function confirmPizzaPickup(selectionId, pizzaData) {
+    const resultContainer = document.getElementById('pizzaPickupResult');
+    if (!resultContainer) return;
+
+    try {
+        const selectionRef = doc(db, 'pizzaSelections', selectionId);
+        await updateDoc(selectionRef, {
+            pickedUp: true,
+            pickedUpAt: serverTimestamp(),
+            pickedUpByAdmin: localStorage.getItem('userEmail') || localStorage.getItem('userId') || 'admin'
+        });
+
+        resultContainer.innerHTML = '<div class="alert alert-success">Pickup confirmed. The pizza has been marked as picked up.</div>';
+        loadUserPizzaSelections();
+    } catch (error) {
+        console.error('Error confirming pizza pickup:', error);
+        resultContainer.innerHTML = `<div class="alert alert-danger">Error confirming pickup: ${escapeHtml(error.message)}</div>`;
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 // INIT
 
 document.addEventListener('DOMContentLoaded', function() {
@@ -259,6 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Event listeners
     document.getElementById('refreshPizzaSummary')?.addEventListener('click', loadPizzaSummaries);
     document.getElementById('refreshUserPizzas')?.addEventListener('click', loadUserPizzaSelections);
+    document.getElementById('pizzaPickupCheckBtn')?.addEventListener('click', checkPizzaPickupCode);
     document.getElementById('pizzaSearchInput')?.addEventListener('input', debounce(applyPizzaFilters, 300));
     
     // Initial load

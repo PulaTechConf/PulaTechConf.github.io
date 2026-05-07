@@ -215,6 +215,23 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row justify-content-center mt-4">
+                            <div class="col-md-8">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h4 class="h6 mb-0"><i class="bi bi-check2-square"></i> Pizza Pickup Check-In</h4>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3">
+                                            <label for="pizzaPickupCodeInput" class="form-label">Pickup Code</label>
+                                            <input type="text" class="form-control" id="pizzaPickupCodeInput" placeholder="Enter or scan pickup code">
+                                        </div>
+                                        <button class="btn btn-primary" id="pizzaPickupCheckBtn">Check Code</button>
+                                        <div class="mt-3" id="pizzaPickupResult"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- User Pizza Selections -->
@@ -362,8 +379,15 @@
                         <label for="notificationTarget" class="form-label">Target Audience</label>
                         <select class="form-select" id="notificationTarget">
                             <option value="all">All Users</option>
-                            <option value="accommodation">Users with Accommodation Info Only</option>
+                            <option value="accommodation_users">Users with Accommodation</option>
+                            <option value="selected_users">Selected Users Only</option>
                         </select>
+                    </div>
+                    <div class="mb-3 d-none" id="selectedUserListContainer">
+                        <label class="form-label">Choose Recipients</label>
+                        <input type="text" class="form-control mb-2" id="selectedUserSearch" placeholder="Search users by name or email...">
+                        <div class="selected-user-list" id="selectedUserList" style="max-height: 260px; overflow-y: auto; border: 1px solid #ddd; border-radius: 0.375rem; padding: 0.5rem; background: #fff;"></div>
+                        <div class="form-text" id="selectedUserCountText">No users selected.</div>
                     </div>
                     <button type="submit" class="btn btn-primary">Send Notification</button>
                 </form>

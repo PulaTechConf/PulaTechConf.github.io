@@ -50,7 +50,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('lastName').textContent = userData.lastName || 'Not provided';
                 document.getElementById('email').textContent = userData.email || 'Not provided';
                 document.getElementById('affiliation').textContent = userData.affiliation || 'Not provided';
-                document.getElementById('accommodation').textContent = userData.accommodation || 'Not provided';
                 
                 // Format and display role
                 const role = localStorage.getItem('userRole') || 'general';
@@ -71,73 +70,57 @@ document.addEventListener('DOMContentLoaded', function() {
         const userId = localStorage.getItem('userId');
         const pizzaContainer = document.getElementById('pizzaSelectionSummary');
         
-        if (!userId) return;
+        if (!userId || !pizzaContainer) return;
         
         try {
-            // Get current user's name
-            const userRef = doc(db, "users", userId);
-            const userSnap = await getDoc(userRef);
+            const pizzaRef = doc(db, "pizzaSelections", userId);
+            const pizzaSnap = await getDoc(pizzaRef);
             
-            if (!userSnap.exists()) {
+            if (!pizzaSnap.exists() || !pizzaSnap.data().day2) {
                 pizzaContainer.innerHTML = `
-                    <div class="alert alert-danger">
-                        <h6><i class="bi bi-exclamation-circle me-2"></i>Error</h6>
-                        <p class="mb-0">Unable to load user information.</p>
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>No Pizza Reservation</h6>
+                        <p class="mb-0">You haven't selected a pizza yet.</p>
+                        <small class="text-muted">Please choose your pizza preference in the Schedule tab.</small>
                     </div>
                 `;
                 return;
             }
-            
-            const userData = userSnap.data();
-            const firstName = userData.firstName || '';
-            const lastName = userData.lastName || '';
-            
-            // Search for pizza selection by matching first and last name
-            const pizzaQuery = query(
-                collection(db, "pizzaSelections"),
-                where("firstName", "==", firstName),
-                where("lastName", "==", lastName)
-            );
-            
-            const pizzaSnapshot = await getDocs(pizzaQuery);
-            
-            if (!pizzaSnapshot.empty) {
-                // Found pizza selection
-                const pizzaDoc = pizzaSnapshot.docs[0];
-                const pizzaData = pizzaDoc.data();
-                
-                const pizzaNames = {
-                    'margherita': '🍅 Margherita',
-                    'pepperoni': '🍕 Pepperoni',
-                    'vegetarian': '🥬 Vegetarian',
-                    'quattro-formaggi': '🧀 Quattro Formaggi',
-                    'prosciutto': '🥓 Prosciutto',
-                    'gluten-free': '🌾 Gluten Free'
-                };
-                
-                pizzaContainer.innerHTML = `
-                    <div class="alert alert-success">
-                        <h6><i class="bi bi-check-circle me-2"></i>Selection Confirmed</h6>
-                        <p class="mb-1"><strong>${pizzaNames[pizzaData.pizzaType] || pizzaData.pizzaType}</strong></p>
-                        <small class="text-muted">Selected on ${pizzaData.timestamp ? new Date(pizzaData.timestamp.seconds * 1000).toLocaleDateString() : 'Unknown'}</small>
-                    </div>
-                `;
-            } else {
-                // No pizza selection found
-                pizzaContainer.innerHTML = `
-                    <div class="alert alert-warning">
-                        <h6><i class="bi bi-exclamation-triangle me-2"></i>No Pizza Selection</h6>
-                        <p class="mb-0">You haven't selected your pizza preference yet.</p>
-                        <small class="text-muted">Please make your selection for Day 2 lunch in the Schedule tab.</small>
-                    </div>
-                `;
-            }
+
+            const pizzaData = pizzaSnap.data();
+            const pizzaNames = {
+                'margherita': '🍅 Margherita',
+                'gluten-free-margherita': '🌾 Margherita (Gluten Free)',
+                'vegetarian': '🥬 Vegetarian',
+                'tuna': '🐟 Tuna',
+                'mushroom': '🍄 Mushroom',
+                'capricciosa': '🍕 Capricciosa'
+            };
+
+            const selectedPizza = pizzaNames[pizzaData.day2] || pizzaData.day2 || 'Unknown';
+            const reservedAt = pizzaData.reservedAt ? new Date(pizzaData.reservedAt.seconds * 1000).toLocaleString() : 'Unknown';
+            const isPickedUp = !!pizzaData.pickedUp;
+            const pickupStatus = isPickedUp ? 'Picked up' : 'Ready for pickup';
+            const pickupCode = pizzaData.pickupCode || 'Not available';
+            const pickedUpAt = pizzaData.pickedUpAt ? new Date(pizzaData.pickedUpAt.seconds * 1000).toLocaleString() : null;
+            const pickedUpByAdmin = pizzaData.pickedUpByAdmin || null;
+
+            pizzaContainer.innerHTML = `
+                <div class="alert alert-success">
+                    <h6><i class="bi bi-check-circle me-2"></i>Pizza Reservation</h6>
+                    <p class="mb-2"><strong>${selectedPizza}</strong></p>
+                    <p class="mb-1"><strong>Status:</strong> ${pickupStatus}</p>
+                    <p class="mb-1"><strong>Reserved:</strong> ${reservedAt}</p>
+                    <p class="mb-1"><strong>Pickup Code:</strong> <code>${escapeHtml(pickupCode)}</code></p>
+                    ${pickedUpAt ? `<p class="mb-0 text-success"><strong>Picked up at:</strong> ${pickedUpAt}${pickedUpByAdmin ? ` by ${escapeHtml(pickedUpByAdmin)}` : ''}</p>` : ''}
+                </div>
+            `;
         } catch (error) {
             console.error("Error loading pizza selection:", error);
             pizzaContainer.innerHTML = `
                 <div class="alert alert-danger">
                     <h6><i class="bi bi-exclamation-circle me-2"></i>Error</h6>
-                    <p class="mb-0">Unable to load pizza selection.</p>
+                    <p class="mb-0">Unable to load pizza reservation.</p>
                 </div>
             `;
         }
@@ -162,5 +145,15 @@ document.addEventListener('DOMContentLoaded', function() {
             alert.classList.remove('show');
             setTimeout(() => alert.remove(), 150);
         }, 5000);
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
     }
 });
