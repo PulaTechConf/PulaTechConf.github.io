@@ -277,8 +277,12 @@ function getPizzaName(pizzaType) {
 }
 
 function generatePickupCode() {
-    // Generate a simple 4-digit numeric code for faster entry
-    const code = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+    // Generate a barcode-friendly code: PZXXXXXX (10 alphanumeric characters)
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; // No I, L, O, 0, 1 for clarity
+    let code = 'PZ';
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
     return code;
 }
 

@@ -62,6 +62,37 @@ function debounce(func, wait) {
     };
 }
 
+// Show barcode preview modal
+function showBarcodePreview(code, userName) {
+    const modal = document.getElementById('barcodeModal');
+    if (!modal) {
+        console.warn('Barcode modal not found');
+        return;
+    }
+    
+    // Update modal content
+    document.getElementById('barcodeModalTitle').textContent = `Barcode for ${userName}`;
+    const barcodeSvg = document.getElementById('barcodeSvg');
+    barcodeSvg.innerHTML = ''; // Clear previous barcode
+    
+    try {
+        JsBarcode("#barcodeSvg", code, {
+            format: "CODE128",
+            width: 2,
+            height: 120,
+            displayValue: true,
+            fontSize: 14
+        });
+    } catch (error) {
+        console.error('Error generating barcode:', error);
+        barcodeSvg.innerHTML = '<p class="text-danger">Error generating barcode</p>';
+    }
+    
+    // Show modal using Bootstrap
+    const bsModal = new bootstrap.Modal(modal);
+    bsModal.show();
+}
+
 // FILTER LOGIC
 
 function applyPizzaFilters() {
@@ -113,7 +144,14 @@ function renderPizzaDesktopTable(data) {
                         ${pizza.emoji} ${escapeHtml(pizza.name)}
                     </span>
                 </td>
-                <td><code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${escapeHtml(selection.pickupCode)}</code></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 3px; font-size: 0.85rem;">${escapeHtml(selection.pickupCode)}</code>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="showBarcodePreview('${escapeHtml(selection.pickupCode)}', '${escapeHtml(selection.userName)}')" title="Show barcode">
+                            <i class="bi bi-barcode"></i>
+                        </button>
+                    </div>
+                </td>
                 <td>${pickedUpBadge}</td>
             </tr>
         `;
@@ -147,6 +185,9 @@ function renderPizzaMobileCards(data) {
                     </div>
                     <div style="margin-top: 8px; font-size: 0.85rem;">
                         <small class="text-muted">Code: </small><code style="background: #f5f5f5; padding: 2px 6px; border-radius: 3px;">${escapeHtml(selection.pickupCode)}</code>
+                        <button class="btn btn-sm btn-outline-secondary ms-1" onclick="showBarcodePreview('${escapeHtml(selection.pickupCode)}', '${escapeHtml(selection.userName)}')" title="Show barcode">
+                            <i class="bi bi-barcode"></i>
+                        </button>
                     </div>
                     ${pickedUpBadge}
                 </div>
@@ -370,7 +411,55 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('pizzaPickupCheckBtn')?.addEventListener('click', checkPizzaPickupCode);
     document.getElementById('pizzaSearchInput')?.addEventListener('input', debounce(applyPizzaFilters, 300));
     
+    // Barcode scanner input listener (auto-submit on scan)
+    const barcodeInput = document.getElementById('pizzaBarcodeInput');
+    if (barcodeInput) {
+        barcodeInput.addEventListener('keypress', function(event) {
+            // Most barcode scanners send an Enter key at the end
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                processBarcodeInput();
+            }
+        });
+        
+        // Also process after a short delay of inactivity (barcode scanner typically finishes within 100-200ms)
+        let barcodeTimeout;
+        barcodeInput.addEventListener('input', function() {
+            clearTimeout(barcodeTimeout);
+            if (this.value.length > 0) {
+                barcodeTimeout = setTimeout(() => {
+                    if (this.value.startsWith('PZ') && this.value.length >= 8) {
+                        processBarcodeInput();
+                    }
+                }, 100);
+            }
+        });
+    }
+    
     // Initial load
     loadPizzaSummaries();
     loadUserPizzaSelections();
 });
+
+// Process barcode scanner input
+function processBarcodeInput() {
+    const barcodeInput = document.getElementById('pizzaBarcodeInput');
+    if (!barcodeInput) return;
+    
+    const code = barcodeInput.value.trim().toUpperCase();
+    if (!code.startsWith('PZ') || code.length < 8) {
+        return; // Not a valid barcode format, wait for more input
+    }
+    
+    // Set the manual input field and check
+    const manualInput = document.getElementById('pizzaPickupCodeInput');
+    if (manualInput) {
+        manualInput.value = code;
+    }
+    
+    // Trigger the check
+    checkPizzaPickupCode();
+    
+    // Clear the barcode input and keep focus for next scan
+    barcodeInput.value = '';
+}

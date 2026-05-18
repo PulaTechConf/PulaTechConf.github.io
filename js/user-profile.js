@@ -2,6 +2,7 @@ import { db } from './firebase-config.js';
 import { 
     doc, 
     getDoc,
+    setDoc,
     collection,
     getDocs,
     query,
@@ -84,6 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
     async function loadPizzaSelection() {
         const userId = localStorage.getItem('userId');
         const pizzaContainer = document.getElementById('pizzaSelectionSummary');
+        const barcodeContainer = document.getElementById('pizzaBarcodeContainer');
         
         if (!userId || !pizzaContainer) return;
         
@@ -94,11 +96,48 @@ document.addEventListener('DOMContentLoaded', function() {
             if (!pizzaSnap.exists() || !pizzaSnap.data().day2) {
                 pizzaContainer.innerHTML = `
                     <div class="alert alert-warning">
-                        <h6><i class="bi bi-exclamation-triangle me-2"></i>No Pizza Reservation</h6>
-                        <p class="mb-0">You haven't selected a pizza yet.</p>
-                        <small class="text-muted">Please choose your pizza preference in the Schedule tab.</small>
+                        <h6><i class="bi bi-exclamation-triangle me-2"></i>Select Your Pizza</h6>
+                        <p class="mb-3">Choose your pizza preference for Day 2 (Thursday, July 17)</p>
+                        <label for="noPizzaSelectDropdown" class="form-label">Pizza Selection</label>
+                        <div class="input-group mb-2">
+                            <select class="form-select" id="noPizzaSelectDropdown">
+                                <option value="">-- Select a pizza --</option>
+                                <option value="margherita">🍅 Margherita</option>
+                                <option value="gluten-free-margherita">🌾 Margherita (Gluten Free)</option>
+                                <option value="vegetarian">🥬 Vegetarian</option>
+                                <option value="tuna">🐟 Tuna</option>
+                                <option value="mushroom">🍄 Mushroom</option>
+                                <option value="capricciosa">🍕 Capricciosa</option>
+                            </select>
+                            <button class="btn btn-primary" id="noPizzaSaveBtn" type="button">Save Selection</button>
+                        </div>
+                        <div id="noPizzaStatus" class="mt-2"></div>
                     </div>
                 `;
+                
+                // Set up event listeners
+                const saveBtn = document.getElementById('noPizzaSaveBtn');
+                const dropdown = document.getElementById('noPizzaSelectDropdown');
+                
+                if (saveBtn && dropdown) {
+                    saveBtn.addEventListener('click', async function() {
+                        const selectedPizza = dropdown.value;
+                        if (!selectedPizza) {
+                            const statusDiv = document.getElementById('noPizzaStatus');
+                            statusDiv.innerHTML = '<div class="alert alert-warning mb-0">Please select a pizza first</div>';
+                            return;
+                        }
+                        await savePizzaSelectionFromProfile(selectedPizza);
+                    });
+                    
+                    dropdown.addEventListener('keypress', async function(e) {
+                        if (e.key === 'Enter' && this.value) {
+                            await savePizzaSelectionFromProfile(this.value);
+                        }
+                    });
+                }
+                
+                if (barcodeContainer) barcodeContainer.style.display = 'none';
                 return;
             }
 
@@ -143,6 +182,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             `;
 
+            // Show barcode
+            if (barcodeContainer) {
+                barcodeContainer.style.display = 'block';
+                // Generate barcode using JsBarcode library
+                try {
+                    JsBarcode("#pizzaBarcode", pickupCode, {
+                        format: "CODE128",
+                        width: 2,
+                        height: 100,
+                        displayValue: true
+                    });
+                } catch (error) {
+                    console.warn('Could not generate barcode:', error);
+                }
+            }
+
             // Show edit button and set up edit form
             const editBtn = document.getElementById('profilePizzaEditBtn');
             if (editBtn) {
@@ -159,6 +214,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <p class="mb-0">Unable to load pizza reservation.</p>
                 </div>
             `;
+            if (barcodeContainer) barcodeContainer.style.display = 'none';
         }
     }
     
@@ -195,8 +251,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function generatePickupCode() {
         const chars = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
-        let code = 'PZ-';
-        for (let i = 0; i < 6; i++) {
+        let code = 'PZ';
+        for (let i = 0; i < 8; i++) {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;
@@ -294,4 +350,79 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
+
+    async function savePizzaSelectionFromProfile(pizzaType) {
+        const userId = localStorage.getItem('userId');
+        const statusDiv = document.getElementById('noPizzaStatus');
+        
+        if (!userId) {
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="alert alert-warning mb-0">Please log in to save your pizza selection.</div>';
+            }
+            return;
+        }
+
+        try {
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="text-muted small">Saving...</div>';
+            }
+
+            // Get user's profile data
+            const userProfileRef = doc(db, "users", userId);
+            const userProfileSnap = await getDoc(userProfileRef);
+            
+            let firstName = '';
+            let lastName = '';
+            
+            if (userProfileSnap.exists()) {
+                const userData = userProfileSnap.data();
+                firstName = userData.firstName || '';
+                lastName = userData.lastName || '';
+            }
+            
+            // Generate pickup code
+            const newPickupCode = generatePickupCode();
+            
+            // Prepare data to save
+            const dataToSave = {
+                day2: pizzaType,
+                day2_timestamp: serverTimestamp(),
+                reservedAt: serverTimestamp(),
+                pickupCode: newPickupCode,
+                pickedUp: false,
+                pickedUpAt: null,
+                pickedUpByAdmin: '',
+                userId: userId,
+                firstName: firstName,
+                lastName: lastName,
+                fullName: `${firstName} ${lastName}`.trim()
+            };
+            
+            // Save user's pizza selection
+            const pizzaRef = doc(db, "pizzaSelections", userId);
+            await setDoc(pizzaRef, dataToSave, { merge: true });
+            
+            // Update summary count
+            const summaryRef = doc(db, "pizzaSummary", "day2");
+            await setDoc(summaryRef, {
+                [pizzaType]: increment(1),
+                lastUpdated: serverTimestamp()
+            }, { merge: true });
+            
+            if (statusDiv) {
+                statusDiv.innerHTML = '<div class="alert alert-success mb-0">✅ Pizza selection saved!</div>';
+            }
+            
+            // Reload the profile to show barcode and confirmation
+            setTimeout(() => {
+                loadPizzaSelection();
+            }, 800);
+        } catch (error) {
+            console.error("Error saving pizza selection:", error);
+            if (statusDiv) {
+                statusDiv.innerHTML = `<div class="alert alert-danger mb-0">Error saving selection: ${error.message}</div>`;
+            }
+        }
+    }
 });
+
