@@ -35,6 +35,11 @@ const pizzaEmojis = {
     'capricciosa': '🍕'
 };
 
+let cameraStream = null;
+let cameraScanActive = false;
+let barcodeDetector = null;
+let cameraScanTimer = null;
+
 // HELPER FUNCTIONS
 
 function escapeHtml(str) {
@@ -413,15 +418,17 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Barcode scanner input listener (auto-submit on scan)
     const barcodeInput = document.getElementById('pizzaBarcodeInput');
+    const cameraScanBtn = document.getElementById('pizzaCameraScanBtn');
+    const cameraStopBtn = document.getElementById('pizzaCameraStopBtn');
+
     if (barcodeInput) {
-        barcodeInput.addEventListener('keypress', function(event) {
-            // Most barcode scanners send an Enter key at the end
+        barcodeInput.addEventListener('keydown', function(event) {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 processBarcodeInput();
             }
         });
-        
+
         // Also process after a short delay of inactivity (barcode scanner typically finishes within 100-200ms)
         let barcodeTimeout;
         barcodeInput.addEventListener('input', function() {
@@ -431,9 +438,17 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (this.value.startsWith('PZ') && this.value.length >= 8) {
                         processBarcodeInput();
                     }
-                }, 100);
+                }, 150);
             }
         });
+    }
+
+    if (cameraScanBtn) {
+        cameraScanBtn.addEventListener('click', startCameraScan);
+    }
+
+    if (cameraStopBtn) {
+        cameraStopBtn.addEventListener('click', stopCameraScan);
     }
     
     // Initial load
@@ -462,4 +477,133 @@ function processBarcodeInput() {
     
     // Clear the barcode input and keep focus for next scan
     barcodeInput.value = '';
+}
+
+async function startCameraScan() {
+    const cameraContainer = document.getElementById('pizzaCameraContainer');
+    const cameraStatus = document.getElementById('pizzaCameraStatus');
+    const cameraPreview = document.getElementById('pizzaCameraPreview');
+    const cameraScanBtn = document.getElementById('pizzaCameraScanBtn');
+    const cameraStopBtn = document.getElementById('pizzaCameraStopBtn');
+
+    if (!cameraContainer || !cameraStatus || !cameraPreview || !cameraScanBtn || !cameraStopBtn) {
+        return;
+    }
+
+    if (cameraScanActive) {
+        return;
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        cameraStatus.textContent = 'Camera scanning is not supported by this browser.';
+        cameraStatus.className = 'alert alert-danger mt-2 mb-0';
+        return;
+    }
+
+    try {
+        if ('BarcodeDetector' in window) {
+            barcodeDetector = new BarcodeDetector({ formats: ['code_128', 'ean_13', 'qr_code', 'code_39', 'code_93', 'itf'] });
+        } else {
+            barcodeDetector = null;
+        }
+
+        cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        cameraPreview.srcObject = cameraStream;
+        await cameraPreview.play();
+
+        cameraContainer.classList.remove('d-none');
+        cameraScanBtn.classList.add('d-none');
+        cameraStopBtn.classList.remove('d-none');
+        cameraStatus.textContent = 'Scanning... Point your camera at the barcode.';
+        cameraStatus.className = 'alert alert-info mt-2 mb-0';
+        cameraScanActive = true;
+
+        if (!barcodeDetector) {
+            cameraStatus.textContent = 'Camera is active, but BarcodeDetector is not supported in this browser. Use a hardware scanner or manual lookup.';
+            cameraStatus.className = 'alert alert-warning mt-2 mb-0';
+            return;
+        }
+
+        scanCameraFrame();
+    } catch (error) {
+        console.error('Camera scan error:', error);
+        cameraStatus.textContent = 'Could not start camera scan. Please allow camera access or use manual lookup.';
+        cameraStatus.className = 'alert alert-danger mt-2 mb-0';
+        stopCameraScan();
+    }
+}
+
+function stopCameraScan() {
+    const cameraContainer = document.getElementById('pizzaCameraContainer');
+    const cameraPreview = document.getElementById('pizzaCameraPreview');
+    const cameraScanBtn = document.getElementById('pizzaCameraScanBtn');
+    const cameraStopBtn = document.getElementById('pizzaCameraStopBtn');
+    const cameraStatus = document.getElementById('pizzaCameraStatus');
+
+    if (cameraScanTimer) {
+        clearTimeout(cameraScanTimer);
+        cameraScanTimer = null;
+    }
+
+    if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+    }
+
+    if (cameraPreview) {
+        cameraPreview.srcObject = null;
+    }
+
+    if (cameraContainer) {
+        cameraContainer.classList.add('d-none');
+    }
+    if (cameraScanBtn) {
+        cameraScanBtn.classList.remove('d-none');
+    }
+    if (cameraStopBtn) {
+        cameraStopBtn.classList.add('d-none');
+    }
+    if (cameraStatus) {
+        cameraStatus.textContent = 'Camera scan stopped.';
+        cameraStatus.className = 'alert alert-secondary mt-2 mb-0';
+    }
+
+    cameraScanActive = false;
+}
+
+async function scanCameraFrame() {
+    if (!cameraScanActive || !barcodeDetector) {
+        return;
+    }
+
+    const cameraPreview = document.getElementById('pizzaCameraPreview');
+    const cameraStatus = document.getElementById('pizzaCameraStatus');
+    if (!cameraPreview || !cameraStatus) {
+        return;
+    }
+
+    try {
+        const barcodes = await barcodeDetector.detect(cameraPreview);
+        if (barcodes && barcodes.length > 0) {
+            const rawValue = barcodes[0].rawValue.trim();
+            if (rawValue) {
+                stopCameraScan();
+                cameraStatus.textContent = `Scanned code: ${rawValue}`;
+                cameraStatus.className = 'alert alert-success mt-2 mb-0';
+
+                const manualInput = document.getElementById('pizzaPickupCodeInput');
+                if (manualInput) {
+                    manualInput.value = rawValue;
+                }
+                checkPizzaPickupCode();
+                return;
+            }
+        }
+    } catch (error) {
+        console.warn('Barcode detection error:', error);
+        cameraStatus.textContent = 'Unable to detect barcode from the camera. Try pointing closer or using better lighting.';
+        cameraStatus.className = 'alert alert-warning mt-2 mb-0';
+    }
+
+    cameraScanTimer = setTimeout(scanCameraFrame, 500);
 }
