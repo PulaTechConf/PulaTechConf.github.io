@@ -148,12 +148,12 @@ function loadCertificateImage() {
 function fitNameFont(ctx, text, maxWidth, preferredSize) {
     let fontSize = preferredSize;
 
-    while (fontSize > 120) {
+    while (fontSize > 180) {
         ctx.font = `${fontSize}px "Italianno", "Times New Roman", serif`;
         if (ctx.measureText(text).width <= maxWidth) {
             return fontSize;
         }
-        fontSize -= 12;
+        fontSize -= 10;
     }
 
     return fontSize;
@@ -189,17 +189,17 @@ async function generateCertificate(userData) {
         canvas.height = image.height;
         ctx.drawImage(image, 0, 0);
 
-        const maxWidth = canvas.width * 0.74;
-        const preferredSize = Math.max(220, Math.round(canvas.width * 0.18));
-        const fontSize = fontReady ? fitNameFont(ctx, fullName, maxWidth, preferredSize) : 150;
+        const maxWidth = canvas.width * 0.58;
+        const preferredSize = Math.round(canvas.width * 0.105);
+        const fontSize = fontReady ? fitNameFont(ctx, fullName, maxWidth, preferredSize) : 190;
 
         ctx.font = fontReady
             ? `${fontSize}px "Italianno", "Times New Roman", serif`
             : `${fontSize}px "Times New Roman", serif`;
         ctx.fillStyle = '#333333';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(fullName, canvas.width / 2, canvas.height * 0.52, maxWidth);
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(fullName, canvas.width / 2, canvas.height * 0.515, maxWidth);
 
         const imageData = canvas.toDataURL('image/jpeg', 0.95);
         const { PDFDocument } = window.PDFLib;
