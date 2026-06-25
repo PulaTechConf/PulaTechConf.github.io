@@ -180,6 +180,7 @@ if (registerForm) {
                 email,
                 password, // Note: In a real app, passwords should be hashed
                 role: "general", // Default role for new users
+                certificateEnabled: false,
                 createdAt: new Date().toISOString()
             };
             

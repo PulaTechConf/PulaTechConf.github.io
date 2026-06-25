@@ -248,134 +248,115 @@ function handleCalendarButtonClick(e) {
 function addAllEventsToCalendar() {
     const events = [
         {
-            title: 'TFPU 2025 - Registration & Welcome',
-            start: '2025-07-16T19:00:00',
-            end: '2025-07-16T19:30:00',
-            location: 'Campus Restaurant, Petra Preradovića 9a, Pula',
-            description: 'Registration and Welcome desk'
+            title: 'TFPU 2026 - Registration',
+            start: '2026-07-15T19:00:00',
+            end: '2026-07-15T19:30:00',
+            location: 'Campus restaurant, Petra Preradovica 9a, Pula',
+            description: 'Registration - Welcome desk'
         },
         {
-            title: 'TFPU 2025 - Cocktail & Ice-breaking Event',
-            start: '2025-07-16T20:00:00',
-            end: '2025-07-16T21:30:00',
-            location: 'Campus Restaurant, Petra Preradovića 9a, Pula',
+            title: 'TFPU 2026 - Cocktail and Ice-Breaking Event',
+            start: '2026-07-15T20:00:00',
+            end: '2026-07-15T21:30:00',
+            location: 'Campus restaurant, Petra Preradovica 9a, Pula',
             description: 'Refreshments and networking'
         },
         {
-            title: 'TFPU 2025 - Opening Ceremony',
-            start: '2025-07-17T10:00:00',
-            end: '2025-07-17T10:35:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
+            title: 'TFPU 2026 - Official Welcome',
+            start: '2026-07-16T10:00:00',
+            end: '2026-07-16T10:15:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Official Welcome'
+        },
+        {
+            title: 'TFPU 2026 - Round Table Discussion',
+            start: '2026-07-16T10:35:00',
+            end: '2026-07-16T11:25:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Industry and Academia in Joint Opportunities in Higher Education'
+        },
+        {
+            title: 'TFPU 2026 - Coffee Break',
+            start: '2026-07-16T11:00:00',
+            end: '2026-07-16T11:10:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Refreshments'
+        },
+        {
+            title: 'TFPU 2026 - Questions and Answers',
+            start: '2026-07-16T11:10:00',
+            end: '2026-07-16T11:35:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Questions and Answers'
+        },
+        {
+            title: "TFPU 2026 - Industrial Partners' Presentations",
+            start: '2026-07-16T11:35:00',
+            end: '2026-07-16T12:40:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: "Industrial Partners' Presentations"
+        },
+        {
+            title: 'TFPU 2026 - Lunch Break',
+            start: '2026-07-16T12:40:00',
+            end: '2026-07-16T13:30:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Lunch Break'
+        },
+        {
+            title: 'TFPU 2026 - Opening Ceremony',
+            start: '2026-07-17T10:00:00',
+            end: '2026-07-17T10:35:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
             description: 'Official welcome'
         },
         {
-            title: 'TFPU 2025 - Invited Lecture 1',
-            start: '2025-07-17T10:35:00',
-            end: '2025-07-17T10:55:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'First invited lecture'
+            title: 'TFPU 2026 - Invited Lecture: Prof. Maja Dragan',
+            start: '2026-07-17T10:35:00',
+            end: '2026-07-17T10:55:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Prof. Maja Dragan, FH Joanneum, Graz, Austria'
         },
         {
-            title: 'TFPU 2025 - Coffee Break',
-            start: '2025-07-17T11:00:00',
-            end: '2025-07-17T11:10:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Refreshments'
+            title: 'TFPU 2026 - Invited Lecture: Assoc. Prof. Hasan Sozen',
+            start: '2026-07-17T11:10:00',
+            end: '2026-07-17T11:35:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Assoc. Prof. Hasan Sozen, University of Ordu, Turkey'
         },
         {
-            title: 'TFPU 2025 - Invited Lecture 2',
-            start: '2025-07-17T11:10:00',
-            end: '2025-07-17T11:35:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Second invited lecture'
+            title: 'TFPU 2026 - Invited Lecture: Assoc. Prof. Ziga Emersic',
+            start: '2026-07-17T11:35:00',
+            end: '2026-07-17T12:00:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'Assoc. Prof. Ziga Emersic, University of Ljubljana, Slovenia'
         },
         {
-            title: 'TFPU 2025 - Invited Lecture 3',
-            start: '2025-07-17T11:35:00',
-            end: '2025-07-17T12:00:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Third invited lecture'
+            title: 'TFPU 2026 - On-Site Presentations',
+            start: '2026-07-17T13:30:00',
+            end: '2026-07-17T15:30:00',
+            location: 'Coworking Pula, Marka Marulica 5, Pula',
+            description: 'On-Site Presentations'
         },
         {
-            title: 'TFPU 2025 - Round Table Discussion',
-            start: '2025-07-17T12:00:00',
-            end: '2025-07-17T12:40:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Education and Opportunities in Dual Studies'
-        },
-        {
-            title: 'TFPU 2025 - Lunch Break',
-            start: '2025-07-17T12:40:00',
-            end: '2025-07-17T13:30:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Pizza lunch - remember to make your selection!'
-        },
-        {
-            title: 'TFPU 2025 - Upping Zone Lecture',
-            start: '2025-07-17T13:30:00',
-            end: '2025-07-17T14:20:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'From Failure to Success'
-        },
-        {
-            title: 'TFPU 2025 - Coffee Break',
-            start: '2025-07-17T14:20:00',
-            end: '2025-07-17T14:30:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Refreshments'
-        },
-        {
-            title: 'TFPU 2025 - Presentations',
-            start: '2025-07-17T14:30:00',
-            end: '2025-07-17T15:50:00',
-            location: 'Coworking Pula, Marka Marulića 5, Pula',
-            description: 'Engineering, Innovations, Industry & Technology / Medicine, Society & Innovations'
-        },
-        {
-            title: 'TFPU 2025 - City Tour & Networking',
-            start: '2025-07-17T18:00:00',
-            end: '2025-07-17T20:00:00',
-            location: 'Pula City Center',
-            description: 'Self-organized city tour and networking'
-        },
-        {
-            title: 'TFPU 2025 - Breakfast & Exhibition',
-            start: '2025-07-18T10:00:00',
-            end: '2025-07-18T12:00:00',
-            location: 'Campus Restaurant, Petra Preradovića 9a, Pula',
-            description: 'Breakfast with Participants + Opening of the Exhibition: Science, Technology and Art'
-        },
-        {
-            title: 'TFPU 2025 - Transfer to Fratarski Island',
-            start: '2025-07-18T13:30:00',
-            end: '2025-07-18T14:30:00',
-            location: 'Fratarski Island Student Camp',
-            description: 'Transfer to island activities'
-        },
-        {
-            title: 'TFPU 2025 - Island Lectures & Workshops',
-            start: '2025-07-18T17:00:00',
-            end: '2025-07-18T20:00:00',
-            location: 'Fratarski Island Student Camp',
-            description: 'Lectures and Workshops on the island'
+            title: 'TFPU 2026 - Online Presentations',
+            start: '2026-07-17T13:00:00',
+            end: '2026-07-17T15:30:00',
+            location: 'Google Meet',
+            description: 'Hybrid mode via https://meet.google.com/bfj-efqx-hbm'
         }
     ];
-    
-    // Create Google Calendar links for all events
-    const calendarLinks = events.map(event => {
-        return createGoogleCalendarUrl(event);
-    });
-    
-    // Open multiple calendar windows (browsers might block this)
+
+    const calendarLinks = events.map(event => createGoogleCalendarUrl(event));
+
     if (confirm('This will open multiple tabs to add all conference events to your Google Calendar. Continue?')) {
         calendarLinks.forEach((link, index) => {
             setTimeout(() => {
                 window.open(link, '_blank');
-            }, index * 500); // Stagger the opening to avoid popup blockers
+            }, index * 500);
         });
     }
 }
-
 // Helper function to create Google Calendar URL
 function createGoogleCalendarUrl(event) {
     const startTime = event.start.replace(/[-:]/g, '').replace('T', 'T');
@@ -487,7 +468,7 @@ async function bookMassageAppointment() {
             userName: userName,
             timeSlot: timeSlot,
             chairNumber: chairNumber,
-            date: '2025-07-17',
+            date: '2026-07-16',
             service: 'physio_massage',
             bookedAt: serverTimestamp()
         });
@@ -549,9 +530,9 @@ function showMassageStatus(message, type) {
 /*
 async function scheduleMassageReminder(timeSlot, userId) {
     try {
-        // Create reminder date for July 17, 2025
+        // Create reminder date for July 16, 2026
         const [hours, minutes] = timeSlot.split(':').map(Number);
-        const reminderDate = new Date('2025-07-17T' + timeSlot + ':00');
+        const reminderDate = new Date('2026-07-16T' + timeSlot + ':00');
         reminderDate.setMinutes(reminderDate.getMinutes() - 10); // 10 minutes before
         
         const reminderData = {
@@ -605,27 +586,27 @@ function updateScheduleProgress() {
     
     // Define conference events with their times
     const conferenceEvents = [
-        // Day 1 - July 16, 2025
-        { date: '2025-07-16', startTime: 19 * 60, endTime: 19 * 60 + 30, id: 'day1-registration' },
-        { date: '2025-07-16', startTime: 20 * 60, endTime: 21 * 60 + 30, id: 'day1-cocktail' },
-        
-        // Day 2 - July 17, 2025
-        { date: '2025-07-17', startTime: 10 * 60, endTime: 10 * 60 + 35, id: 'day2-opening' },
-        { date: '2025-07-17', startTime: 10 * 60 + 35, endTime: 10 * 60 + 55, id: 'day2-lecture1' },
-        { date: '2025-07-17', startTime: 11 * 60, endTime: 11 * 60 + 10, id: 'day2-coffee1' },
-        { date: '2025-07-17', startTime: 11 * 60 + 10, endTime: 11 * 60 + 35, id: 'day2-lecture2' },
-        { date: '2025-07-17', startTime: 11 * 60 + 35, endTime: 12 * 60, id: 'day2-lecture3' },
-        { date: '2025-07-17', startTime: 12 * 60, endTime: 12 * 60 + 40, id: 'day2-roundtable' },
-        { date: '2025-07-17', startTime: 12 * 60 + 40, endTime: 13 * 60 + 30, id: 'day2-lunch' },
-        { date: '2025-07-17', startTime: 13 * 60 + 30, endTime: 14 * 60 + 20, id: 'day2-upping' },
-        { date: '2025-07-17', startTime: 14 * 60 + 20, endTime: 14 * 60 + 30, id: 'day2-coffee2' },
-        { date: '2025-07-17', startTime: 14 * 60 + 30, endTime: 15 * 60 + 50, id: 'day2-presentations' },
-        { date: '2025-07-17', startTime: 18 * 60, endTime: 20 * 60, id: 'day2-citytour' },
-        
-        // Day 3 - July 18, 2025
-        { date: '2025-07-18', startTime: 10 * 60, endTime: 12 * 60, id: 'day3-breakfast' },
-        { date: '2025-07-18', startTime: 13 * 60 + 30, endTime: 14 * 60 + 30, id: 'day3-transfer' },
-        { date: '2025-07-18', startTime: 17 * 60, endTime: 20 * 60, id: 'day3-lectures' }
+        // Day 1 - July 15, 2026
+        { date: '2026-07-15', startTime: 19 * 60, endTime: 19 * 60 + 30, id: 'day1-registration' },
+        { date: '2026-07-15', startTime: 20 * 60, endTime: 21 * 60 + 30, id: 'day1-cocktail' },
+
+        // Day 2 - July 16, 2026
+        { date: '2026-07-16', startTime: 10 * 60, endTime: 10 * 60 + 15, id: 'day2-welcome' },
+        { date: '2026-07-16', startTime: 10 * 60 + 35, endTime: 11 * 60 + 25, id: 'day2-roundtable' },
+        { date: '2026-07-16', startTime: 11 * 60, endTime: 11 * 60 + 10, id: 'day2-coffee' },
+        { date: '2026-07-16', startTime: 11 * 60 + 10, endTime: 11 * 60 + 35, id: 'day2-qa' },
+        { date: '2026-07-16', startTime: 11 * 60 + 35, endTime: 12 * 60 + 40, id: 'day2-partners' },
+        { date: '2026-07-16', startTime: 12 * 60 + 40, endTime: 13 * 60 + 30, id: 'day2-lunch' },
+
+        // Day 3 - July 17, 2026
+        { date: '2026-07-17', startTime: 10 * 60, endTime: 10 * 60 + 35, id: 'day3-opening' },
+        { date: '2026-07-17', startTime: 10 * 60 + 35, endTime: 10 * 60 + 55, id: 'day3-lecture-maja' },
+        { date: '2026-07-17', startTime: 11 * 60, endTime: 11 * 60 + 10, id: 'day3-coffee' },
+        { date: '2026-07-17', startTime: 11 * 60 + 10, endTime: 11 * 60 + 35, id: 'day3-lecture-hasan' },
+        { date: '2026-07-17', startTime: 11 * 60 + 35, endTime: 12 * 60, id: 'day3-lecture-ziga' },
+        { date: '2026-07-17', startTime: 12 * 60 + 40, endTime: 13 * 60 + 30, id: 'day3-lunch' },
+        { date: '2026-07-17', startTime: 13 * 60, endTime: 15 * 60 + 30, id: 'day3-online-presentations' },
+        { date: '2026-07-17', startTime: 13 * 60 + 30, endTime: 15 * 60 + 30, id: 'day3-onsite-presentations' }
     ];
     
     // Clear all existing classes
@@ -688,6 +669,15 @@ function updateScheduleProgress() {
 }
 
 function getScheduleItemByTime(event) {
+    const expectedHour = Math.floor(event.startTime / 60).toString().padStart(2, '0');
+    const expectedMinute = (event.startTime % 60).toString().padStart(2, '0');
+    const expectedStart = `${event.date}T${expectedHour}:${expectedMinute}:00`;
+    const calendarButton = document.querySelector(`.add-to-calendar-btn[data-event-start="${expectedStart}"]`);
+
+    if (calendarButton) {
+        return calendarButton.closest('.schedule-item');
+    }
+
     const startHour = Math.floor(event.startTime / 60);
     const startMinute = event.startTime % 60;
     const endHour = Math.floor(event.endTime / 60);
@@ -761,25 +751,23 @@ function addIndividualCalendarButtons() {
             calendarBtn.style.float = 'right';
             
             // Determine the date based on the accordion section
-            let eventDate = '2025-07-16'; // Default Day 1
+            let eventDate = '2026-07-15'; // Default Day 1
             const accordionItem = item.closest('.accordion-item');
             if (accordionItem) {
                 const dayTitle = accordionItem.querySelector('.accordion-button').textContent;
-                if (dayTitle.includes('July 17')) {
-                    eventDate = '2025-07-17';
-                } else if (dayTitle.includes('July 18')) {
-                    eventDate = '2025-07-18';
+                if (dayTitle.includes('July 16')) {
+                    eventDate = '2026-07-16';
+                } else if (dayTitle.includes('July 17')) {
+                    eventDate = '2026-07-17';
                 }
             }
             
             // Get location based on day
             let location = 'Campus Restaurant, Petra Preradovića 9a, Pula';
-            if (eventDate === '2025-07-17') {
-                location = 'Coworking Pula, Marka Marulića 5, Pula';
-            } else if (eventDate === '2025-07-18') {
-                location = 'Campus Restaurant / Fratarski Island, Pula';
+            if (eventDate === '2026-07-16' || eventDate === '2026-07-17') {
+                location = 'Coworking Pula, Marka Marulica 5, Pula';
             }
-            
+
             calendarBtn.addEventListener('click', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
@@ -797,7 +785,7 @@ function addIndividualCalendarButtons() {
 function addSingleEventToCalendar(title, timeText, date, location) {
     try {
         // Parse time range
-        const timeRange = timeText.split('–');
+        const timeRange = timeText.split(/\s*(?:-|\u2013|\u2014)\s*/);
         let startTime, endTime;
         
         if (timeRange.length === 2) {
@@ -818,11 +806,11 @@ function addSingleEventToCalendar(title, timeText, date, location) {
         const endDateTime = `${date}T${endTime}:00`;
         
         const event = {
-            title: `TFPU 2025 - ${title}`,
+            title: `TFPU 2026 - ${title}`,
             start: startDateTime,
             end: endDateTime,
             location: location,
-            description: `PulaTech Conference 2025 event. Location: ${location}`
+            description: `PulaTech Conference 2026 event. Location: ${location}`
         };
         
         const googleCalendarUrl = createGoogleCalendarUrl(event);

@@ -78,10 +78,11 @@ function initializeEditButtons() {
 
 function initializeAccordionHeaderEditing() {
     const accordionHeaders = document.querySelectorAll('.accordion-header');
+    const contentNamespace = document.body.dataset.contentNamespace || 'default';
     
     accordionHeaders.forEach((header, index) => {
         // Create unique ID for saving
-        const headerId = `accordionHeader_${index}`;
+        const headerId = `${contentNamespace}_accordionHeader_${index}`;
         header.dataset.headerId = headerId;
         
         // Create edit button for header

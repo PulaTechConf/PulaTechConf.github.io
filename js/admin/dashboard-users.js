@@ -97,7 +97,7 @@ function renderDesktopTable(data) {
     if (!tbody) return;
     
     if (data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted">No users</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted">No users</td></tr>';
         return;
     }
     
@@ -134,6 +134,16 @@ function renderDesktopTable(data) {
                 <span class="badge ${user.accommodation ? 'bg-success' : 'bg-secondary'}">
                     ${user.accommodation ? escapeHtml(user.accommodation) : 'Not provided'}
                 </span>
+            </td>
+            <td>
+                <div class="form-check form-switch certificate-switch">
+                    <input type="checkbox" class="form-check-input certificate-checkbox"
+                           id="certificate-${user.id}"
+                           data-user-id="${user.id}" ${user.certificateEnabled === true ? 'checked' : ''}>
+                    <label class="form-check-label small" for="certificate-${user.id}">
+                        ${user.certificateEnabled === true ? 'On' : 'Off'}
+                    </label>
+                </div>
             </td>
             <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span></td>
             <td>
@@ -218,6 +228,14 @@ function renderMobileCards(data) {
                                 data-current-role="${user.role || 'general'}">
                             <i class="bi bi-person-gear"></i> Change
                         </button>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Certificate</span>
+                    <span class="detail-value">
+                        <input type="checkbox" class="form-check-input certificate-checkbox"
+                               data-user-id="${user.id}" ${user.certificateEnabled === true ? 'checked' : ''}>
+                        <span class="ms-2">${user.certificateEnabled === true ? 'Enabled' : 'Locked'}</span>
                     </span>
                 </div>
             </div>
@@ -307,6 +325,12 @@ function addTableEventListeners() {
     document.querySelectorAll('.user-table .showed-up-checkbox').forEach(cb => {
         cb.addEventListener('change', function() { updateShowedUp(this.dataset.userId, this.checked); });
     });
+
+    document.querySelectorAll('.user-table .certificate-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            updateUserField(this.dataset.userId, 'certificateEnabled', this.checked);
+        });
+    });
     
     document.querySelectorAll('.user-table .edit-name-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
@@ -344,6 +368,13 @@ function addMobileEventListeners() {
         cb.addEventListener('change', function(e) {
             e.stopPropagation();
             updateShowedUp(this.dataset.userId, this.checked);
+        });
+    });
+
+    document.querySelectorAll('#mobileUserCards .certificate-checkbox').forEach(cb => {
+        cb.addEventListener('change', function(e) {
+            e.stopPropagation();
+            updateUserField(this.dataset.userId, 'certificateEnabled', this.checked);
         });
     });
     
@@ -457,7 +488,7 @@ async function loadUsers() {
     const tableBody = document.getElementById('userTableBody');
     const mobileCards = document.getElementById('mobileUserCards');
     
-    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</td></tr>';
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="8" class="text-center"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</td></tr>';
     if (mobileCards) mobileCards.innerHTML = '<div class="text-center p-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading...</div>';
     
     try {

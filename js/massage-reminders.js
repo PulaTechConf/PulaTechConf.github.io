@@ -76,9 +76,9 @@ class MassageReminderService {
             const booking = bookingsSnapshot.docs[0].data();
             const timeSlot = booking.timeSlot;
             
-            // Create appointment time for July 17, 2025
+            // Create appointment time for July 16, 2026
             const [hours, minutes] = timeSlot.split(':').map(Number);
-            const appointmentTime = new Date('2025-07-17T' + timeSlot + ':00');
+            const appointmentTime = new Date('2026-07-16T' + timeSlot + ':00');
             const reminderTime = new Date(appointmentTime.getTime() - 10 * 60000); // 10 minutes before
             
             const now = new Date();

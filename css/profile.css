@@ -438,6 +438,22 @@ h5 {
     background: linear-gradient(135deg, #f0f4f8 0%, #e3e8ed 100%);
 }
 
+.certificate-locked-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 180px;
+    padding: 1.5rem;
+    color: #2c3e50;
+}
+
+.certificate-locked-state .bi {
+    color: #6c757d;
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+
 .certificate-thumbnail {
     width: 100%;
     height: auto;
@@ -463,6 +479,125 @@ h5 {
     background: linear-gradient(135deg, #218838 0%, #1aa87c 100%);
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+}
+
+#downloadCertificateBtn:disabled {
+    background: #6c757d;
+    box-shadow: none;
+    cursor: not-allowed;
+    opacity: 0.85;
+    transform: none;
+}
+
+/* ACCREDITATION SECTION */
+
+.accreditation-badge {
+    display: grid;
+    grid-template-columns: 160px minmax(0, 1fr) 150px;
+    min-height: 300px;
+    overflow: hidden;
+    border: 1px solid #d9e5f2;
+    border-radius: 12px;
+    background:
+        linear-gradient(90deg, rgba(53, 111, 190, 0.08), rgba(255, 255, 255, 0) 45%),
+        #fff;
+    box-shadow: 0 14px 35px rgba(0, 0, 0, 0.12);
+}
+
+.accreditation-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-right: 2px solid #b9ddf0;
+    background:
+        linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)),
+        url("../icons/ikona(svitla).png") center 78% / 82% no-repeat,
+        #f8fbfd;
+}
+
+.accreditation-left span {
+    color: #2c3e50;
+    font-size: 2rem;
+    font-family: Georgia, "Times New Roman", serif;
+    line-height: 1;
+}
+
+.accreditation-left strong {
+    color: #2c3e50;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.35rem;
+    font-weight: 500;
+}
+
+.accreditation-main {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem 4.25rem 2rem 1.5rem;
+    text-align: center;
+}
+
+.accreditation-year {
+    position: absolute;
+    top: 0;
+    right: 1.5rem;
+    padding: 1.5rem 0.7rem;
+    background: #cbe6f6;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    writing-mode: vertical-rl;
+}
+
+.accreditation-main h3 {
+    margin: 0 auto;
+    max-width: 350px;
+    color: #20242a;
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: 1.25rem;
+    line-height: 1.45;
+}
+
+.accreditation-dates {
+    margin: 1rem 0 1.25rem;
+    color: #356FBE;
+    font-weight: 600;
+}
+
+.accreditation-person {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding-top: 1rem;
+    border-top: 1px solid #cbe6f6;
+}
+
+.accreditation-person strong {
+    color: #2c3e50;
+    font-size: 1.35rem;
+}
+
+.accreditation-person span {
+    color: #5b6672;
+    font-size: 1rem;
+}
+
+.accreditation-qr {
+    display: flex;
+    align-items: end;
+    justify-content: center;
+    padding: 1.5rem;
+    background: #f8fbfd;
+}
+
+.accreditation-qr img {
+    width: 120px;
+    height: 120px;
+    border: 6px solid #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
 }
 
 /* Certificate loading */
@@ -576,6 +711,30 @@ h5 {
     .certificate-thumbnail {
         max-height: 200px;
     }
+
+    .accreditation-badge {
+        grid-template-columns: 1fr;
+    }
+
+    .accreditation-left {
+        border-right: 0;
+        border-bottom: 2px solid #b9ddf0;
+        text-align: center;
+    }
+
+    .accreditation-year {
+        position: static;
+        display: inline-block;
+        align-self: center;
+        margin-bottom: 1rem;
+        padding: 0.5rem 1rem;
+        color: #356FBE;
+        writing-mode: horizontal-tb;
+    }
+
+    .accreditation-qr {
+        align-items: center;
+    }
     
     /* Reorder columns on tablet */
     .col-lg-4 {
@@ -654,6 +813,24 @@ h5 {
     
     .certificate-thumbnail {
         max-height: 180px;
+    }
+
+    .accreditation-left,
+    .accreditation-main,
+    .accreditation-qr {
+        padding: 1rem;
+    }
+
+    .accreditation-left span {
+        font-size: 1.6rem;
+    }
+
+    .accreditation-main h3 {
+        font-size: 1.1rem;
+    }
+
+    .accreditation-person strong {
+        font-size: 1.1rem;
     }
     
     .notifications-panel {
@@ -736,6 +913,15 @@ h5 {
     
     .certificate-thumbnail {
         max-height: 160px;
+    }
+
+    .accreditation-badge {
+        min-height: 0;
+    }
+
+    .accreditation-qr img {
+        width: 110px;
+        height: 110px;
     }
     
     .certificate-loading {
@@ -850,4 +1036,22 @@ html {
 
 #userRole::first-letter {
     text-transform: uppercase;
+}
+
+@media print {
+    body * {
+        visibility: hidden;
+    }
+
+    #accreditationBadge,
+    #accreditationBadge * {
+        visibility: visible;
+    }
+
+    #accreditationBadge {
+        position: absolute;
+        inset: 20px;
+        width: calc(100% - 40px);
+        box-shadow: none;
+    }
 }

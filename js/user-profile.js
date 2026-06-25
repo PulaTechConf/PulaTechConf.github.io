@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', function() {
     if (cancelBtn) {
         cancelBtn.addEventListener('click', hidePizzaEditForm);
     }
+
+    const printAccreditationBtn = document.getElementById('printAccreditationBtn');
+    if (printAccreditationBtn) {
+        printAccreditationBtn.addEventListener('click', function() {
+            window.print();
+        });
+    }
     
     // Add logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
@@ -75,10 +82,45 @@ document.addEventListener('DOMContentLoaded', function() {
                     'admin': 'Administrator'
                 };
                 document.getElementById('userRole').textContent = roleDisplayNames[role] || role;
+
+                updateAccreditation(userData);
             }
         } catch (error) {
             console.error("Error loading user profile:", error);
             showAlert('Error loading profile data', 'danger');
+        }
+    }
+
+    function updateAccreditation(userData) {
+        const firstName = userData.firstName || '';
+        const lastName = userData.lastName || '';
+        const fullName = `${firstName} ${lastName}`.trim() || 'Conference Participant';
+        const affiliation = userData.affiliation || 'Affiliation not provided';
+        const email = userData.email || '';
+        const country = userData.country || '';
+
+        const nameShortEl = document.getElementById('accreditationName');
+        const fullNameEl = document.getElementById('accreditationFullName');
+        const affiliationEl = document.getElementById('accreditationAffiliation');
+        const qrEl = document.getElementById('accreditationQr');
+
+        if (nameShortEl) nameShortEl.textContent = fullName;
+        if (fullNameEl) fullNameEl.textContent = fullName;
+        if (affiliationEl) affiliationEl.textContent = affiliation;
+
+        if (qrEl) {
+            const qrData = [
+                'PulaTechConf 2026 Accreditation',
+                `Name: ${fullName}`,
+                `Affiliation: ${affiliation}`,
+                email ? `Email: ${email}` : '',
+                country ? `Country: ${country}` : '',
+                'Conference: Central and Mediterranean European Conference on New Technologies, Innovations, Society and Development',
+                'Dates: July 15-17, 2026',
+                'Location: Pula, Croatia'
+            ].filter(Boolean).join('\n');
+
+            qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(qrData)}`;
         }
     }
     

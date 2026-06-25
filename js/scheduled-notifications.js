@@ -11,12 +11,12 @@ export async function schedulePizzaReminder() {
     try {
         console.log("Scheduling pizza reminder notification");
         
-        // Create notification for July 17, 2025 at 11:00 AM
-        const reminderDate = new Date('2025-07-17T11:00:00');
+        // Create notification for July 16, 2026 at 11:00 AM
+        const reminderDate = new Date('2026-07-16T11:00:00');
         
         const notificationData = {
-            title: "Pizza Selection Reminder",
-            message: "Don't forget to select your pizza choice for today's lunch! Please make your selection as soon as possible to ensure we have your preferred option available.",
+            title: "Lunch Reminder",
+            message: "Lunch break is approaching. Please check the conference schedule for the latest details.",
             timestamp: Timestamp.fromDate(reminderDate),
             scheduledFor: Timestamp.fromDate(reminderDate),
             type: 'pizza_reminder',

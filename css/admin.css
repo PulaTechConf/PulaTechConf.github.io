@@ -403,6 +403,18 @@ h4 { font-size: 1.25rem; font-weight: 600; color: #2c3e50; }
     border-radius: 20px;
 }
 
+.user-table .certificate-switch {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 76px;
+}
+
+.user-table .certificate-switch .form-check-input {
+    margin: 0;
+}
+
 /* MOBILE USER CARDS (User Management) */
 
 .mobile-user-card {
@@ -720,9 +732,11 @@ h4 { font-size: 1.25rem; font-weight: 600; color: #2c3e50; }
     .user-table th:nth-child(5),
     .user-table td:nth-child(5) { width: 15%; max-width: 120px; }
     .user-table th:nth-child(6),
-    .user-table td:nth-child(6) { width: 70px; }
+    .user-table td:nth-child(6) { width: 90px; text-align: center; }
     .user-table th:nth-child(7),
-    .user-table td:nth-child(7) { width: 80px; }
+    .user-table td:nth-child(7) { width: 70px; }
+    .user-table th:nth-child(8),
+    .user-table td:nth-child(8) { width: 80px; }
     
     .user-table .btn-sm {
         padding: 0.2rem 0.4rem !important;

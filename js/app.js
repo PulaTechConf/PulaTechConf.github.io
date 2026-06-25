@@ -101,10 +101,10 @@ function setupScheduleReminders() {
 // Parse date from schedule text
 function parseScheduleDate(dateText, timeText) {
     try {
-        const year = 2025;
+        const year = 2026;
         const monthMap = { 'July': 6 }; // 0-based month index
         
-        // Extract day from text like "Day 1 – Wednesday, July 16"
+        // Extract day from text like "Day 1 - Wednesday, July 15"
         const dayMatch = dateText.match(/July (\d+)/);
         if (!dayMatch) return null;
         

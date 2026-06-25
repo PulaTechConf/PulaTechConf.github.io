@@ -13,12 +13,12 @@ class ScheduleNotifications {    constructor() {
         
         this.scheduleEvents = [
             {
-                id: 'day2-lunch-pizza',
-                title: 'Lunch Break (Pizza Selection)',
-                time: '12:30',
-                date: this.testMode ? this.getTomorrowDate() : '2025-07-17',
+                id: 'day2-lunch',
+                title: 'Lunch Break',
+                time: '12:40',
+                date: this.testMode ? this.getTomorrowDate() : '2026-07-16',
                 notifyBefore: [15, 5],
-                message: 'Lunch break is starting soon! Don\'t forget to select your pizza if you haven\'t already!'
+                message: 'Lunch break is starting soon.'
             },
 
         ];
