@@ -2727,3 +2727,20 @@ body.admin-mode .editable-section:hover {
         min-height: 180px;
     }
 }
+
+.safe-schedule-editor .schedule-edit-card {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    background: #fff;
+    padding: 16px;
+    margin-bottom: 12px;
+}
+
+.safe-schedule-editor .schedule-heading-card {
+    border-left: 4px solid #356FBE;
+}
+
+.safe-schedule-editor textarea {
+    min-height: 72px;
+    resize: vertical;
+}

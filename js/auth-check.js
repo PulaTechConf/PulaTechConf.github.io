@@ -22,10 +22,10 @@
         
         // Determine redirect path based on current location
         let redirectPath;
-        if (window.location.pathname.includes('/app/')) {
-            redirectPath = '../index.html';
-        } else if (window.location.pathname.includes('/admin/')) {
+        if (window.location.pathname.includes('/admin/')) {
             redirectPath = '../../index.html';
+        } else if (window.location.pathname.includes('/app/')) {
+            redirectPath = '../index.html';
         } else {
             redirectPath = 'index.html';
         }
@@ -40,6 +40,11 @@
         
         // Apply role-based access
         const userRole = localStorage.getItem('userRole') || 'general';
+        if (window.location.pathname.includes('/admin/') && userRole !== 'admin') {
+            console.warn("Non-admin user attempted to access admin page");
+            window.location.href = '../home.html';
+            return;
+        }
         
         // Show admin elements for admin users
         if (userRole === 'admin') {

@@ -147,11 +147,17 @@ function renderDesktopTable(data) {
             </td>
             <td><span class="badge ${getRoleBadgeClass(user.role)}">${user.role || 'general'}</span></td>
             <td>
-                <button class="btn btn-sm btn-outline-primary change-role-btn" 
-                        data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
-                        data-current-role="${user.role || 'general'}">
-                    <i class="bi bi-person-gear"></i><span class="btn-text ms-1">Role</span>
-                </button>
+                <div class="btn-group btn-group-sm" role="group">
+                    <button class="btn btn-outline-primary change-role-btn" 
+                            data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
+                            data-current-role="${user.role || 'general'}">
+                        <i class="bi bi-person-gear"></i><span class="btn-text ms-1">Role</span>
+                    </button>
+                    <button class="btn btn-outline-secondary reset-password-btn"
+                            data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}">
+                        <i class="bi bi-key"></i><span class="btn-text ms-1">Password</span>
+                    </button>
+                </div>
             </td>
         </tr>
     `).join('');
@@ -236,6 +242,15 @@ function renderMobileCards(data) {
                         <input type="checkbox" class="form-check-input certificate-checkbox"
                                data-user-id="${user.id}" ${user.certificateEnabled === true ? 'checked' : ''}>
                         <span class="ms-2">${user.certificateEnabled === true ? 'Enabled' : 'Locked'}</span>
+                    </span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Password</span>
+                    <span class="detail-value">
+                        <button class="btn btn-sm btn-outline-secondary reset-password-btn"
+                                data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}">
+                            <i class="bi bi-key"></i> Reset
+                        </button>
                     </span>
                 </div>
             </div>
@@ -361,6 +376,13 @@ function addTableEventListeners() {
             openRoleChangeModal(this.dataset.id, this.dataset.name, this.dataset.currentRole);
         });
     });
+
+    document.querySelectorAll('.user-table .reset-password-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            resetUserPassword(this.dataset.id, this.dataset.name);
+        });
+    });
 }
 
 function addMobileEventListeners() {
@@ -398,6 +420,13 @@ function addMobileEventListeners() {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
             openRoleChangeModal(this.dataset.id, this.dataset.name, this.dataset.currentRole);
+        });
+    });
+
+    document.querySelectorAll('#mobileUserCards .reset-password-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            resetUserPassword(this.dataset.id, this.dataset.name);
         });
     });
 }
@@ -482,6 +511,41 @@ async function handleRoleChangeConfirm() {
     }
 }
 
+function generateTemporaryPassword() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789';
+    let password = 'PTC-';
+    for (let i = 0; i < 8; i++) {
+        password += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return password;
+}
+
+async function resetUserPassword(userId, userName) {
+    if (!userId) return;
+
+    const suggestedPassword = generateTemporaryPassword();
+    const newPassword = prompt(`Set a new password for ${userName}:`, suggestedPassword);
+    if (newPassword === null) return;
+
+    const trimmedPassword = newPassword.trim();
+    if (trimmedPassword.length < 6) {
+        alert('Password must be at least 6 characters.');
+        return;
+    }
+
+    try {
+        await updateDoc(doc(db, "users", userId), {
+            password: trimmedPassword,
+            passwordUpdatedAt: new Date().toISOString(),
+            passwordResetBy: localStorage.getItem('userId') || 'admin'
+        });
+        alert(`Password updated for ${userName}.\nNew password: ${trimmedPassword}`);
+    } catch (error) {
+        console.error("Error resetting password:", error);
+        alert(`Error resetting password: ${error.message}`);
+    }
+}
+
 // LOAD DATA
 
 async function loadUsers() {
@@ -510,7 +574,7 @@ async function loadUsers() {
         
     } catch (error) {
         console.error("Error:", error);
-        if (tableBody) tableBody.innerHTML = `<tr><td colspan="7" class="text-center text-danger">Error: ${error.message}</td></tr>`;
+        if (tableBody) tableBody.innerHTML = `<tr><td colspan="8" class="text-center text-danger">Error: ${escapeHtml(error.message)}</td></tr>`;
     }
 }
 

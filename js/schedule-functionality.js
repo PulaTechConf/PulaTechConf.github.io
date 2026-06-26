@@ -947,7 +947,7 @@ function addUploadButton(scheduleItem) {
     if (buttonContainer) {
         // Create upload button
         const uploadBtn = document.createElement('a');
-        uploadBtn.href = 'https://forms.gle/wy2aG3UxL1ncZsEU8';
+        uploadBtn.href = 'https://forms.gle/uC3ezWVFs7VqDDDSA';
         uploadBtn.target = '_blank';
         uploadBtn.className = 'btn btn-sm btn-warning ms-2 upload-presentation-btn';
         uploadBtn.innerHTML = '<i class="bi bi-cloud-upload me-1"></i>Upload';

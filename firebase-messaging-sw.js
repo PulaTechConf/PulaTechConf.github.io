@@ -1,6 +1,7 @@
 // Import Firebase scripts for messaging
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/11.9.1/firebase-messaging-compat.js');
+importScripts('/js/badge-worker.js');
 
 // Initialize Firebase
 firebase.initializeApp({
@@ -20,6 +21,12 @@ messaging.onBackgroundMessage((payload) => {
   console.log('Received background message:', payload);
 
   const notificationTitle = payload.notification?.title || payload.data?.title || 'PulaTechConf Notification';
+  const explicitBadgeCount = Number(payload.data?.unreadCount || payload.data?.badgeCount || payload.data?.count);
+  const badgePromise = self.pulaTechBadge
+    ? (Number.isFinite(explicitBadgeCount) && explicitBadgeCount >= 0
+      ? self.pulaTechBadge.set(explicitBadgeCount)
+      : self.pulaTechBadge.increment(1))
+    : Promise.resolve();
   const notificationOptions = {
     body: payload.notification?.body || payload.data?.body || 'You have a new notification',
     icon: '/icons/ikona(svitla).png',
@@ -44,7 +51,10 @@ messaging.onBackgroundMessage((payload) => {
     }
   };
 
-  return self.registration.showNotification(notificationTitle, notificationOptions);
+  return Promise.all([
+    badgePromise,
+    self.registration.showNotification(notificationTitle, notificationOptions)
+  ]);
 });
 
 // Handle notification clicks

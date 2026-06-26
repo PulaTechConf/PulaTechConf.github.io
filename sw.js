@@ -1,4 +1,5 @@
-const CACHE_NAME = 'pulatech-conf-v4';
+const CACHE_NAME = 'pulatech-conf-v6';
+importScripts('/js/badge-worker.js');
 const urlsToCache = [
   '/app/home.html',
   '/app/profile.html',
@@ -11,6 +12,8 @@ const urlsToCache = [
   '/js/auth.js',
   '/js/auth-check.js',
   '/js/notifications.js',
+  '/js/app-badge.js',
+  '/js/badge-worker.js',
   '/js/pizza-selection.js',
   '/js/user-profile.js',
   '/js/certificate.js',
@@ -115,6 +118,7 @@ self.addEventListener('activate', function(event) {
 // Push notification event
 self.addEventListener('push', function(event) {
   console.log('Push message received:', event);
+  let rawPushData = {};
   
   let notificationData = {
     title: 'PulaTech Conference',
@@ -138,6 +142,7 @@ self.addEventListener('push', function(event) {
   if (event.data) {
     try {
       const data = event.data.json();
+      rawPushData = data;
       notificationData.title = data.title || notificationData.title;
       notificationData.body = data.body || data.message || notificationData.body;
       notificationData.tag = data.tag || notificationData.tag;
@@ -147,8 +152,18 @@ self.addEventListener('push', function(event) {
     }
   }
 
+  const explicitBadgeCount = Number(rawPushData.unreadCount || rawPushData.badgeCount || rawPushData.count);
+  const badgePromise = self.pulaTechBadge
+    ? (Number.isFinite(explicitBadgeCount) && explicitBadgeCount >= 0
+      ? self.pulaTechBadge.set(explicitBadgeCount)
+      : self.pulaTechBadge.increment(1))
+    : Promise.resolve();
+
   event.waitUntil(
-    self.registration.showNotification(notificationData.title, notificationData)
+    Promise.all([
+      badgePromise,
+      self.registration.showNotification(notificationData.title, notificationData)
+    ])
   );
 });
 

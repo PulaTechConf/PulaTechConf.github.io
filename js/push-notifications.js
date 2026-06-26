@@ -1,6 +1,7 @@
 import { messaging, getToken, onMessage } from './firebase-config.js';
 import { doc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
 import { db } from './firebase-config.js';
+import { incrementAppBadgeCount } from './app-badge.js';
 
 class PushNotificationManager {
     constructor() {
@@ -178,6 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // Listen for custom FCM notifications and update UI
 document.addEventListener('fcmNotification', (event) => {
     const { title, body, data } = event.detail;
+    incrementAppBadgeCount(1);
     
     // Update notification badge/counter
     const notificationBadges = document.querySelectorAll('.notification-badge');
@@ -203,11 +205,11 @@ function showNotificationToast(title, body) {
     toast.innerHTML = `
         <div class="toast-header">
             <i class="bi bi-bell text-primary me-2"></i>
-            <strong class="me-auto">${title}</strong>
+            <strong class="me-auto">${escapeHtml(title)}</strong>
             <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
         </div>
         <div class="toast-body">
-            ${body}
+            ${escapeHtml(body)}
         </div>
     `;
     
@@ -224,6 +226,15 @@ function showNotificationToast(title, body) {
     toast.addEventListener('hidden.bs.toast', () => {
         toast.remove();
     });
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
 }
 
 export { PushNotificationManager };

@@ -3,6 +3,7 @@ import {
     collection, 
     doc, 
     setDoc,
+    updateDoc,
     getDoc,
     query,
     where,
@@ -35,6 +36,8 @@ function validateInput(data) {
 // Elements
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
+const resetPasswordForm = document.getElementById('resetPasswordForm');
+const forgotPasswordLink = document.getElementById('forgotPasswordLink');
 const authMessage = document.getElementById('authMessage');
 
 // Add debug logging
@@ -199,6 +202,74 @@ if (registerForm) {
         } catch (error) {
             console.error("Registration error:", error);
             showMessage(`Registration error: ${error.message}`, 'danger');
+        }
+    });
+}
+
+if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener('click', (e) => {
+        e.preventDefault();
+        const resetTab = document.getElementById('reset-tab');
+        if (resetTab) {
+            resetTab.click();
+        }
+    });
+}
+
+// Password reset functionality
+if (resetPasswordForm) {
+    resetPasswordForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const email = document.getElementById('resetEmail').value.trim();
+        const lastName = document.getElementById('resetLastName').value.trim();
+        const newPassword = document.getElementById('resetNewPassword').value;
+        const confirmPassword = document.getElementById('resetConfirmPassword').value;
+
+        const validationErrors = validateInput({ email, password: newPassword });
+        if (!lastName) {
+            validationErrors.push('Last name is required');
+        }
+        if (newPassword !== confirmPassword) {
+            validationErrors.push('Passwords do not match');
+        }
+
+        if (validationErrors.length > 0) {
+            showMessage(validationErrors.join('. '), 'danger');
+            return;
+        }
+
+        try {
+            const usersRef = collection(db, "users");
+            const q = query(usersRef, where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+
+            if (querySnapshot.empty) {
+                showMessage('No user found with this email', 'danger');
+                return;
+            }
+
+            const userDoc = querySnapshot.docs[0];
+            const userData = userDoc.data();
+            const registeredLastName = String(userData.lastName || '').trim().toLowerCase();
+
+            if (registeredLastName !== lastName.toLowerCase()) {
+                showMessage('Email and last name do not match our records', 'danger');
+                return;
+            }
+
+            await updateDoc(doc(db, "users", userDoc.id), {
+                password: newPassword,
+                passwordUpdatedAt: new Date().toISOString()
+            });
+
+            resetPasswordForm.reset();
+            document.getElementById('loginEmail').value = email;
+            document.getElementById('login-tab').click();
+            showMessage('Password updated. You can now log in with the new password.', 'success');
+        } catch (error) {
+            console.error("Password reset error:", error);
+            showMessage(`Password reset error: ${error.message}`, 'danger');
         }
     });
 }

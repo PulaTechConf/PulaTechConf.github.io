@@ -43,6 +43,42 @@ document.addEventListener('DOMContentLoaded', function() {
     loadContent();
 });
 
+function isScheduleSection(section) {
+    return Boolean(section && section.id && section.id.includes('ScheduleSection'));
+}
+
+function ensureScheduleSafeEditor() {
+    let scheduleSafeEditor = document.getElementById('scheduleSafeEditor');
+    if (scheduleSafeEditor) return scheduleSafeEditor;
+
+    const modalBody = document.querySelector('#contentEditModal .modal-body');
+    const richEditorRow = document.getElementById('richTextEditor')?.closest('.row');
+    if (!modalBody) return null;
+
+    scheduleSafeEditor = document.createElement('div');
+    scheduleSafeEditor.id = 'scheduleSafeEditor';
+    scheduleSafeEditor.className = 'safe-schedule-editor d-none';
+
+    if (richEditorRow) {
+        richEditorRow.insertAdjacentElement('afterend', scheduleSafeEditor);
+    } else {
+        modalBody.appendChild(scheduleSafeEditor);
+    }
+
+    return scheduleSafeEditor;
+}
+
+function setEditorMode(mode) {
+    const toolbar = document.querySelector('.editor-toolbar');
+    const richEditorRow = document.getElementById('richTextEditor')?.closest('.row');
+    const scheduleSafeEditor = ensureScheduleSafeEditor();
+    const isScheduleMode = mode === 'schedule';
+
+    toolbar?.classList.toggle('d-none', isScheduleMode);
+    richEditorRow?.classList.toggle('d-none', isScheduleMode);
+    scheduleSafeEditor?.classList.toggle('d-none', !isScheduleMode);
+}
+
 // ============================================
 // EDIT BUTTONS FOR EDITABLE SECTIONS
 // ============================================
@@ -191,11 +227,15 @@ function openHeaderEditModal(header) {
 // ============================================
 
 function openEditModal(section) {
-    const modal = new bootstrap.Modal(document.getElementById('contentEditModal'));
+    const modalElement = document.getElementById('contentEditModal');
+    const modal = new bootstrap.Modal(modalElement);
     const modalTitle = document.getElementById('editModalLabel');
+    const mode = isScheduleSection(section) ? 'schedule' : 'rich';
     
     // Set modal title
     modalTitle.textContent = `Edit: ${section.dataset.title || section.id}`;
+    modalElement.dataset.editorMode = mode;
+    setEditorMode(mode);
     
     // Store section ID for saving
     document.getElementById('currentSectionId').value = section.id;
@@ -205,20 +245,70 @@ function openEditModal(section) {
     
     // Set content after modal is shown
     setTimeout(() => {
-        const richTextEditor = document.getElementById('richTextEditor');
-        const livePreview = document.getElementById('livePreview');
-        
-        if (richTextEditor && livePreview) {
-            // Clone section and remove edit button
-            const sectionClone = section.cloneNode(true);
-            const editButton = sectionClone.querySelector('.edit-button');
-            if (editButton) editButton.remove();
-            
-            const content = sectionClone.innerHTML;
-            richTextEditor.innerHTML = content;
-            livePreview.innerHTML = content;
+        if (mode === 'schedule') {
+            populateScheduleSafeEditor(section);
+        } else {
+            populateRichTextEditor(section);
         }
     }, 100);
+}
+
+function populateRichTextEditor(section) {
+    const richTextEditor = document.getElementById('richTextEditor');
+    const livePreview = document.getElementById('livePreview');
+
+    if (richTextEditor && livePreview) {
+        // Clone section and remove edit button
+        const sectionClone = section.cloneNode(true);
+        const editButton = sectionClone.querySelector('.edit-button');
+        if (editButton) editButton.remove();
+
+        const content = sectionClone.innerHTML;
+        richTextEditor.innerHTML = content;
+        livePreview.innerHTML = content;
+    }
+}
+
+function populateScheduleSafeEditor(section) {
+    const scheduleSafeEditor = ensureScheduleSafeEditor();
+    if (!scheduleSafeEditor) return;
+
+    const headings = getScheduleHeadings(section);
+    const scheduleItems = Array.from(section.querySelectorAll('.schedule-item')).map(getScheduleItemSnapshot);
+
+    const headingHtml = headings.map(heading => `
+        <div class="schedule-edit-card schedule-heading-card" data-heading-index="${heading.index}">
+            <label class="form-label fw-bold">Section heading</label>
+            <input type="text" class="form-control" data-field="text" data-original="${escapeHtml(heading.text)}" value="${escapeHtml(heading.text)}">
+        </div>
+    `).join('');
+
+    const itemHtml = scheduleItems.map(item => `
+        <div class="schedule-edit-card" data-item-index="${item.index}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Time</label>
+                    <input type="text" class="form-control" data-field="time" data-original="${escapeHtml(item.time)}" value="${escapeHtml(item.time)}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Badge</label>
+                    <input type="text" class="form-control" data-field="badge" data-original="${escapeHtml(item.badge)}" value="${escapeHtml(item.badge)}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-bold">Event text</label>
+                    <textarea class="form-control" data-field="body" data-original="${escapeHtml(item.body)}" rows="2">${escapeHtml(item.body)}</textarea>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    scheduleSafeEditor.innerHTML = `
+        <div class="alert alert-warning py-2 small mb-3">
+            Protected schedule editor: saves text fields only, while buttons, links, calendar data, and embedded controls stay intact.
+        </div>
+        ${headingHtml}
+        ${itemHtml || '<div class="text-muted">No schedule items found.</div>'}
+    `;
 }
 
 // ============================================
@@ -231,6 +321,8 @@ function initializeRichTextEditor() {
     const toolbar = document.querySelector('.editor-toolbar');
     
     if (!richTextEditor || !livePreview || !toolbar) return;
+    if (richTextEditor.dataset.initialized === 'true') return;
+    richTextEditor.dataset.initialized = 'true';
     
     // Update live preview when editor content changes
     richTextEditor.addEventListener('input', function() {
@@ -367,6 +459,203 @@ function initializeRichTextEditor() {
 }
 
 // ============================================
+// PROTECTED SCHEDULE EDITING
+// ============================================
+
+function getScheduleHeadings(section) {
+    return Array.from(section.children)
+        .filter(child => /^H[1-6]$/.test(child.tagName))
+        .map((heading, index) => ({
+            index,
+            text: heading.textContent.trim()
+        }));
+}
+
+function getScheduleItemSnapshot(item, index) {
+    const timeElement = item.querySelector('.fw-bold');
+    const badgeElement = item.querySelector('.badge');
+    const bodyElement = item.querySelector('p');
+
+    return {
+        index,
+        time: getOwnText(timeElement),
+        badge: badgeElement?.textContent.trim() || '',
+        body: bodyElement?.textContent.trim() || ''
+    };
+}
+
+function getOwnText(element) {
+    if (!element) return '';
+    return Array.from(element.childNodes)
+        .filter(node => node.nodeType === Node.TEXT_NODE)
+        .map(node => node.textContent.trim())
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+function setOwnText(element, value) {
+    if (!element) return;
+
+    const newValue = String(value || '').trim();
+    const textNode = Array.from(element.childNodes)
+        .find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+
+    if (textNode) {
+        textNode.textContent = newValue;
+    } else {
+        element.insertBefore(document.createTextNode(newValue), element.firstChild);
+    }
+}
+
+function collectScheduleEditorPatches() {
+    const scheduleSafeEditor = document.getElementById('scheduleSafeEditor');
+    const scheduleItems = [];
+    const scheduleHeadings = [];
+
+    if (!scheduleSafeEditor) {
+        return { scheduleItems, scheduleHeadings };
+    }
+
+    scheduleSafeEditor.querySelectorAll('.schedule-heading-card').forEach(card => {
+        const input = card.querySelector('[data-field="text"]');
+        if (!input) return;
+
+        const value = input.value.trim();
+        const original = input.dataset.original || '';
+        if (value !== original) {
+            scheduleHeadings.push({
+                index: Number(card.dataset.headingIndex),
+                text: value
+            });
+        }
+    });
+
+    scheduleSafeEditor.querySelectorAll('.schedule-edit-card[data-item-index]').forEach(card => {
+        const patch = { index: Number(card.dataset.itemIndex) };
+
+        card.querySelectorAll('[data-field]').forEach(field => {
+            const value = field.value.trim();
+            const original = field.dataset.original || '';
+            if (value !== original) {
+                patch[field.dataset.field] = value;
+            }
+        });
+
+        if (Object.keys(patch).length > 1) {
+            scheduleItems.push(patch);
+        }
+    });
+
+    return { scheduleItems, scheduleHeadings };
+}
+
+function mergeSchedulePatches(existingPatches = [], newPatches = []) {
+    const patchesByIndex = new Map();
+
+    if (Array.isArray(existingPatches)) {
+        existingPatches.forEach(patch => {
+            if (Number.isInteger(patch.index)) {
+                patchesByIndex.set(patch.index, { ...patch });
+            }
+        });
+    }
+
+    if (Array.isArray(newPatches)) {
+        newPatches.forEach(patch => {
+            if (Number.isInteger(patch.index)) {
+                patchesByIndex.set(patch.index, {
+                    ...(patchesByIndex.get(patch.index) || { index: patch.index }),
+                    ...patch
+                });
+            }
+        });
+    }
+
+    return Array.from(patchesByIndex.values()).sort((a, b) => a.index - b.index);
+}
+
+function applySchedulePatches(section, data = {}) {
+    const headings = getScheduleHeadings(section);
+    const scheduleItems = Array.from(section.querySelectorAll('.schedule-item'));
+
+    if (Array.isArray(data.scheduleHeadings)) {
+        data.scheduleHeadings.forEach(headingPatch => {
+            const heading = headings[headingPatch.index];
+            if (heading && typeof headingPatch.text === 'string') {
+                Array.from(section.children)
+                    .filter(child => /^H[1-6]$/.test(child.tagName))[headingPatch.index]
+                    .textContent = headingPatch.text;
+            }
+        });
+    }
+
+    if (Array.isArray(data.scheduleItems)) {
+        data.scheduleItems.forEach(itemPatch => {
+            const item = scheduleItems[itemPatch.index];
+            if (!item) return;
+
+            if (typeof itemPatch.time === 'string') {
+                setOwnText(item.querySelector('.fw-bold'), itemPatch.time);
+                updateCalendarTime(item, itemPatch.time);
+            }
+
+            if (typeof itemPatch.badge === 'string') {
+                const badge = item.querySelector('.badge');
+                if (badge) badge.textContent = itemPatch.badge;
+            }
+
+            if (typeof itemPatch.body === 'string') {
+                const body = item.querySelector('p');
+                if (body) body.textContent = itemPatch.body;
+                updateCalendarDescription(item, itemPatch.body);
+            }
+        });
+    }
+}
+
+function updateCalendarDescription(scheduleItem, bodyText) {
+    const calendarButton = scheduleItem.querySelector('.add-to-calendar-btn');
+    const cleanBodyText = String(bodyText || '').trim();
+
+    if (!calendarButton || !cleanBodyText) return;
+
+    calendarButton.dataset.eventDescription = cleanBodyText;
+    calendarButton.dataset.eventTitle = `TFPU 2026 - ${cleanBodyText.substring(0, 120)}`;
+}
+
+function updateCalendarTime(scheduleItem, timeText) {
+    const calendarButton = scheduleItem.querySelector('.add-to-calendar-btn');
+    if (!calendarButton) return;
+
+    const parsedTime = parseTimeRange(timeText);
+    if (!parsedTime) return;
+
+    const currentStartDate = (calendarButton.dataset.eventStart || '').split('T')[0];
+    const currentEndDate = (calendarButton.dataset.eventEnd || calendarButton.dataset.eventStart || '').split('T')[0];
+    if (!currentStartDate || !currentEndDate) return;
+
+    calendarButton.dataset.eventStart = `${currentStartDate}T${parsedTime.start}:00`;
+    calendarButton.dataset.eventEnd = `${currentEndDate}T${parsedTime.end}:00`;
+}
+
+function parseTimeRange(timeText) {
+    const match = String(timeText || '').match(/(\d{1,2}:\d{2})\s*(?:-|–|—)\s*(\d{1,2}:\d{2})/);
+    if (!match) return null;
+
+    return {
+        start: normalizeTime(match[1]),
+        end: normalizeTime(match[2])
+    };
+}
+
+function normalizeTime(time) {
+    const [hours, minutes] = time.split(':');
+    return `${hours.padStart(2, '0')}:${minutes}`;
+}
+
+// ============================================
 // SAVE CONTENT
 // ============================================
 
@@ -375,7 +664,15 @@ async function saveContent() {
     const section = document.getElementById(sectionId);
     const richTextEditor = document.getElementById('richTextEditor');
     
-    if (!section || !richTextEditor) return;
+    if (!section) return;
+
+    const editModal = document.getElementById('contentEditModal');
+    if (isScheduleSection(section) || editModal?.dataset.editorMode === 'schedule') {
+        await saveScheduleContent(sectionId, section);
+        return;
+    }
+
+    if (!richTextEditor) return;
     
     const content = richTextEditor.innerHTML;
     
@@ -404,11 +701,54 @@ async function saveContent() {
     }
 }
 
+async function saveScheduleContent(sectionId, section) {
+    const schedulePatches = collectScheduleEditorPatches();
+    const hasChanges = schedulePatches.scheduleItems.length > 0 || schedulePatches.scheduleHeadings.length > 0;
+
+    if (!hasChanges) {
+        showAlert('No schedule changes to save.', 'info');
+        return;
+    }
+
+    try {
+        const contentRef = doc(db, "siteContent", sectionId);
+        const existingSnap = await getDoc(contentRef);
+        const existingData = existingSnap.exists() ? existingSnap.data() : {};
+
+        const scheduleItems = mergeSchedulePatches(existingData.scheduleItems, schedulePatches.scheduleItems);
+        const scheduleHeadings = mergeSchedulePatches(existingData.scheduleHeadings, schedulePatches.scheduleHeadings);
+
+        await setDoc(contentRef, {
+            content: null,
+            type: 'scheduleSection',
+            scheduleItems,
+            scheduleHeadings,
+            updatedAt: serverTimestamp(),
+            updatedBy: localStorage.getItem('userId')
+        }, { merge: true });
+
+        applySchedulePatches(section, { scheduleItems, scheduleHeadings });
+
+        const modal = bootstrap.Modal.getInstance(document.getElementById('contentEditModal'));
+        modal.hide();
+
+        showAlert('Schedule updated safely.', 'success');
+    } catch (error) {
+        console.error("Error saving schedule content:", error);
+        showAlert('Error saving schedule: ' + error.message, 'danger');
+    }
+}
+
 // ============================================
 // UPDATE SECTION CONTENT
 // ============================================
 
 function updateSectionContent(section, newContent) {
+    if (isScheduleSection(section)) {
+        console.warn(`Ignoring legacy HTML content update for protected schedule section: ${section.id}`);
+        return;
+    }
+
     // Check for functional elements that need preserving
     const hasFunctionalElements = section.querySelector('#lunchTitle, #pizzaChoice, #clearPizzaBtn, #massageTimeSlot, #bookMassageBtn');
     
@@ -478,8 +818,21 @@ async function loadContent() {
             const contentRef = doc(db, "siteContent", section.id);
             const contentSnap = await getDoc(contentRef);
             
-            if (contentSnap.exists() && contentSnap.data().content) {
-                updateSectionContent(section, contentSnap.data().content);
+            if (contentSnap.exists()) {
+                const contentData = contentSnap.data();
+
+                if (isScheduleSection(section)) {
+                    if (Array.isArray(contentData.scheduleItems) || Array.isArray(contentData.scheduleHeadings)) {
+                        applySchedulePatches(section, contentData);
+                    } else if (contentData.content) {
+                        console.warn(`Legacy full-HTML schedule content ignored for protected section: ${section.id}`);
+                    }
+                    continue;
+                }
+
+                if (contentData.content) {
+                    updateSectionContent(section, contentData.content);
+                }
             }
         } catch (error) {
             console.error(`Error loading content for section ${section.id}:`, error);
@@ -511,6 +864,15 @@ async function loadContent() {
 // UTILITY FUNCTIONS
 // ============================================
 
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 function showAlert(message, type) {
     const alertContainer = document.getElementById('alertContainer');
     if (!alertContainer) {
@@ -527,7 +889,7 @@ function showAlert(message, type) {
     alert.innerHTML = `
         <div class="d-flex align-items-center gap-2">
             <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'}"></i>
-            <span>${message}</span>
+            <span>${escapeHtml(message)}</span>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     `;

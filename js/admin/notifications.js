@@ -190,6 +190,46 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+function sanitizeNotificationHtml(value) {
+    const template = document.createElement('template');
+    template.innerHTML = String(value || '');
+
+    const allowedTags = new Set(['A', 'B', 'BR', 'DIV', 'EM', 'I', 'LI', 'OL', 'P', 'SPAN', 'STRONG', 'U', 'UL']);
+    const elements = Array.from(template.content.querySelectorAll('*'));
+
+    elements.forEach(element => {
+        if (!allowedTags.has(element.tagName)) {
+            element.replaceWith(document.createTextNode(element.textContent || ''));
+            return;
+        }
+
+        Array.from(element.attributes).forEach(attribute => {
+            const name = attribute.name.toLowerCase();
+            if (name.startsWith('on') || name === 'style' || name === 'class') {
+                element.removeAttribute(attribute.name);
+                return;
+            }
+
+            if (element.tagName === 'A' && name === 'href') {
+                const href = element.getAttribute('href') || '';
+                if (!/^(https?:|mailto:)/i.test(href)) {
+                    element.removeAttribute('href');
+                }
+                return;
+            }
+
+            element.removeAttribute(attribute.name);
+        });
+
+        if (element.tagName === 'A') {
+            element.setAttribute('target', '_blank');
+            element.setAttribute('rel', 'noopener noreferrer');
+        }
+    });
+
+    return template.innerHTML;
+}
+
 // Example usage (for testing)
 document.addEventListener('DOMContentLoaded', function() {
     // Admin-only functionality
@@ -346,7 +386,7 @@ async function loadRecentNotifications() {
             }
             
             // Truncate message for preview (strip HTML for preview)
-            const messageText = notification.message.replace(/<[^>]*>/g, ''); // Strip HTML tags for preview
+            const messageText = String(notification.message || '').replace(/<[^>]*>/g, ''); // Strip HTML tags for preview
             const messagePreview = messageText.length > 100 
                 ? messageText.substring(0, 100) + '...' 
                 : messageText;
@@ -355,8 +395,8 @@ async function loadRecentNotifications() {
                 <div class="list-group-item notification-item" data-id="${notificationId}">
                     <div class="d-flex justify-content-between align-items-start">
                         <div class="notification-header" style="cursor: pointer; flex-grow: 1;" onclick="toggleNotificationContent('${notificationId}')">
-                            <h6 class="mb-1">${notification.title}</h6>
-                            <p class="mb-1 text-muted notification-preview" id="preview-${notificationId}">${messagePreview}</p>
+                            <h6 class="mb-1">${escapeHtml(notification.title)}</h6>
+                            <p class="mb-1 text-muted notification-preview" id="preview-${notificationId}">${escapeHtml(messagePreview)}</p>
                             <small class="text-muted">${formattedDate}</small>
                         </div>
                         <div class="ms-2">
@@ -368,7 +408,7 @@ async function loadRecentNotifications() {
                     <div class="notification-full-content d-none mt-2" id="content-${notificationId}">
                         <div class="alert alert-light">
                             <strong>Full Message:</strong><br>
-                            <div style="margin-top: 8px;">${notification.message}</div>
+                            <div style="margin-top: 8px;">${sanitizeNotificationHtml(notification.message)}</div>
                         </div>
                         <small class="text-muted">
                             <i class="bi bi-person"></i> Created by: ${notification.createdBy || 'Unknown'}

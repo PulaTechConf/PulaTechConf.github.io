@@ -6,6 +6,7 @@ import {
     limit,
     onSnapshot
 } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+import { setAppBadgeCount, syncAppBadgeFromStorage } from './app-badge.js';
 
 // Utility functions for managing read notifications
 function getReadNotifications() {
@@ -62,8 +63,49 @@ function escapeHtml(value) {
         .replace(/'/g, '&#039;');
 }
 
+function sanitizeNotificationHtml(value) {
+    const template = document.createElement('template');
+    template.innerHTML = String(value || '');
+
+    const allowedTags = new Set(['A', 'B', 'BR', 'DIV', 'EM', 'I', 'LI', 'OL', 'P', 'SPAN', 'STRONG', 'U', 'UL']);
+    const elements = Array.from(template.content.querySelectorAll('*'));
+
+    elements.forEach(element => {
+        if (!allowedTags.has(element.tagName)) {
+            element.replaceWith(document.createTextNode(element.textContent || ''));
+            return;
+        }
+
+        Array.from(element.attributes).forEach(attribute => {
+            const name = attribute.name.toLowerCase();
+            if (name.startsWith('on') || name === 'style' || name === 'class') {
+                element.removeAttribute(attribute.name);
+                return;
+            }
+
+            if (element.tagName === 'A' && name === 'href') {
+                const href = element.getAttribute('href') || '';
+                if (!/^(https?:|mailto:)/i.test(href)) {
+                    element.removeAttribute('href');
+                }
+                return;
+            }
+
+            element.removeAttribute(attribute.name);
+        });
+
+        if (element.tagName === 'A') {
+            element.setAttribute('target', '_blank');
+            element.setAttribute('rel', 'noopener noreferrer');
+        }
+    });
+
+    return template.innerHTML;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Notifications.js loaded");
+    syncAppBadgeFromStorage();
     
     // Find UI elements
     const notificationsBtn = document.getElementById('notificationsBtn');
@@ -177,6 +219,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     notificationsPanel.innerHTML = '<div class="notifications-content"><div class="text-center p-3">No notifications</div></div>';
                 }
                 updateNotificationBadge();
+                setAppBadgeCount(0);
                 return;
             }
             
@@ -268,6 +311,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             notificationBadge.classList.add('d-none');
         }
+
+        setAppBadgeCount(unreadCount);
     }
     
     // Function to update the notifications panel UI
@@ -320,13 +365,13 @@ document.addEventListener('DOMContentLoaded', () => {
             notificationItem.innerHTML = `
                 <div class="notification-header" style="cursor: pointer; padding: 10px; border-bottom: 1px solid #eee; background-color: ${headerBgColor}; color: #333;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <strong style="color: #333;">${notification.title}${unreadIndicator}${linkIcon}</strong>
+                        <strong style="color: #333;">${escapeHtml(notification.title)}${unreadIndicator}${linkIcon}</strong>
                         <small class="text-muted" style="color: #666;">${formattedDate}</small>
                     </div>
                     <i class="bi bi-chevron-down mt-1" style="color: #333;"></i>
                 </div>
                 <div class="notification-details" style="display: none; padding: 10px; background-color: #f8f9fa; border-bottom: 1px solid #eee; color: #555;">
-                    <p class="mb-2" style="color: #555; word-break: break-word;">${notification.message}</p>
+                    <div class="mb-2" style="color: #555; word-break: break-word;">${sanitizeNotificationHtml(notification.message)}</div>
                     ${notification.url ? `<a href="${escapeHtml(notification.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary" style="width: 100%;">Open Link <i class="bi bi-box-arrow-up-right ms-1"></i></a>` : ''}
                 </div>
             `;
@@ -434,7 +479,7 @@ document.addEventListener('DOMContentLoaded', () => {
             notificationCard.innerHTML = `
                 <div class="card-header notification-tab-header" style="cursor: pointer; background-color: ${headerBgColor};">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h6 class="mb-0">${notification.title}${unreadIndicator}${linkIcon}</h6>
+                        <h6 class="mb-0">${escapeHtml(notification.title)}${unreadIndicator}${linkIcon}</h6>
                         <div class="d-flex align-items-center">
                             <small class="text-muted me-2">${formattedDate}</small>
                             <i class="bi bi-chevron-down"></i>
@@ -442,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
                 <div class="card-body notification-tab-details" style="display: none;">
-                    <p class="card-text" style="word-break: break-word;">${notification.message}</p>
+                    <div class="card-text" style="word-break: break-word;">${sanitizeNotificationHtml(notification.message)}</div>
                     ${notification.url ? `<a href="${escapeHtml(notification.url)}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-primary mt-2">Open Link <i class="bi bi-box-arrow-up-right ms-1"></i></a>` : ''}
                 </div>
             `;
