@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pulatech-conf-v6';
+const CACHE_NAME = 'pulatech-conf-v7';
 importScripts('/js/badge-worker.js');
 const urlsToCache = [
   '/app/home.html',
@@ -24,6 +24,8 @@ const urlsToCache = [
   '/js/admin/notifications.js',
   '/js/admin/users.js',
   '/favicon.ico',
+  '/icons/pwa-icon-192.png',
+  '/icons/pwa-icon-512.png',
   '/icons/ikona(svitla).png',
   '/icons/ikona(tamna).png',
   'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css',

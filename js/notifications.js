@@ -103,6 +103,43 @@ function sanitizeNotificationHtml(value) {
     return template.innerHTML;
 }
 
+async function syncLauncherBadgeNotification(unreadCount) {
+    const normalizedCount = Number(unreadCount) || 0;
+
+    if (!('serviceWorker' in navigator) || !('Notification' in window) || Notification.permission !== 'granted') {
+        return;
+    }
+
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        const existingNotifications = await registration.getNotifications({ tag: 'pulatech-unread-count' });
+
+        if (normalizedCount <= 0) {
+            existingNotifications.forEach(notification => notification.close());
+            return;
+        }
+
+        const body = normalizedCount === 1
+            ? 'You have 1 unread conference notification.'
+            : `You have ${normalizedCount} unread conference notifications.`;
+
+        await registration.showNotification('PulaTechConf', {
+            body,
+            icon: '/icons/pwa-icon-192.png',
+            badge: '/favicon.ico',
+            tag: 'pulatech-unread-count',
+            renotify: false,
+            silent: true,
+            data: {
+                url: '/app/home.html#notifications',
+                unreadCount: normalizedCount
+            }
+        });
+    } catch (error) {
+        console.debug('Launcher badge notification sync skipped:', error);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Notifications.js loaded");
     syncAppBadgeFromStorage();
@@ -313,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         setAppBadgeCount(unreadCount);
+        syncLauncherBadgeNotification(unreadCount);
     }
     
     // Function to update the notifications panel UI
