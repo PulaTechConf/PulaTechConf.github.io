@@ -27,6 +27,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const printAllBtn = document.getElementById('printAllBtn');
     const badgeContainer = document.getElementById('badgeContainer');
     const badgePrintArea = document.getElementById('badgePrintArea');
+
+    function getUserOrganization(userData) {
+        return String(userData.organization || userData.affiliation || '');
+    }
     
     // Add event listeners
     if (refreshBtn) {
@@ -90,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <td><input type="checkbox" class="user-select" data-id="${doc.id}"></td>
                     <td>${userData.firstName || ''} ${userData.lastName || ''}</td>
                     <td>${userData.email || ''}</td>
-                    <td>${userData.affiliation || ''}</td>
+                    <td>${getUserOrganization(userData)}</td>
                     <td>${userData.country || ''}</td>
                     <td><span class="badge ${getRoleBadgeClass(userData.role)}">${userData.role || 'general'}</span></td>
                     <td>
@@ -177,7 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('editFirstName').value = userData.firstName || '';
             document.getElementById('editLastName').value = userData.lastName || '';
             document.getElementById('editEmail').value = userData.email || '';
-            document.getElementById('editAffiliation').value = userData.affiliation || '';
+            document.getElementById('editAffiliation').value = getUserOrganization(userData);
             document.getElementById('editCountry').value = userData.country || '';
             document.getElementById('editRole').value = userData.role || 'general';
             
@@ -203,6 +207,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 firstName: document.getElementById('editFirstName').value,
                 lastName: document.getElementById('editLastName').value,
                 email: document.getElementById('editEmail').value,
+                organization: document.getElementById('editAffiliation').value,
                 affiliation: document.getElementById('editAffiliation').value,
                 country: document.getElementById('editCountry').value,
                 role: document.getElementById('editRole').value,
@@ -355,7 +360,7 @@ document.addEventListener('DOMContentLoaded', function() {
         badge.innerHTML = `
             <div class="text-center">
                 <h3 class="badge-name">${userData.firstName || ''} ${userData.lastName || ''}</h3>
-                <p class="badge-affiliation">${userData.affiliation || ''}</p>
+                <p class="badge-affiliation">${getUserOrganization(userData)}</p>
                 <p class="badge-country">${userData.country || ''}</p>
                 <p class="badge-role text-muted">${userData.role || 'attendee'}</p>
             </div>

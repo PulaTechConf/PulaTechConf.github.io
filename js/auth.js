@@ -109,7 +109,9 @@ if (loginForm) {
             localStorage.setItem('userName', `${userData.firstName} ${userData.lastName}`);
             localStorage.setItem('userEmail', userData.email);
             localStorage.setItem('userCountry', userData.country || '');
-            localStorage.setItem('userAffiliation', userData.affiliation || '');
+            const organization = userData.organization || userData.affiliation || '';
+            localStorage.setItem('userAffiliation', organization);
+            localStorage.setItem('userOrganization', organization);
             localStorage.setItem('userFirstName', userData.firstName);
             localStorage.setItem('userLastName', userData.lastName);
             
@@ -144,7 +146,7 @@ if (registerForm) {
         
         const firstName = document.getElementById('firstName').value;
         const lastName = document.getElementById('lastName').value;
-        const affiliation = document.getElementById('affiliation').value;
+        const organization = document.getElementById('affiliation').value;
         const country = document.getElementById('country').value;
         const email = document.getElementById('registerEmail').value;
         const password = document.getElementById('registerPassword').value;
@@ -177,7 +179,8 @@ if (registerForm) {
             const userData = {
                 firstName,
                 lastName,
-                affiliation,
+                organization,
+                affiliation: organization,
                 country,
                 accommodation: '', // Default empty accommodation, can be set from admin page
                 email,

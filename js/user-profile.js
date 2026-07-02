@@ -39,6 +39,10 @@ document.addEventListener('DOMContentLoaded', function() {
             window.print();
         });
     }
+
+    function getUserOrganization(userData) {
+        return String(userData.organization || userData.affiliation || '');
+    }
     
     // Add logout functionality
     const logoutBtn = document.getElementById('logoutBtn');
@@ -72,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.getElementById('firstName').textContent = userData.firstName || 'Not provided';
                 document.getElementById('lastName').textContent = userData.lastName || 'Not provided';
                 document.getElementById('email').textContent = userData.email || 'Not provided';
-                document.getElementById('affiliation').textContent = userData.affiliation || 'Not provided';
+                document.getElementById('affiliation').textContent = getUserOrganization(userData) || 'Not provided';
                 
                 // Format and display role
                 const role = localStorage.getItem('userRole') || 'general';
@@ -95,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const firstName = userData.firstName || '';
         const lastName = userData.lastName || '';
         const fullName = `${firstName} ${lastName}`.trim() || 'Conference Participant';
-        const affiliation = userData.affiliation || 'Affiliation not provided';
+        const organization = getUserOrganization(userData) || 'Organization not provided';
         const email = userData.email || '';
         const country = userData.country || '';
 
@@ -106,13 +110,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (nameShortEl) nameShortEl.textContent = fullName;
         if (fullNameEl) fullNameEl.textContent = fullName;
-        if (affiliationEl) affiliationEl.textContent = affiliation;
+        if (affiliationEl) affiliationEl.textContent = organization;
 
         if (qrEl) {
             const qrData = [
                 'PulaTechConf 2026 Accreditation',
                 `Name: ${fullName}`,
-                `Affiliation: ${affiliation}`,
+                `Organization: ${organization}`,
                 email ? `Email: ${email}` : '',
                 country ? `Country: ${country}` : '',
                 'Conference: Central and Mediterranean European Conference on New Technologies, Innovations, Society and Development',

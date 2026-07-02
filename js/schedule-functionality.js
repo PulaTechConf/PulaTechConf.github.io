@@ -311,18 +311,18 @@ function addAllEventsToCalendar() {
             description: 'Official welcome'
         },
         {
-            title: 'TFPU 2026 - Invited Lecture: Prof. Maja Dragan',
+            title: 'TFPU 2026 - Invited Lecture: Maja Dragan',
             start: '2026-07-17T10:35:00',
             end: '2026-07-17T10:55:00',
             location: 'Coworking Pula, Marka Marulica 5, Pula',
-            description: 'Prof. Maja Dragan, FH Joanneum, Graz, Austria'
+            description: 'Maja Dragan, FH Joanneum, Graz, Austria'
         },
         {
-            title: 'TFPU 2026 - Invited Lecture: Assoc. Prof. Hasan Sozen',
+            title: 'TFPU 2026 - Invited Lecture: Assoc. Prof. Dr. Hasan Sozen',
             start: '2026-07-17T11:10:00',
             end: '2026-07-17T11:35:00',
             location: 'Coworking Pula, Marka Marulica 5, Pula',
-            description: 'Assoc. Prof. Hasan Sozen, University of Ordu, Turkey'
+            description: 'Assoc. Prof. Dr. Hasan Sozen, University of Ordu, Turkiye'
         },
         {
             title: 'TFPU 2026 - Invited Lecture: Assoc. Prof. Ziga Emersic',
@@ -340,7 +340,7 @@ function addAllEventsToCalendar() {
         },
         {
             title: 'TFPU 2026 - Online Presentations',
-            start: '2026-07-17T13:00:00',
+            start: '2026-07-17T13:30:00',
             end: '2026-07-17T15:30:00',
             location: 'Google Meet',
             description: 'Hybrid mode via https://meet.google.com/bfj-efqx-hbm'
@@ -605,7 +605,7 @@ function updateScheduleProgress() {
         { date: '2026-07-17', startTime: 11 * 60 + 10, endTime: 11 * 60 + 35, id: 'day3-lecture-hasan' },
         { date: '2026-07-17', startTime: 11 * 60 + 35, endTime: 12 * 60, id: 'day3-lecture-ziga' },
         { date: '2026-07-17', startTime: 12 * 60 + 40, endTime: 13 * 60 + 30, id: 'day3-lunch' },
-        { date: '2026-07-17', startTime: 13 * 60, endTime: 15 * 60 + 30, id: 'day3-online-presentations' },
+        { date: '2026-07-17', startTime: 13 * 60 + 30, endTime: 15 * 60 + 30, id: 'day3-online-presentations' },
         { date: '2026-07-17', startTime: 13 * 60 + 30, endTime: 15 * 60 + 30, id: 'day3-onsite-presentations' }
     ];
     

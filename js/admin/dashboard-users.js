@@ -33,6 +33,10 @@ function escapeHtml(str) {
         .replace(/'/g, '&#039;');
 }
 
+function getUserOrganization(user) {
+    return String(user.organization || user.affiliation || '');
+}
+
 function debounce(func, wait) {
     let timeout;
     return function(...args) {
@@ -54,7 +58,7 @@ function applyFilters() {
             (user.firstName || '').toLowerCase().includes(searchTerm) ||
             (user.lastName || '').toLowerCase().includes(searchTerm) ||
             (user.email || '').toLowerCase().includes(searchTerm) ||
-            (user.affiliation || '').toLowerCase().includes(searchTerm) ||
+            getUserOrganization(user).toLowerCase().includes(searchTerm) ||
             (user.accommodation || '').toLowerCase().includes(searchTerm);
         
         const matchesRole = !roleFilter || user.role === roleFilter;
@@ -101,7 +105,9 @@ function renderDesktopTable(data) {
         return;
     }
     
-    tbody.innerHTML = data.map(user => `
+    tbody.innerHTML = data.map(user => {
+        const organization = getUserOrganization(user);
+        return `
         <tr>
             <td class="text-center">
                 <input type="checkbox" class="form-check-input showed-up-checkbox" 
@@ -120,10 +126,10 @@ function renderDesktopTable(data) {
             <td>
                 <button class="btn btn-sm btn-outline-primary me-1 edit-affiliation-btn" 
                         data-id="${user.id}" data-name="${escapeHtml(user.firstName)} ${escapeHtml(user.lastName)}" 
-                        data-current-affiliation="${escapeHtml(user.affiliation)}">
+                        data-current-affiliation="${escapeHtml(organization)}">
                     <i class="bi bi-pencil"></i>
                 </button>
-                ${escapeHtml(user.affiliation) || '<span class="text-muted">-</span>'}
+                ${escapeHtml(organization) || '<span class="text-muted">-</span>'}
             </td>
             <td>
                 <button class="btn btn-sm btn-outline-primary me-1 edit-accommodation-btn" 
@@ -160,7 +166,8 @@ function renderDesktopTable(data) {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
     
     addTableEventListeners();
 }
@@ -174,7 +181,9 @@ function renderMobileCards(data) {
         return;
     }
     
-    container.innerHTML = data.map(user => `
+    container.innerHTML = data.map(user => {
+        const organization = getUserOrganization(user);
+        return `
         <div class="mobile-user-card" data-user-id="${user.id}">
             <div class="card-header-row" onclick="toggleUserCard('${user.id}')">
                 <button class="expand-btn" id="expandBtn-${user.id}" type="button">
@@ -202,12 +211,12 @@ function renderMobileCards(data) {
                     <span class="detail-value">${escapeHtml(user.email)}</span>
                 </div>
                 <div class="detail-row">
-                    <span class="detail-label">Affiliation</span>
+                    <span class="detail-label">Organization</span>
                     <span class="detail-value">
-                        ${escapeHtml(user.affiliation) || '<span class="text-muted">Not provided</span>'}
+                        ${escapeHtml(organization) || '<span class="text-muted">Not provided</span>'}
                         <button class="btn btn-sm btn-link p-0 ms-2 edit-affiliation-btn" 
                                 data-id="${user.id}" data-name="${escapeHtml(user.firstName)}" 
-                                data-current-affiliation="${escapeHtml(user.affiliation)}">
+                                data-current-affiliation="${escapeHtml(organization)}">
                             <i class="bi bi-pencil"></i>
                         </button>
                     </span>
@@ -255,7 +264,8 @@ function renderMobileCards(data) {
                 </div>
             </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
     
     addMobileEventListeners();
 }
@@ -334,6 +344,24 @@ async function updateUserField(userId, field, value) {
     }
 }
 
+async function updateUserOrganization(userId, value) {
+    try {
+        await updateDoc(doc(db, "users", userId), {
+            organization: value,
+            affiliation: value
+        });
+        const user = allUsers.find(u => u.id === userId);
+        if (user) {
+            user.organization = value;
+            user.affiliation = value;
+        }
+        applyFilters();
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Error updating organization");
+    }
+}
+
 // EVENT LISTENERS
 
 function addTableEventListeners() {
@@ -357,8 +385,8 @@ function addTableEventListeners() {
     document.querySelectorAll('.user-table .edit-affiliation-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const newValue = prompt(`Edit affiliation for ${this.dataset.name}:`, this.dataset.currentAffiliation || '');
-            if (newValue !== null) updateUserField(this.dataset.id, 'affiliation', newValue);
+            const newValue = prompt(`Edit organization for ${this.dataset.name}:`, this.dataset.currentAffiliation || '');
+            if (newValue !== null) updateUserOrganization(this.dataset.id, newValue);
         });
     });
     
@@ -403,8 +431,8 @@ function addMobileEventListeners() {
     document.querySelectorAll('#mobileUserCards .edit-affiliation-btn').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
-            const newValue = prompt(`Edit affiliation:`, this.dataset.currentAffiliation || '');
-            if (newValue !== null) updateUserField(this.dataset.id, 'affiliation', newValue);
+            const newValue = prompt(`Edit organization:`, this.dataset.currentAffiliation || '');
+            if (newValue !== null) updateUserOrganization(this.dataset.id, newValue);
         });
     });
     
